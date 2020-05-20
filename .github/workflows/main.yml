@@ -1,0 +1,42 @@
+# This is a continuous action workflow for bazel, using bazelisk.
+
+name: CI
+
+# Controls when the action will run. Triggers the workflow on push
+# events but only for the master branch. Triggers on all pull requests.
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build-and-test:
+    env:
+      BAZEL_CXXOPTS: -std=c++17
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Mount bazel cache
+      uses: actions/cache@v1
+      with:
+        path: "/home/runner/.cache/bazel"
+        key: bazel
+
+    - name: Install bazelisk
+      run: |
+        curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.4.0/bazelisk-linux-amd64"
+        mkdir -p "${GITHUB_WORKSPACE}/bin/"
+        mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+        chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+        
+    - name: Build
+      run: |
+        "${GITHUB_WORKSPACE}/bin/bazel" build ...
+
+    - name: Test
+      run: |
+        "${GITHUB_WORKSPACE}/bin/bazel" test ...
