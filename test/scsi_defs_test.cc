@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "lib/scsi_defs.h"
-
 #include "gtest/gtest.h"
 #include "absl/base/casts.h"
+
 namespace {
 
   /*
@@ -31,5 +31,4 @@ namespace {
     EXPECT_EQ(0b000, cb.reserved);
     EXPECT_EQ(0b11, cb.vendor_specific);
   }
-
 } // anonymous namespace for testing

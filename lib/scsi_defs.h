@@ -5,6 +5,7 @@
 
 #include "absl/base/attributes.h"
 
+// The fields of structures in this namespace are arranged according to Big Endian format.
 namespace scsi_defs {
 
   // SAM-4 Table 33 
@@ -81,6 +82,88 @@ namespace scsi_defs {
     uint8_t reserved : 3;
     uint8_t vendor_specific : 2;
   };
+
+  // Refer to https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf , Section 3.6 Table 58
+  struct InquiryCommand {
+    OpCode op_code = OpCode::kInquiry;
+    uint8_t reserved : 6;
+    bool obsolete : 1; // formerly CMDDT
+    bool evpd : 1; // Enable Vital Product Data (EVPD)
+    uint8_t page_code : 8;
+    uint16_t allocation_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(InquiryCommand) == 6);
+
+  // Refer to https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf , Section 3.6.2 Table 60
+  enum class PeripheralQualifier : uint8_t {
+    kPeripheralDeviceConnected = 0b000,
+    kPeripheralDeviceNotConnected = 0b001,
+    kReserved = 0b010,
+    kNotSupported = 0b011
+  };
+
+  // Refer to https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf , Section 3.6.2 Table 63
+  enum class TPGS : uint8_t {
+    kNotSupported = 0b00,
+    kImplicitAccess = 0b01,
+    kExcplicitAccess = 0b10,
+    kFullAccess = 0b11,
+  };
+
+  enum class ResponseDataFormat : uint8_t {
+    kObsolete0 = 0x0,
+    kObsolete1 = 0x1,
+    kCompliant = 0x2,
+  };
+
+  // Refer to https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf , Section 3.6.2 Table 59
+  struct InquiryData {
+    PeripheralQualifier peripheral_qualifier : 3;
+    PeripheralDeviceType peripheral_device_type : 5;
+    bool rmb : 1; // Removable Media Bit (RMB)
+    bool lu_cong : 1;
+    uint8_t reserved_1 : 6;
+    Version version : 8;
+    uint8_t reserved_2 : 2;
+    bool normaca : 1; //Normal ACA (NORMACA)
+    bool hisup : 1; // Hierarchical Support Bit (HISUP)
+    ResponseDataFormat response_data_format : 4;
+    uint8_t additional_length : 8;
+    bool sccs : 1; // SCC Supported
+    bool acc : 1; // Access controls Coordinator Bit
+    TPGS tpgs : 2; // Target Port Group Support (TPGS)
+    bool third_party_copy : 1; // referred to as 3PC in the documentation
+    uint8_t reserved_3 : 2;
+    bool protect : 1;
+    bool obsolete_1 : 1;
+    bool encserv : 1; // Enclosure Services Bit
+    bool vs_1 : 1; // vendor specific bit
+    bool multip : 1; // multiple SCSI Port
+    bool obsolete_2 : 1;
+    uint8_t reserved_4 : 2;
+    bool addr_16 : 1; // SCSI 16-bit address support bit
+    bool obsolete_3 : 1;
+    bool reserved_5 : 1;
+    bool wbus_16 : 1; // Wide Bus bit 
+    bool sync : 1;
+    bool obsolete_4 : 1;
+    bool reserved_6 : 1;
+    bool cmdque : 1; // Command Management Model bit
+    bool vs_2 : 1; // vendor specific bit
+    uint64_t vendor_identification : 64;
+    uint8_t product_identification[16];
+    uint32_t product_revision_level : 32;
+    uint8_t vendor_specific_1[20];
+    uint8_t reserved_7 : 4;
+    uint8_t clocking : 2;
+    bool qas : 1; // Quick Arbitration and Selection Supported bit
+    bool ius : 1; // Information Units Supported bit
+    uint8_t reserved_8 : 8;
+    uint16_t vendor_descriptors[8];
+    uint8_t reserved_9[22];
+  } ABSL_ATTRIBUTE_PACKED; 
+  static_assert(sizeof(InquiryData) == 96);
 
   // SCSI Reference Manual Table 76 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   struct PersistentReserveInCommand {

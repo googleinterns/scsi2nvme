@@ -1,2 +1,5 @@
 #ignore all bazel build files
 /bazel-*
+
+#ignore local editor files
+/.vscode*
