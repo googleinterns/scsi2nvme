@@ -29,7 +29,7 @@ namespace {
     EXPECT_EQ(0b00, cb.obsolete);
     EXPECT_EQ(0b1, cb.naca);
     EXPECT_EQ(0b000, cb.reserved);
-    EXPECT_EQ(0b11, cb.vendorSpecific);
+    EXPECT_EQ(0b11, cb.vendor_specific);
   }
 
 } // anonymous namespace for testing
