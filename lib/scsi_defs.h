@@ -67,6 +67,7 @@ namespace scsi_defs {
     kStartStopUnit = 0x1b,
     kDoPreventAllowMediumRemoval = 0x1e,
     kReadCapacity10 = 0x25,
+    kUnmap = 0x42,
     kReadToc = 0x43,
     kModeSense10 = 0x5a,
     kPersistentReserveIn = 0x5e,
@@ -258,6 +259,36 @@ namespace scsi_defs {
     ControlByte control_byte;
   } ABSL_ATTRIBUTE_PACKED;
   static_assert(sizeof(ModeSense10Command) == 10);
+
+  // SCSI Reference Manual Table 204 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct UnmapCommand {
+    OpCode op_code = OpCode::kUnmap;
+    uint8_t reserved_1 : 7;
+    bool anchor : 1;
+    uint32_t reserved_2 : 32;
+    uint8_t reserved_3 : 3;
+    uint8_t group_number : 5;
+    uint16_t param_list_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(UnmapCommand) == 10);
+
+  // SCSI Reference Manual Table 205 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // This struct is a header for variable length data
+  struct UnmapParamList {
+    uint16_t data_length : 16;
+    uint16_t block_desc_data_length : 16;
+    uint32_t reserved_1 : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(UnmapParamList) == 8);
+
+    // SCSI Reference Manual Table 206 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct UnmapBlockDescriptor {
+    uint64_t logical_block_addr : 64;
+    uint32_t logical_block_count : 32;
+    uint32_t reserved_1 : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
 } // namepsace scsi_defs
 #endif
