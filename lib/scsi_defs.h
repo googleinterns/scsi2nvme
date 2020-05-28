@@ -68,6 +68,7 @@ namespace scsi_defs {
     kDoPreventAllowMediumRemoval = 0x1e,
     kReadCapacity10 = 0x25,
     kReadToc = 0x43,
+    kModeSense10 = 0x5a,
     kPersistentReserveIn = 0x5e,
     kPersistentReserveOut = 0x5f,
     kServiceActionIn = 0x9e,
@@ -227,6 +228,36 @@ namespace scsi_defs {
     // additional parameter data
   } ABSL_ATTRIBUTE_PACKED;
   static_assert(sizeof(ProParamList) == 24);
+
+  // SCSI Reference Manual Table 73 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ModeSense6Command {
+    OpCode opCode = OpCode::kModeSense6;
+    uint8_t reserved_1 : 4;
+    bool dbd : 1; // Disable block descriptors
+    uint8_t reserved_2 : 3;
+    uint8_t pc : 2; // Page control
+    uint8_t page_code : 6;
+    uint8_t sub_page_code : 8;
+    uint8_t alloc_length : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ModeSense6Command) == 6);
+
+  // SCSI Reference Manual Table 75 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ModeSense10Command {
+    OpCode opCode = OpCode::kModeSense10;
+    uint8_t reserved_1 : 3;
+    bool llbaa : 1; // Long LBA accepted
+    bool dbd : 1; // Disable block descriptors
+    uint8_t reserved_2 : 3;
+    uint8_t pc : 2; // Page control
+    uint8_t page_code : 6;
+    uint8_t sub_page_code : 8;
+    uint32_t reserved_3 : 24;
+    uint16_t alloc_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ModeSense10Command) == 10);
 
 } // namepsace scsi_defs
 #endif
