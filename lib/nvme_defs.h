@@ -3,6 +3,7 @@
 
 namespace nvme_defs {
 
+    // NVMe Base Specification Figure 125 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
   enum class StatusType : uint8_t {
     kGenericCommandStatus = 0x0,
     kCommandSpecificStatus = 0x1,
@@ -20,8 +21,9 @@ namespace nvme_defs {
     kCommandIdConflict = 0x3,
     kDataTransferError = 0x4,
     kCommandsAbortedDueToPowerLossNotification = 0x5,
-    kCommandAbortedRequested = 0x7,
-    kCommandAbortedDUeToSqDeletion = 0x8,
+    kInternalError = 0x6,
+    kCommandAbortRequested = 0x7,
+    kCommandAbortedDueToSqDeletion = 0x8,
     kCommandAbortedDueToFailedFusedCommand = 0x9,
     kCommandAbortedDueToMissingFusedCommand = 0xa,
     kInvalidNamespaceOrFormat = 0xb,
@@ -46,11 +48,14 @@ namespace nvme_defs {
     kCommandNotSupportedForQueueInCmb = 0x1f,
     kNamespaceIsWriteProtected = 0x20,
     kCommandInterrupted = 0x21,
+    kTransientTransportError = 0x22,
     // Reserved = 0x23 to 0x7f
     // I/O Command Set Specific = 0x80 t0 0xbf
     // Vendor Specific = 0xc0 to 0xff
 
     // NVM Command Set
+    kLbaOutOfRange = 0x80,
+    kCapacityExceeded = 0x81,
     kNamespaceNotReady = 0x82,
     kReservationConflict = 0x83,
     kFormatInProgress = 0x84,
@@ -70,7 +75,7 @@ namespace nvme_defs {
     kInvalidFirmwareImage = 0x7,
     kInvalidInterruptVector = 0x8,
     kInvalidLogPage = 0x9,
-    kInvalidFOrmat = 0xa,
+    kInvalidFormat = 0xa,
     kFirmwareActivationRequiresConventionalReset = 0xb,
     kInvalidQueueDeletion = 0xc,
     kFeatureIdentifierNotSaveable = 0xd,
@@ -79,12 +84,12 @@ namespace nvme_defs {
     kFirmwareActivationRequiresNvmSubsystemReset = 0x10,
     kFirmwareActivationRequiresControllerLevelReset = 0x11,
     kFirmwareActiationRequiresMaximumTimeViolation = 0x12,
-    kFirmwareActivationProhibited,
-    kOverlappingRange,
-    kNamespaceInsufficientCapacity,
-    kNamespaceIdentifierUnavaiable,
+    kFirmwareActivationProhibited = 0x13,
+    kOverlappingRange = 0x14,
+    kNamespaceInsufficientCapacity = 0x15,
+    kNamespaceIdentifierUnavailable = 0x16,
     // Reserved = 0x17
-    kNamesapceAlreadyAttahced = 0x18,
+    kNamespaceAlreadyAttached = 0x18,
     kNamespaceIsPrivate = 0x19,
     kNamespaceNotAttached = 0x1a,
     kThinProvisioningNotSupported = 0x1b,
@@ -95,22 +100,22 @@ namespace nvme_defs {
     kInvalidSecondaryControllerState = 0x20,
     kInvalidNumberOfControllerResources = 0x21,
     kInvalidResourceIdentifier = 0x22,
-    kSanitizeProhibiedWhilePersistentMemoryRegionIsEnabled = 0x23,
+    kSanitizeProhibitedWhilePersistentMemoryRegionIsEnabled = 0x23,
     kAnaGroupIdentifierInvalid = 0x24,
     kAnaAttachFailed = 0x25,
     // Reserved = 0x26 to 0x6f
-    // Directive specific = 0x70 to 0x7f
+    // Directive Specific = 0x70 to 0x7f
     // I/O Command Set Specific = 0x80 to 0xbf
-    // Vendor Speicfic = 0xc0 to 0xff
+    // Vendor Specific = 0xc0 to 0xff
 
     // NVM Command Set
     kConflictingAttributes = 0x80,
-    kInvalidProtectionnInformation = 0x81,
+    kInvalidProtectionInformation = 0x81,
     kAttemptedWriteToReadOnlyRange = 0x82,
   };
 
   // NVMe Base Specification Figure 130 and Figure 131 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
-  enum class MeidaAndDataIntegrityErrorValues : uint8_t {
+  enum class MediaAndDataIntegrityErrorValues : uint8_t {
     // Reserved = 0x0 to 0x7f
     // I/O Command Set Specific = 0x80 to 0xbf
     // Vendor Specific = 0xc0 to 0xff
@@ -150,18 +155,18 @@ namespace nvme_defs {
 
   // NVMe Base Specification Figure 139 and Figure 140 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
   enum class AdminCommandOpCode : uint8_t {
-    kDeleteIOSubmissionQueue = 0x0,
-    kCreateIOSubmissionQueue = 0x1,
+    kDeleteIoSubmissionQueue = 0x0,
+    kCreateIoSubmissionQueue = 0x1,
     kGetLogPage = 0x2,
-    kDeleteIOCompletionQueue = 0x4,
-    kCreateIOCompletionQueue = 0x5,
+    kDeleteIoCompletionQueue = 0x4,
+    kCreateIoCompletionQueue = 0x5,
     kIdentify = 0x6,
     kAbort = 0x8,
     kSetFeatures = 0x9,
     kGetFeatures = 0xa,
-    kAsynchronousEvenRequests = 0xc,
+    kAsynchronousEventRequests = 0xc,
     kNamespaceManagement = 0xd,
-    kFirwareCommit = 0x10,
+    kFirmwareCommit = 0x10,
     kFirmwareImageDownload = 0x11,
     kDeviceSelfTest = 0x14,
     kNamespaceAttachment = 0x15,
@@ -172,8 +177,10 @@ namespace nvme_defs {
     kNvmeMiSend = 0x1d,
     kNvmeMiReceive = 0x1e,
     kDoorbellBufferConfig = 0x7c,
-    // IO Command Set specific 0x80 to 0xbf
-    // Vendor specific = 0xc0 to 0xff
+    // I/O Command Set specific = 0x80 to 0xbf
+    // Vendor Specific = 0xc0 to 0xff
+
+    // NVM Command Set Specific
     kFormatNvm 0x80,
     kSecuritySend = 0x81,
     kSecurityReceive = 0x82,
@@ -195,7 +202,7 @@ namespace nvme_defs {
     kReservationReport = 0xe,
     kReservationAcquire = 0x11,
     kReservationRelease = 0x15,
-    // Vendor specific = 0x80 to 0xff
+    // Vendor Specific = 0x80 to 0xff
   };
 
 } // namespace nvme_defs
