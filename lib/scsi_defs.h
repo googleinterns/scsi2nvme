@@ -260,6 +260,129 @@ namespace scsi_defs {
   } ABSL_ATTRIBUTE_PACKED;
   static_assert(sizeof(ModeSense10Command) == 10);
 
+  // SCSI Reference Manual Table 150, 159, 162 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct MaintenanceInHeader {
+    uint8_t reserved_1 : 3;
+    uint8_t service_action : 5;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(MaintenanceInHeader) == 1);
+  
+  // SCSI Reference Manual Table 150 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReportOpCodesCommand {
+    bool rctd : 1; // Return commands timeout descriptor
+    uint8_t reserved_1 : 4;
+    uint8_t reporting_options : 3;
+    uint8_t requested_op_code : 8;
+    uint16_t requested_service_action : 16;
+    uint32_t alloc_length : 32;
+    uint8_t reserved_2 : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportOpCodesCommand) == 10);
+
+  // SCSI Reference Manual Table 157 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct CommandTimeoutsDescriptor {
+    uint16_t descriptor_length : 16;
+    uint8_t reserved_1 : 8;
+    uint8_t cmd_specific : 8;
+    uint32_t nominal_cmd_timeout : 32;
+    uint32_t reccomended_cmd_timeout : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(CommandTimeoutsDescriptor) == 12);
+
+  // SCSI Reference Manual Table 153 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct CommandDescriptor {
+    OpCode op_code;
+    uint8_t reserved_1 : 8;
+    uint16_t service_action : 16;
+    uint8_t reserved_2 : 8;
+    uint8_t reserved_3 : 6;
+    bool ctdp : 1; // Command timeouts descriptor present
+    bool servactv : 1; // Service action valid
+    uint16_t cdb_length : 16; // Command descriptor block length
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(CommandDescriptor) == 8);
+
+  struct CommandDescriptorTimeoutIncluded {
+    OpCode op_code;
+    uint8_t reserved_1 : 8;
+    uint16_t service_action : 16;
+    uint8_t reserved_2 : 8;
+    uint8_t reserved_3 : 6;
+    bool ctdp : 1; // Command timeouts descriptor present
+    bool servactv : 1; // Service action valid
+    uint16_t cdb_length : 16; // Command descriptor block length
+    CommandTimeoutsDescriptor cmd_timeouts_desc; // This field's validity is specified by ctdp.
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(CommandDescriptorTimeoutIncluded) == 20);
+
+  // SCSI Reference Manual Table 152 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // This struct is a header for variable sized data
+  struct AllCommandsParamData {
+    uint32_t listByteSize : 32;
+  };
+
+  // SCSI Reference Manual Table 155 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // This struct is a header for variable sized data
+  struct OneCommandParamData {
+    uint8_t reserved_1 : 8;
+    bool ctdp : 1; // Command timeouts descriptor present
+    uint8_t reserved_2 : 4;
+    uint8_t support : 3;
+    uint16_t cdb_size : 16;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(OneCommandParamData) == 4);
+
+  // SCSI Reference Manual Table 159 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // Report supported task managment functions command
+  struct ReportTmfCommand {
+    bool repd : 1; // Return extended parameter data
+    uint32_t reserved_1 : 31;
+    uint32_t alloc_length : 32;
+    uint8_t reserved_2 : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportTmfCommand) == 10);
+
+  // SCSI Reference Manual Table 161 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // Report supported task managment functions parameter data
+  struct ReportTmfParamData {
+    bool ats : 1; // Abort task supported
+    bool atss : 1; // Abort task set supported
+    bool cacas : 1; // Clear ACA supported
+    bool ctss : 1; // Clear task set supported
+    bool lurs : 1; // Logical unit reset supported
+    bool qts : 1; // Query task supported
+    uint8_t reserved_1 : 7; // Obsolete
+    bool qaes : 1; // Query async event supported
+    bool qtss : 1; // Query task set supported
+    bool itnrs : 1; // I-T Nexus reset supported
+    uint8_t reserved_2 : 8;
+    uint8_t additional_data_length : 8;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportTmfParamData) == 4);
+
+  // SCSI Reference Manual Table 162 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReportTimestampCommand {
+    uint32_t reserved_1 : 32;
+    uint32_t alloc_length : 32;
+    uint8_t reserved_2 : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportTimestampCommand) == 10);
+
+  // SCSI Reference Manual Table 163 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReportTimestampParamData {
+    uint16_t data_length : 16;
+    uint8_t reserved_1 : 5;
+    uint8_t ts_origin : 3;
+    uint8_t reserved : 8;
+    uint64_t timestamp : 48;
+    uint8_t reserved_2 : 8;
+    uint8_t reserved_3 : 8;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportTimestampParamData) == 12);
+  
   // SCSI Reference Manual Table 204 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   struct UnmapCommand {
     OpCode op_code = OpCode::kUnmap;
