@@ -18,13 +18,10 @@
 #include <string>
 
 class HelloWorld {
+  // Class to test the initial setup using Bazel and gtest
 
-    // Class to test the initial setup using Bazel and gtest
-
-public:
-    
-    std::string get_hello_world_string();
-
+ public:
+  std::string get_hello_world_string();
 };
 
 #endif
