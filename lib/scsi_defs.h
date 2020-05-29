@@ -62,6 +62,8 @@ namespace scsi_defs {
   enum class OpCode : uint8_t {
     kTestUnitReady = 0x0,
     kRequestSense = 0x3,
+    kRead6 = 0x08,
+    kWrite6 = 0x0a,
     kInquiry = 0x12,
     kReserve6 = 0x16,
     kRelease6 = 0x17,
@@ -69,14 +71,28 @@ namespace scsi_defs {
     kStartStopUnit = 0x1b,
     kDoPreventAllowMediumRemoval = 0x1e,
     kReadCapacity10 = 0x25,
+    kRead10 = 0x28,
+    kWrite10 = 0x2a,
+    kVerify10 = 0x2f,
+    kSync10 = 0x35,
     kUnmap = 0x42,
     kReadToc = 0x43,
     kModeSense10 = 0x5a,
     kPersistentReserveIn = 0x5e,
     kPersistentReserveOut = 0x5f,
+    kRead32 = 0x7f,
+    kWrite32 = 0x7f,
+    kVerify32 = 0x7f,
+    kRead16 = 0x88,
+    kWrite16 = 0x8a,
+    kVerify16 = 0x8f,
+    kSync16 = 0x91,
     kServiceActionIn = 0x9e,
     kReportLuns = 0xa0,
     kMaintenanceIn = 0xa3,
+    kRead12 = 0xa8,
+    kWrite12 = 0xaa,
+    kVerify12 = 0xaf,
   };
 
   // SCSI Reference Manual Table 10 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
@@ -257,6 +273,282 @@ namespace scsi_defs {
     // additional parameter data
   } ABSL_ATTRIBUTE_PACKED;
   static_assert(sizeof(ProParamList) == 24);
+
+  // SCSI Reference Manual Table 95 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct Read6Command {
+    OpCode op_code;
+    uint8_t reserved : 3;
+    uint32_t logical_block_address : 21;
+    uint8_t transfer_length : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Read6Command) == 6);
+  
+  // SCSI Reference Manual Table 97 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Read10Command {
+    OpCode op_code;
+    uint8_t rd_protect : 3; // read protect bit
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool rarc : 1; // Rebuild Assist Recovery bit
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    uint8_t reserved : 3;
+    uint8_t group_number : 5;
+    uint16_t transfer_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Read10Command) == 10);
+
+  // SCSI Reference Manual Table 99 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Read12Command {
+    OpCode op_code;
+    uint8_t rd_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool rarc : 1; // Rebuild Assist Recovery bit
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    uint32_t transfer_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Read12Command) == 12);
+
+  // SCSI Reference Manual Table 100 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Read16Command {
+    OpCode op_code;
+    uint8_t rd_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool rarc : 1; // Rebuild Assist Recovery bit
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool reserved1 : 1;
+    uint64_t logical_block_address : 64;
+    uint32_t transfer_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved2 : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Read16Command) == 16);
+
+  // SCSI Reference Manual Table 102 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Read32Command {
+    OpCode op_code;
+    ControlByte control_byte;
+    uint32_t reserved_1 : 32;
+    uint8_t reserved_2 : 3;
+    uint8_t group_number : 5;
+    uint8_t additional_cdb_length : 8; // 0x18
+    uint16_t service_action : 16; // 0x0009
+    uint8_t rd_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool rarc : 1; // Rebuild Assist Recovery bit
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    uint16_t reserved_3 : 9;
+    uint64_t logical_block_address : 64;
+    uint32_t expected_initial_logical_block_reference_tag : 32;
+    uint16_t expected_logical_block_application_tag : 16;
+    uint16_t logical_block_application_tag_mask : 16;
+    uint32_t transfer_length : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Read32Command) == 32);
+
+  // SCSI Reference Manual Table 215 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Write6Command {
+    OpCode op_code;
+    uint8_t reserved : 3;
+    uint32_t logical_block_address : 21;
+    uint8_t transfer_length : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Write6Command) == 6);
+
+  // SCSI Reference Manual Table 216 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Write10Command {
+    OpCode op_code;
+    uint8_t wr_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool reserved_1 : 1;
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    uint8_t reserved_2 : 3;
+    uint8_t group_number : 5;
+    uint16_t transfer_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Write10Command) == 10);
+
+  // SCSI Reference Manual Table 218 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Write12Command {
+    OpCode op_code;
+    uint8_t wr_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool reserved_1 : 1;
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    uint32_t transfer_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved_2 : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Write12Command) == 12);
+
+  // SCSI Reference Manual Table 219 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Write16Command {
+    OpCode op_code;
+    uint8_t wr_proetect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool reserved_1 : 1;
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    bool reserved_2 : 1;
+    uint64_t logical_block_address : 64;
+    uint32_t transfer_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved_3 : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Write16Command) == 16);
+
+  // SCSI Reference Manual Table 220 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Write32Command {
+    OpCode op_code;
+    ControlByte control_byte;
+    uint32_t reserved_1 : 32;
+    uint8_t reserved_2 : 3;
+    uint8_t group_number : 5;
+    uint8_t additional_cdb_length : 8; // 0x18
+    uint16_t service_action : 16; // 0x000B
+    uint8_t rd_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool fua : 1; // Forced Unit access bit
+    bool reserved_3 : 1;
+    bool fua_nv : 1; // Forced Access Unit Non-Volatile 
+    uint16_t reserved_4 : 9;
+    uint64_t logical_block_address : 64;
+    uint32_t expected_initial_logical_block_reference_tag : 32;
+    uint16_t expected_logical_block_application_tag : 16;
+    uint16_t logical_block_application_tag_mask : 16;
+    uint32_t transfer_length : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Write32Command) == 32);
+
+  // SCSI Reference Manual Table 207 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Verify10Command {
+    OpCode op_code;
+    uint8_t vr_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool reserved_1 : 1;
+    uint8_t bytchk : 2;
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    bool restricted_mmc_5 : 1;
+    uint8_t reserved_2 : 2;
+    uint8_t group_number : 5;
+    uint16_t verification_length : 16;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Verify10Command) == 10);
+
+  // SCSI Reference Manual Table 218 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Verify12Command {
+    OpCode op_code;
+    uint8_t vr_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool reserved_1 : 1;
+    uint8_t bytchk : 2;
+    bool obsolete : 1;
+    uint32_t logical_block_address : 32;
+    uint32_t verification_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved_2 : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Verify12Command) == 12);
+
+  // SCSI Reference Manual Table 219 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Verify16Command {
+    OpCode op_code;
+    uint8_t vr_proetect : 3;
+    bool dpo : 1; // disable page output bit
+    bool reserved_1 : 1;
+    bool bytchk : 2;
+    bool reserved_2 : 1;
+    uint64_t logical_block_address : 64;
+    uint32_t verification_length : 32;
+    bool restricted_mmc_6 : 1;
+    uint8_t reserved_3 : 2;
+    uint8_t group_number : 5;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Verify16Command) == 16);
+
+  // SCSI Reference Manual Table 220 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct Verify32Command {
+    OpCode op_code;
+    ControlByte control_byte;
+    uint32_t reserved_1 : 32;
+    uint8_t reserved_2 : 3;
+    uint8_t group_number : 5;
+    uint8_t additional_cdb_length : 8; // 0x18
+    uint16_t service_action : 16; // 0x000A
+    uint8_t vr_protect : 3;
+    bool dpo : 1; // disable page output bit
+    bool reserved_3 : 1;
+    uint8_t bytchk : 2;
+    uint16_t reserved_4 : 9;
+    uint64_t logical_block_address : 64;
+    uint32_t expected_initial_logical_block_reference_tag : 32;
+    uint16_t expected_logical_block_application_tag : 16;
+    uint16_t logical_block_application_tag_mask : 16;
+    uint32_t transfer_length : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(Verify32Command) == 32);
+
+  // SCSI Reference Manual Table 199 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct SynchronizeCache10Command {
+    OpCode op_code;
+    uint8_t reserved_1 : 5;
+    bool sync_nv : 1; // Sync volatile or non-volatile caches
+    bool immed : 1; // Immediate bit
+    bool obsolete_2 : 1;
+    uint32_t logical_block_address : 32;
+    uint8_t reserved_2 : 3;
+    uint8_t group_number : 5;
+    uint16_t number_of_blocks : 16;
+    ControlByte control_byte; 
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(SynchronizeCache10Command) == 10);
+
+
+  // SCSI Reference Manual Table 201 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf  
+  struct SynchronizeCache16Command {
+    OpCode op_code;
+    uint8_t reserved_1 : 5;
+    bool sync_nv : 1; // Sync volatile or non-volatile caches
+    bool immed : 1; // Immediate bit
+    bool reserved_2 : 1;
+    uint64_t logical_block_address : 64;
+    uint32_t number_of_blocks : 32;
+    uint8_t reserved_3 : 3;
+    uint8_t group_number : 5;
+    ControlByte control_byte; 
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(SynchronizeCache16Command) == 16);
 
   // SCSI Reference Manual Table 73 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   struct ModeSense6Command {
