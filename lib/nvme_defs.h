@@ -14,7 +14,7 @@ enum class StatusType : uint8_t {
 };
 
 // NVMe Base Specification Figure 126 and Figure 127 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
-enum class GenericCommandStatus {
+enum class GenericCommandStatus : uint8_t {
   kSuccessfulCompletion = 0x0,
   kInvalidCommandOpCode = 0x1,
   kInvalidFieldInCommand = 0x2,
@@ -83,7 +83,7 @@ enum class CommandSpecificStatus : uint8_t {
   kFeatureNotNamespaceSpecific = 0xf,
   kFirmwareActivationRequiresNvmSubsystemReset = 0x10,
   kFirmwareActivationRequiresControllerLevelReset = 0x11,
-  kFirmwareActiationRequiresMaximumTimeViolation = 0x12,
+  kFirmwareActivationRequiresMaximumTimeViolation = 0x12,
   kFirmwareActivationProhibited = 0x13,
   kOverlappingRange = 0x14,
   kNamespaceInsufficientCapacity = 0x15,
@@ -206,5 +206,4 @@ enum class NvmCommandOpCode : uint8_t {
 };
 
 } // namespace nvme_defs
-
 #endif
