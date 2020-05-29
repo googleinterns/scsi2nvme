@@ -3,6 +3,151 @@
 
 namespace nvme_defs {
 
+  enum class StatusType : uint8_t {
+    kGenericCommandStatus = 0x0,
+    kCommandSpecificStatus = 0x1,
+    kMediaAndDataIntegrityErrors = 0x2,
+    kPathRelatedStatus = 0x3,
+    // Reserved = 0x4 to 0x6
+    // Vendor Specific = 0x7
+  };
+
+    // NVMe Base Specification Figure 126 and Figure 127 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+  enum class GenericCommandStatus {
+    kSuccessfulCompletion = 0x0,
+    kInvalidCommandOpCode = 0x1,
+    kInvalidFieldInCommand = 0x2,
+    kCommandIdConflict = 0x3,
+    kDataTransferError = 0x4,
+    kCommandsAbortedDueToPowerLossNotification = 0x5,
+    kCommandAbortedRequested = 0x7,
+    kCommandAbortedDUeToSqDeletion = 0x8,
+    kCommandAbortedDueToFailedFusedCommand = 0x9,
+    kCommandAbortedDueToMissingFusedCommand = 0xa,
+    kInvalidNamespaceOrFormat = 0xb,
+    kCommandSequenceError = 0xc,
+    kInvalidSglSegmentDescriptor = 0xd,
+    kInvalidNumberOfSglDescriptors = 0xe,
+    kDataSglLengthInvalid = 0xf,
+    kMetadataSglLengthInvalid = 0x10,
+    kSglDescriptorTypeInvalid = 0x11,
+    kInvalidUseOfControllerMemoryBuffer = 0x12,
+    kPrpOffsetInvalid = 0x13,
+    kAtomicWriteUnitExceeded = 0x14,
+    kOperationDenied = 0x15,
+    kSglOffsetInvalid = 0x16,
+    // Reserved = 0x17
+    kHostIdentifierInconsistentFormat = 0x18,
+    kKeepAliveTimeoutInvalid = 0x1a,
+    kCommandAbortedDueToPreemptAndAbort = 0x1b,
+    kSanitizeFailed = 0x1c,
+    kSanitizeInProgress = 0x1d;
+    kSglDataBlockGranularityInvalid = 0x1e,
+    kCommandNotSupportedForQueueInCmb = 0x1f,
+    kNamespaceIsWriteProtected = 0x20,
+    kCommandInterrupted = 0x21,
+    // Reserved = 0x23 to 0x7f
+    // I/O Command Set Specific = 0x80 t0 0xbf
+    // Vendor Specific = 0xc0 to 0xff
+
+    // NVM Command Set
+    kNamespaceNotReady = 0x82,
+    kReservationConflict = 0x83,
+    kFormatInProgress = 0x84,
+    // Reserved = 0x85 yo 0xbf
+  };
+
+
+  // NVMe Base Specification Figure 128 and Figure 129 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+  enum class CommandSpecificStatus : uint8_t {
+    kCompletionQueueInvalid = 0x0,
+    kInvalidQueueIdentifier = 0x1,
+    kInvalidQueueSize = 0x2,
+    kAbortCommandLimitExceeded = 0x3,
+    // Reserved = 0x4
+    kAsynchronousEventRequestLimitExceeded = 0x5,
+    kInvalidFirmwareSlot = 0x6,
+    kInvalidFirmwareImage = 0x7,
+    kInvalidInterruptVector = 0x8,
+    kInvalidLogPage = 0x9,
+    kInvalidFOrmat = 0xa,
+    kFirmwareActivationRequiresConventionalReset = 0xb,
+    kInvalidQueueDeletion = 0xc,
+    kFeatureIdentifierNotSaveable = 0xd,
+    kFeatureNotChangeable = 0xe,
+    kFeatureNotNamespaceSpecific = 0xf,
+    kFirmwareActivationRequiresNvmSubsystemReset = 0x10,
+    kFirmwareActivationRequiresControllerLevelReset = 0x11,
+    kFirmwareActiationRequiresMaximumTimeViolation = 0x12,
+    kFirmwareActivationProhibited,
+    kOverlappingRange,
+    kNamespaceInsufficientCapacity,
+    kNamespaceIdentifierUnavaiable,
+    // Reserved = 0x17
+    kNamesapceAlreadyAttahced = 0x18,
+    kNamespaceIsPrivate = 0x19,
+    kNamespaceNotAttached = 0x1a,
+    kThinProvisioningNotSupported = 0x1b,
+    kControllerListInvalid = 0x1c,
+    kDeviceSelfTestInProgress = 0x1d,
+    kBootPartitionWriteProhibited = 0x1e,
+    kInvalidControllerIdentifier = 0x1f,
+    kInvalidSecondaryControllerState = 0x20,
+    kInvalidNumberOfControllerResources = 0x21,
+    kInvalidResourceIdentifier = 0x22,
+    kSanitizeProhibiedWhilePersistentMemoryRegionIsEnabled = 0x23,
+    kAnaGroupIdentifierInvalid = 0x24,
+    kAnaAttachFailed = 0x25,
+    // Reserved = 0x26 to 0x6f
+    // Directive specific = 0x70 to 0x7f
+    // I/O Command Set Specific = 0x80 to 0xbf
+    // Vendor Speicfic = 0xc0 to 0xff
+
+    // NVM Command Set
+    kConflictingAttributes = 0x80,
+    kInvalidProtectionnInformation = 0x81,
+    kAttemptedWriteToReadOnlyRange = 0x82,
+  };
+
+  // NVMe Base Specification Figure 130 and Figure 131 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+  enum class MeidaAndDataIntegrityErrorValues : uint8_t {
+    // Reserved = 0x0 to 0x7f
+    // I/O Command Set Specific = 0x80 to 0xbf
+    // Vendor Specific = 0xc0 to 0xff
+
+    // NVM Command Set
+    kWriteFault = 0x80,
+    kUnrecoveredReadError = 0x81,
+    kEndToEndGuardCheckError = 0x82,
+    kEndToEndApplicationTagCheckError = 0x83,
+    kEndToEndReferenceTagCheckError = 0x84,
+    kCompareFailure = 0x85,
+    kAccessDenied = 0x86,
+    kDeallocatedOrUnwrittenLogicalBlock = 0x87,
+  };
+
+  // NVMe Base Specification Figure 132 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+  enum class PathRelatedStatus : uint8_t {
+    kInternalPathError = 0x0,
+    kAsymmetricAccessPersistentLoss = 0x1,
+    kAsymmetricAccessInaccessible = 0x2,
+    kAsymmetricAccessTransition = 0x3,
+    // Reserved = 0x4 to 0x5
+
+    // Controller detected Pathing errors
+    kControllerPathingError = 0x60,
+    // Reserved = 0x61 to 0x6f
+
+    // Host detected Pathing errors
+    kHostPathingError = 0x70,
+    kCommandAbortedByHost = 0x71,
+    // Reserved = 0x72 to 0x7f
+
+    // Other Pathing errors
+    // I/O Command Set Specific = 0x80 to 0xbf
+    // Vendor Specific = 0xc0 to 0xff
+  }
+
   // NVMe Base Specification Figure 139 and Figure 140 https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
   enum class AdminCommandOpCode : uint8_t {
     kDeleteIOSubmissionQueue = 0x0,
