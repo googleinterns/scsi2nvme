@@ -8,6 +8,8 @@
 // The fields of structures in this namespace are arranged according to Big Endian format.
 namespace scsi_defs {
 
+  using LunAddress = uint64_t;
+
   // SAM-4 Table 33 
   enum class Status : uint8_t {
     kGood = 0x0,
@@ -260,6 +262,33 @@ namespace scsi_defs {
   } ABSL_ATTRIBUTE_PACKED;
   static_assert(sizeof(ModeSense10Command) == 10);
 
+  // SCSI Reference Manual Table 148 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  enum class SelectReport : uint8_t {
+    kRestrictedMethods = 0x0,
+    kWellKnown = 0x1,
+    kAllLogical = 0x2
+  };
+
+  // SCSI Reference Manual Table 147 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReportLunsCommand {
+    OpCode op_code = OpCode::kReportLuns;
+    uint8_t reserved_1 : 8;
+    SelectReport select_report : 8;
+    uint32_t reserved_2 : 24;
+    uint32_t alloc_length : 32;
+    uint8_t reserved_3 : 8;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReportLunsCommand) == 12);
+
+  // SCSI Reference Manual Table 149 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  // This struct is a header for variable sized data
+  struct ReportLunsParamData {
+    uint32_t list_byte_length : 32;
+    uint32_t reserved_1 : 32;
+  };
+  static_assert(sizeof(ReportLunsParamData) == 8);
+  
   // SCSI Reference Manual Table 150, 159, 162 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   struct MaintenanceInHeader {
     uint8_t reserved_1 : 3;
