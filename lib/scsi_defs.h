@@ -87,6 +87,32 @@ namespace scsi_defs {
     uint8_t vendor_specific : 2;
   };
 
+  // SCSI Reference Manual Table 202 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct TestUnitReadyCommand {
+    OpCode op_code;
+    uint32_t reserved : 32;
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(TestUnitReadyCommand) == 6);
+
+  // SCSI Reference Manual Table 119 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReadCapacity10Command {
+    OpCode op_code;
+    uint8_t reserved_1 : 8; // obsolete
+    uint32_t logical_block_address : 32; // obsolete
+    uint16_t reserved_2 : 16;
+    uint8_t reserved_3 : 8; // obsolete PMI bit
+    ControlByte control_byte;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReadCapacity10Command) == 10);
+
+  // SCSI Reference Manual Table 120 https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  struct ReadCapacity10Data {
+    uint32_t returned_logical_block_address : 32;
+    uint32_t block_length : 32;
+  } ABSL_ATTRIBUTE_PACKED;
+  static_assert(sizeof(ReadCapacity10Data) == 8);
+
   // Refer to https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf , Section 3.6 Table 58
   struct InquiryCommand {
     OpCode op_code = OpCode::kInquiry;
