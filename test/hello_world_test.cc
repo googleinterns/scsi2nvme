@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "lib/hello_world.h"
 
 #include "gtest/gtest.h"
-#include "lib/hello_world.h"
 
 namespace {
 
 /*
     Tests the HelloWorld class to return the expected string
 */
-  TEST(HelloWorldClass, ShouldReturnHelloWorldString){
-    HelloWorld *hw = new HelloWorld();
-    std::string expected = "Hello World!";
-    std::string actual = hw->get_hello_world_string();
-    EXPECT_EQ(expected, actual);
-  }
-} // anonymous namespace for testing
+TEST(HelloWorldClass, ShouldReturnHelloWorldString) {
+  HelloWorld *hw = new HelloWorld();
+  std::string expected = "Hello World!";
+  std::string actual = hw->get_hello_world_string();
+  EXPECT_EQ(expected, actual);
+}
+}  // namespace

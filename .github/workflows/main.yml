@@ -11,7 +11,27 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
+  # This workflow contains a two jobs.
+  # The first checks the code's style. The second builds & tests the library.
+  check-style:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 2.7
+    
+    - name: Install clang-format
+      run: |
+        sudo apt-get install clang-format
+    
+    - name: Check style
+      run: |
+        "${GITHUB_WORKSPACE}/third_party/run_clang_format/run-clang-format.py" -r lib test
+  
   build-and-test:
     env:
       BAZEL_CXXOPTS: -std=c++17

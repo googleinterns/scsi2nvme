@@ -13,22 +13,23 @@
 // limitations under the License.
 
 #include "lib/scsi_defs.h"
-#include "gtest/gtest.h"
+
 #include "absl/base/casts.h"
+#include "gtest/gtest.h"
 
 namespace {
 
-  /*
-    Tests the ControlByte class
-  */
+/*
+  Tests the ControlByte class
+*/
 
-  TEST(ControlByteClass, ShouldReturnCorrectControlByte) {
-    uint8_t cbValue = 0b11000100;
-    scsi_defs::ControlByte cb = absl::bit_cast<scsi_defs::ControlByte>(cbValue);
+TEST(ControlByteClass, ShouldReturnCorrectControlByte) {
+  uint8_t cbValue = 0b11000100;
+  scsi_defs::ControlByte cb = absl::bit_cast<scsi_defs::ControlByte>(cbValue);
 
-    EXPECT_EQ(0b00, cb.obsolete);
-    EXPECT_EQ(0b1, cb.naca);
-    EXPECT_EQ(0b000, cb.reserved);
-    EXPECT_EQ(0b11, cb.vendor_specific);
-  }
-} // anonymous namespace for testing
+  EXPECT_EQ(0b00, cb.obsolete);
+  EXPECT_EQ(0b1, cb.naca);
+  EXPECT_EQ(0b000, cb.reserved);
+  EXPECT_EQ(0b11, cb.vendor_specific);
+}
+}  // namespace
