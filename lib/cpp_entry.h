@@ -1,5 +1,5 @@
 /*
-* C++ kernel entry
+ * C++ kernel entry
  */
 
 #ifndef CPP_ENTRY_H

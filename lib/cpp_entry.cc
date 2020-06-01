@@ -1,13 +1,14 @@
 /*
  * C++ component inside the Linux kernel
  */
- 
+
+#include "cpp_entry.h"
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 
 #include <cstring>
 
-#include "cpp_entry.h"
 #include "print.h"
 #include "scsi_defs.h"
 
@@ -20,6 +21,4 @@ void init(void) {
   print("%u\n", cb.naca);
 }
 
-void release(void) {
-  print("Goodbye, world!\n");
-}
+void release(void) { print("Goodbye, world!\n"); }

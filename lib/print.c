@@ -1,6 +1,6 @@
-#include <linux/kernel.h>
-
 #include "print.h"
+
+#include <linux/kernel.h>
 
 void print(const char* p, ...) {
   va_list args;
