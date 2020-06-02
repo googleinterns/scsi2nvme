@@ -14,6 +14,4 @@
 
 #include "hello_world.h"
 
-std::string HelloWorld::get_hello_world_string() {
-    return "Hello World!";
-}
+std::string HelloWorld::get_hello_world_string() { return "Hello World!"; }
