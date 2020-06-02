@@ -12,7 +12,7 @@ namespace nvme_defs {
 
 // NVMe Base Specification Figure 125
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
-enum class StatusCodeType :uint8_t {
+enum class StatusCodeType : uint8_t {
   kGeneric = 0x0,
   kCommandSpecific = 0x1,
   kMediaError = 0x2,
