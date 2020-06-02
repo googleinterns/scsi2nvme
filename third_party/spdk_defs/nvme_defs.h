@@ -1,6 +1,8 @@
 #ifndef LIB_NVME_DEFS_H
 #define LIB_NVME_DEFS_H
 
+#include <cstdint>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -10,10 +12,10 @@ namespace nvme_defs {
 
 // NVMe Base Specification Figure 125
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
-enum class StatusCodeType : uint8_t {
+enum class StatusCodeType :uint8_t {
   kGeneric = 0x0,
   kCommandSpecific = 0x1,
-  kMediaError 0x2,
+  kMediaError = 0x2,
   kPath = 0x3,
   // Reserved 0x4-0x6
   kVendorSpecific = 0x7,
@@ -94,7 +96,7 @@ enum class CommandSpecificStatusCode : uint8_t {
   kNamespaceNotAttached = 0x1a,
   kThinprovisioningNotSupported = 0x1b,
   kControllerListInvalid = 0x1c,
-  kDeviceSelfTestInProgress 0x1d,
+  kDeviceSelfTestInProgress = 0x1,
   kBootPartitionWriteProhibited = 0x1e,
   kInvalidCtrlrId = 0x1f,
   kInvalidSecondaryCtrlrState = 0x20,
