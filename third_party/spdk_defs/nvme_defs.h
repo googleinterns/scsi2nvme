@@ -57,6 +57,7 @@ enum class GenericCommandStatusCode : uint8_t {
   kSglDataBlockGranularityInvalid = 0x1e,
   kCommandInvalidInCmb = 0x1f,
 
+  // NVM command set
   kLbaOutOfRange = 0x80,
   kCapacityExceeded = 0x81,
   kNamespaceNotReady = 0x82,
@@ -103,6 +104,7 @@ enum class CommandSpecificStatusCode : uint8_t {
   kInvalidNumCtrlrResources = 0x21,
   kInvalidResourceId = 0x22,
 
+  // NVM command set
   kConflictingAttributes = 0x80,
   kInvalidProtectionInfo = 0x81,
   kAttemptedWriteToRoRange = 0x82,
@@ -125,9 +127,7 @@ enum class MediaErrorStatusCode : uint8_t {
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 enum class PathStatusCode : uint8_t {
   kInternalPathError = 0x00,
-
   kControllerPathError = 0x60,
-
   kHostPathError = 0x70,
   kAbortedByHost = 0x71,
 };
@@ -152,26 +152,19 @@ enum class AdminOpcode : uint8_t {
   // Reserved 0x0e-0x0f
   kFirmwareCommit = 0x10,
   kFirmwareImageDownload = 0x11,
-
   kDeviceSelfTest = 0x14,
   kNsAttachment = 0x15,
-
   kKeepAlive = 0x18,
   kDirectiveSend = 0x19,
   kDirectiveReceive = 0x1a,
-
   kVirtualizationManagement = 0x1c,
   kNvmeMiSend = 0x1d,
   kNvmeMiReceive = 0x1e,
-
   kDoorbellBufferConfig = 0x7c,
-
   kFormatNvm = 0x80,
   kSecuritySend = 0x81,
   kSecurityReceive = 0x82,
-
   kSanitize = 0x84,
-
   kGetLbaStatus = 0x86,
 };
 
@@ -187,10 +180,8 @@ enum class NvmOpcode : uint8_t {
   // Reserved 0x06-0x07
   kWriteZeroes = 0x08,
   kDatasetManagement = 0x09,
-
   kReservationRegister = 0x0d,
   kReservationReport = 0x0e,
-
   kReservationAcquire = 0x11,
   kReservationRelease = 0x15,
   kPdkNvmeSctGeneric = 0x0,
