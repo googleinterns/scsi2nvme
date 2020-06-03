@@ -192,7 +192,39 @@ enum class NvmOpcode : uint8_t {
   kSctVendorSpecific = 0x7,
 };
 
-} // namespace nvme_defs
+struct spdk_nvme_cmd {
+  // dword 0
+  uint16_t opc : 8;   // opcode
+  uint16_t fuse : 2;  // fused operation
+  uint16_t rsvd1 : 4;
+  uint16_t psdt : 2;
+  uint16_t cid;  // command identifier
+
+  // dword 1
+  uint32_t nsid;  // namespace identifier
+
+  // dword 2-3
+  uint32_t rsvd2;
+  uint32_t rsvd3;
+
+  // dword 4-5
+  uint64_t mptr;  // metadata pointer
+
+  // dword 6-9: data pointer
+  uint64_t prp1;  // prp entry 1
+  uint64_t prp2;  // prp entry 2
+
+  // dword 10-15
+  uint32_t cdw10;  // command-specific
+  uint32_t cdw11;  // command-specific
+  uint32_t cdw12;  // command-specific
+  uint32_t cdw13;  // command-specific
+  uint32_t cdw14;  // command-specific
+  uint32_t cdw15;  // command-specific
+};
+static_assert(sizeof(spdk_nvme_cmd) == 64);
+
+}  // namespace nvme_defs
 
 #ifdef __cplusplus
 }
