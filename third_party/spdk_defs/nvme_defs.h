@@ -3,6 +3,10 @@
 
 #include <cstdint>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // https://github.com/spdk/spdk/blob/master/include/spdk/nvme_spec.h
 namespace nvme_defs {
 
@@ -189,5 +193,9 @@ enum class NvmOpcode : uint8_t {
 };
 
 } // namespace nvme_defs
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
