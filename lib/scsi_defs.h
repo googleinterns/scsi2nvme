@@ -5,10 +5,6 @@
 
 #include "absl/base/attributes.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // The fields of structures in this namespace are arranged according to Big
 // Endian format.
 namespace scsi_defs {
@@ -794,9 +790,5 @@ struct UnmapBlockDescriptor {
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
 }  // namespace scsi_defs
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
