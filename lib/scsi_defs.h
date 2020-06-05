@@ -804,4 +804,5 @@ struct UnmapBlockDescriptor {
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
 }  // namespace scsi_defs
+
 #endif
