@@ -188,6 +188,6 @@ enum class NvmOpcode : uint8_t {
   kSctVendorSpecific = 0x7,
 };
 
-} // namespace nvme_defs
+}  // namespace nvme_defs
 
 #endif

@@ -30,7 +30,7 @@ jobs:
     
     - name: Check style
       run: |
-        "${GITHUB_WORKSPACE}/third_party/run_clang_format/run-clang-format.py" -r lib test
+        "${GITHUB_WORKSPACE}/third_party/run_clang_format/run-clang-format.py" -r lib test third_party/spdk_defs
   
   build-and-test:
     env:
