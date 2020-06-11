@@ -270,6 +270,130 @@ struct SglDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(SglDescriptor) == 16);
 
+// NVMe Base Specification Figure 245
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct IdentifyNamespace {
+  uint64_t nsze : 64;  // namespace size
+  uint64_t ncap : 64;  // namespace capacity
+  uint64_t nuse : 64;  // namespace utilization
+
+  struct {
+    uint8_t thin_prov : 1;  // thin provisioning
+    // NAWUN, NAWUPF, and NACWU are defined for this namespace
+    uint8_t ns_atomic_write_unit : 1;
+    // Supports Deallocated or Unwritten LBA error for this namespace
+    uint8_t dealloc_or_unwritten_err : 1;
+    // Non-zero NGUID and EUI64 for namespace are never reused
+    uint8_t guid_never_reused : 1;
+    uint8_t reserved1 : 4;
+  } nsfeat;  // namespace features
+
+  uint8_t nlbaf : 8;  // number of lba formats
+
+  struct {
+    uint8_t format : 4;
+    uint8_t extended : 1;
+    uint8_t reserved2 : 3;
+  } flbas;  // formatted lba size
+
+  struct {
+    // metadata can be transferred using prp list
+    uint8_t extended : 1;
+    // metadata can be transferred w/ separate metadata ptr
+    uint8_t pointer : 1;
+    uint8_t reserved3 : 6;
+  } mc;  // metadata capabilities
+
+  struct {
+    uint8_t pit1 : 1;      // protection information type 1
+    uint8_t pit2 : 1;      // protection information type 2
+    uint8_t pit3 : 1;      // protection information type 3
+    uint8_t md_start : 1;  // first eight bytes of metadata
+    uint8_t md_end : 1;    // last eight bytes of metadata
+  } dpc;                   // end-to-end data protection capabilities
+
+  struct {
+    uint8_t pit : 3;  // protection information type
+    // 1 == protection info transferred at start of metadata
+    // 0 == protection info transferred at end of metadata
+    uint8_t md_start : 1;
+    uint8_t reserved4 : 4;
+  } dps;  // end-to-end data protection type settings
+
+  struct {
+    uint8_t can_share : 1;
+    uint8_t reserved : 7;
+  } nmic;  // namespace multi-path I/O and namespace sharing capabilities
+
+  union {
+    struct {
+      uint8_t persist : 1;           // supports persist through power loss
+      uint8_t write_exclusive : 1;   // supports write exclusive
+      uint8_t exclusive_access : 1;  // supports exclusive access
+      // supports write exclusive - registrants only
+      uint8_t write_exclusive_reg_only : 1;
+      // supports exclusive access registrants only
+      uint8_t exclusive_access_reg_only : 1;
+      // supports write exclusive - all registrants
+      uint8_t write_exclusive_all_reg : 1;
+      // supports exclusive access - all registrants
+      uint8_t exclusive_access_all_reg : 1;
+      // supports ignore existing key
+      uint8_t ignore_existing_key : 1;
+    } rescap;
+    uint8_t raw : 8;
+  } nsrescap;  // reservation capabilities
+
+  struct {
+    uint8_t percentage_remaining : 7;
+    uint8_t fpi_supported : 1;
+  } fpi;  // format progress indicator
+
+  union {
+    uint8_t raw : 8;
+    struct {
+      // Value read from deallocated blocks
+      // 000b = not reported
+      // 001b = all bytes 0x00
+      // 010b = all bytes 0xFF
+      // \ref spdk_nvme_dealloc_logical_block_read_value
+      uint8_t read_value : 3;
+
+      // Supports Deallocate bit in Write
+      // Zeroes Guard field behavior for
+      // deallocated logical blocks 0:
+      // contains 0xFFFF 1: contains CRC for read value
+      uint8_t write_zero_deallocate : 1;
+
+      uint8_t guard_value : 1;
+      uint8_t reserved : 3;
+    } bits;
+  } dlfeat;  // deallocate logical features
+
+  uint16_t nawun : 16;     // namespace atomic write unit normal
+  uint16_t nawupf : 16;    // namespace atomic write unit power fail
+  uint16_t nacwu : 16;     // namespace atomic compare & write unit
+  uint16_t nabsn : 16;     // namespace atomic boundary size normal
+  uint16_t nabo : 16;      // namespace atomic boundary offset
+  uint16_t nabspf : 16;    // namespace atomic boundary size power fail
+  uint16_t noiob : 16;     // namespace optimal I/O boundary in logical blocks
+  uint64_t nvmcap[2];      // NVM capacity
+  uint8_t reserved64[40];  // includes fields added in NVMe Revision 1.4
+  uint8_t nguid[16];       // namespace globally unique identifier
+  uint64_t eui64 : 64;     // IEEE extended unique identifier
+
+  struct {
+    uint32_t ms : 16;    // metadata size
+    uint32_t lbads : 8;  // lba data size
+    uint32_t rp : 2;     // relative performance
+    uint32_t reserved6 : 6;
+  } lbaf[16];  // lba format support
+
+  uint8_t reserved6[192];
+  uint8_t vendor_specific[3712];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(IdentifyNamespace) == 4096);
+
 }  // namespace nvme_defs
 
 #endif
