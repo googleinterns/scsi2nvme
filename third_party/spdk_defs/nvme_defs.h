@@ -190,6 +190,37 @@ enum class NvmOpcode : uint8_t {
   kSctVendorSpecific = 0x7,
 };
 
+// NVMe Base Specification Figure 184
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+enum class FeatureType : uint8_t {
+  // Reserved 0x00
+  kArbitration = 0x01,
+  kPowerManagement = 0x02,
+  kLbaRangeType = 0x03,
+  kTemperatureThreshold = 0x04,
+  kErrorRecovery = 0x05,
+  kVolatileWriteCache = 0x06,
+  kNumberOfQueues = 0x07,
+  kInterruptCoalescing = 0x08,
+  kInterruptVectorConfiguration = 0x09,
+  kWriteAtomicity = 0x0a,
+  kAsyncEventConfiguration = 0x0b,
+  kAutonomousPowerStateTransition = 0x0c,
+  kHostMemBuffer = 0x0d,
+  kTimestamp = 0x0e,
+  kKeepAliveTimer = 0x0f,
+  kHostControlledThermalManagement = 0x10,
+  kNonOperationalPowerStateConfig = 0x11,
+  // Reserved 0x12-0x77
+  // Nvme-MI features 0x78-0x7f
+  kSoftwareProgressMarker = 0x80,
+  kHostIdentifier = 0x81,
+  kHostReserveMask = 0x82,
+  kHostReservePersist = 0x83,
+  // command set specific (reserved) 0x84-0xbf
+  // vendor specific 0xc0-0xff
+};
+
 // NVMe Base Specification Figure 112
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 enum class SglDescriptorType : uint8_t {
