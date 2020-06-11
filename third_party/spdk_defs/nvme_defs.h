@@ -270,6 +270,35 @@ struct SglDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(SglDescriptor) == 16);
 
+// NVMe Base Specification Figure 105
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct GenericQueueEntryCmd {
+  // dword 0
+  uint16_t opc : 8;   // opcode
+  uint16_t fuse : 2;  // fused operation
+  uint16_t rsvd1 : 4;
+  uint16_t psdt : 2;
+  uint16_t cid : 16;  // command identifier
+  // dword 1
+  uint32_t nsid : 32;  // namespace identifier
+  // dword 2-3
+  uint32_t rsvd2 : 32;
+  uint32_t rsvd3 : 32;
+  // dword 4-5
+  uint64_t mptr : 64;  // metadata pointer
+  // dword 6-9: data pointer
+  union {
+    struct {
+      uint64_t prp1 : 64;  // prp entry 1
+      uint64_t prp2 : 64;  // prp entry 2
+    } prp;
+    SglDescriptor sgl_descriptor;
+  } dptr;
+  // dword 10-15
+  uint32_t cdw[6];  // command-specific
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(GenericQueueEntryCmd) == 64);
+
 // NVMe Base Specification Figure 245
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 struct IdentifyNamespace {
