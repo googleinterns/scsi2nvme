@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "absl/base/attributes.h"
+
 // https://github.com/spdk/spdk/blob/master/include/spdk/nvme_spec.h
 namespace nvme_defs {
 
@@ -187,6 +189,55 @@ enum class NvmOpcode : uint8_t {
   // Reserved 0x4-0x6
   kSctVendorSpecific = 0x7,
 };
+
+// NVMe Base Specification Figure 112
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+enum class SglDescriptorType : uint8_t {
+  kDataBlock = 0x0,
+  kBitBucket = 0x1,
+  kSegment = 0x2,
+  kLastSegment = 0x3,
+  kKeyedDataBlock = 0x4,
+  kTransportDataBlock = 0x5,
+  // Reserved 0x6-0xe
+  kVendorSpecific = 0xf,
+};
+
+// NVMe Base Specification Figure 113
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+enum class SglDescriptorSubtype : uint8_t {
+  kAddress = 0x0,
+  kOffset = 0x1,
+  kTransport = 0xa,
+};
+
+// NVMe Base Specification Figure 114 to Figure 119
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct SglDescriptor {
+  uint64_t address : 64;
+  union {
+    struct {
+      uint32_t length : 32;
+      uint32_t reserved : 24;
+      uint8_t subtype : 4;
+      uint8_t type : 4;
+    } unkeyed;
+
+    struct {
+      uint32_t length : 24;
+      uint64_t key : 32;
+      uint8_t subtype : 4;
+      uint8_t type : 4;
+    } keyed;
+
+    struct {
+      uint64_t reserved : 56;
+      uint8_t subtype : 4;
+      uint8_t type : 4;
+    } generic;
+  };
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(SglDescriptor) == 16);
 
 }  // namespace nvme_defs
 
