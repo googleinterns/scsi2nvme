@@ -190,6 +190,35 @@ enum class NvmOpcode : uint8_t {
   kSctVendorSpecific = 0x7,
 };
 
+// NVMe Base Specification Figure 124
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct CplStatus {
+  uint16_t p : 1;      // phase tag
+  uint16_t sc : 8;     // status code
+  uint16_t sct : 3;    // status code type
+  uint16_t rsvd2 : 2;  // command retry delay in 1_4 spec
+  uint16_t m : 1;      // more
+  uint16_t dnr : 1;    // do not retry
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(CplStatus) == 2);
+
+// Completion Queue Entry
+// NVMe Base Specification Figure 121
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_0e.pdf
+struct GenericQueueEntryCpl {
+  // dword 0
+  uint32_t cdw0 : 32;  // command-specific
+  // dword 1
+  uint32_t rsvd1 : 32;
+  // dword 2
+  uint16_t sqhd : 16;  // submission queue head pointer
+  uint16_t sqid : 16;  // submission queue identifier
+  // dword 3
+  uint16_t cid : 16;  // command identifier
+  CplStatus cpl_status;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(GenericQueueEntryCpl) == 16);
+
 // NVMe Base Specification Figure 184
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 enum class FeatureType : uint8_t {
