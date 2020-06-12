@@ -7,8 +7,8 @@
 #include <scsi/scsi_host.h>
 #include <scsi/scsi.h>
 
-#define NAME="SCSI2NVMe Mock"
-#define QUEUE_COUNT=1
+#define NAME "SCSI2NVMe Mock"
+#define QUEUE_COUNT 1
 
 static struct bus_type pseudo_bus;
 
@@ -25,7 +25,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd *cmd) {
   return 0;
 }
 
-static int scsi_abort(struct scsi_cmd* cmd) {
+static int scsi_abort(struct scsi_cmnd* cmd) {
   return SUCCESS;
 }
 
@@ -81,29 +81,46 @@ static struct bus_type pseudo_bus = {
 static void scsi_mock_release_device(struct device *dev) {}
 
 static int scsi_mock_add_device(void) {
-  pseudo_adapter.parent = pseudo_primary;
+  pseudo_adapter.parent = pseudo_root_dev;
   pseudo_adapter.bus = &pseudo_bus;
   pseudo_adapter.release = &scsi_mock_release_device;
   return device_register(&pseudo_adapter);
 }
 
 static int __init scsi_mock_init(void) {
+  int err;
   printk("HELLO!\n");
   pseudo_root_dev = root_device_register("pseudo_scsi_root");
-  bus_register(&pseudo_bus);
-  driver_register(&scsi_mock_driverfs);
-  scsi_mock_add_device();
+  if (IS_ERR(pseudo_root_dev)) {
+    printk("Error registering root dev\n");
+    return -EINVAL;
+  }
+  err = bus_register(&pseudo_bus);
+  if (err) {
+    printk("Error registering bus\n");
+    return -EINVAL;
+  }
+  err = driver_register(&scsi_mock_driverfs);
+  if (err) {
+    printk("Error registering driver\n");
+    return -EINVAL;
+  }
+  err = scsi_mock_add_device();
+  if (err) {
+    printk("Error regsitering mock device\n");
+    return -EINVAL;
+  }
   return 0;
 }
 
-static int __exit scsi_mock_exit(void) {
+static void __exit scsi_mock_exit(void) {
   device_unregister(&pseudo_adapter);
   driver_unregister(&scsi_mock_driverfs);
   bus_unregister(&pseudo_bus);
   root_device_unregister(pseudo_root_dev);
   printk("GOODBYE!\n");
-  return 0;
 }
 
 device_initcall(scsi_mock_init);
-module_exit(scsi_debug_exit);
+module_exit(scsi_mock_exit);
+MODULE_LICENSE("GPL");
