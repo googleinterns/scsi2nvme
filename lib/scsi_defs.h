@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-#include "absl/base/attributes.h"
+#include "attributes.h"
 
 // The fields of structures in this namespace are arranged according to Big
 // Endian format.
