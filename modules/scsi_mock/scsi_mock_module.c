@@ -22,6 +22,7 @@ static struct device_driver scsi_mock_driverfs = {
 };
 
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd *cmd) {
+  printk("RECIEVED COMMAND"); 
   return 0;
 }
 
@@ -29,7 +30,12 @@ static int scsi_abort(struct scsi_cmnd* cmd) {
   return SUCCESS;
 }
 
+static const char* scsi_mock_info(struct Scsi_Host* host) {
+  return "SCSI Mock Host, Version 0.1";
+}
+
 static struct scsi_host_template scsi_mock_template = {
+  .info = scsi_mock_info,
   .module = THIS_MODULE,
   .name = NAME,
   .queuecommand = scsi_queuecommand,
@@ -38,7 +44,7 @@ static struct scsi_host_template scsi_mock_template = {
   .can_queue = 64,
   .this_id = 7,
   .sg_tablesize = SG_MAX_SEGMENTS,
-  .cmd_per_lun = 1,
+  .cmd_per_lun = 1
 };
 
 static int bus_match(struct device *dev, struct device_driver *driver) {
@@ -84,32 +90,44 @@ static int scsi_mock_add_device(void) {
   pseudo_adapter.parent = pseudo_root_dev;
   pseudo_adapter.bus = &pseudo_bus;
   pseudo_adapter.release = &scsi_mock_release_device;
+  dev_set_name(&pseudo_adapter, "scsi_mock_adapter");
+  printk("Running device_register\n");
   return device_register(&pseudo_adapter);
 }
 
 static int __init scsi_mock_init(void) {
   int err;
-  printk("HELLO!\n");
+  printk("Registering root device\n");
   pseudo_root_dev = root_device_register("pseudo_scsi_root");
   if (IS_ERR(pseudo_root_dev)) {
     printk("Error registering root dev\n");
     return -EINVAL;
   }
+  printk("Registering bus\n");
   err = bus_register(&pseudo_bus);
   if (err) {
     printk("Error registering bus\n");
+    root_device_unregister(pseudo_root_dev);
     return -EINVAL;
   }
+  printk("Registering mock driver\n");
   err = driver_register(&scsi_mock_driverfs);
   if (err) {
     printk("Error registering driver\n");
+    root_device_unregister(pseudo_root_dev);
+    bus_unregister(&pseudo_bus);
     return -EINVAL;
   }
+  printk("Registering mock device\n");
   err = scsi_mock_add_device();
   if (err) {
     printk("Error regsitering mock device\n");
+    root_device_unregister(pseudo_root_dev);
+    bus_unregister(&pseudo_bus);
+    driver_unregister(&scsi_mock_driverfs);
     return -EINVAL;
   }
+  printk("SUCCESS!");
   return 0;
 }
 
@@ -124,3 +142,4 @@ static void __exit scsi_mock_exit(void) {
 device_initcall(scsi_mock_init);
 module_exit(scsi_mock_exit);
 MODULE_LICENSE("GPL");
+MODULE_VERSION("0.1");
