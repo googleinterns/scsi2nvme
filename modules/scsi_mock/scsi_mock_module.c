@@ -1,11 +1,11 @@
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
 #include <linux/device.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/scatterlist.h>
 
-#include <scsi/scsi_host.h>
 #include <scsi/scsi.h>
+#include <scsi/scsi_host.h>
 
 #define NAME "SCSI2NVMe Mock"
 #define QUEUE_COUNT 1
@@ -16,42 +16,37 @@ static struct device* pseudo_root_dev;
 
 static struct device pseudo_adapter;
 
-static struct device_driver scsi_mock_driverfs = {
-  .name = NAME,
-  .bus = &pseudo_bus
-};
+static struct device_driver scsi_mock_driverfs = {.name = NAME,
+                                                  .bus = &pseudo_bus};
 
-static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd *cmd) {
-  printk("RECIEVED COMMAND"); 
+static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
+  printk("RECIEVED COMMAND");
   return 0;
 }
 
-static int scsi_abort(struct scsi_cmnd* cmd) {
-  return SUCCESS;
-}
+static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }
 
 static const char* scsi_mock_info(struct Scsi_Host* host) {
   return "SCSI Mock Host, Version 0.1";
 }
 
 static struct scsi_host_template scsi_mock_template = {
-  .info = scsi_mock_info,
-  .module = THIS_MODULE,
-  .name = NAME,
-  .queuecommand = scsi_queuecommand,
-  .eh_abort_handler = scsi_abort,
-  .proc_name = NAME,
-  .can_queue = 64,
-  .this_id = 7,
-  .sg_tablesize = SG_MAX_SEGMENTS,
-  .cmd_per_lun = 1
-};
+    .info = scsi_mock_info,
+    .module = THIS_MODULE,
+    .name = NAME,
+    .queuecommand = scsi_queuecommand,
+    .eh_abort_handler = scsi_abort,
+    .proc_name = NAME,
+    .can_queue = 64,
+    .this_id = 7,
+    .sg_tablesize = SG_MAX_SEGMENTS,
+    .cmd_per_lun = 1};
 
-static int bus_match(struct device *dev, struct device_driver *driver) {
+static int bus_match(struct device* dev, struct device_driver* driver) {
   return 1;
 }
 
-static int bus_driver_probe(struct device *dev) {
+static int bus_driver_probe(struct device* dev) {
   int err;
   struct Scsi_Host* scsi_host;
   scsi_host = scsi_host_alloc(&scsi_mock_template, 0);
@@ -70,21 +65,19 @@ static int bus_driver_probe(struct device *dev) {
   return 0;
 }
 
-static int bus_remove(struct device *dev) {
+static int bus_remove(struct device* dev) {
   struct Scsi_Host* scsi_host = dev_get_drvdata(dev);
   scsi_remove_host(scsi_host);
   scsi_host_put(scsi_host);
   return 0;
 }
 
-static struct bus_type pseudo_bus = {
-  .name = "scsi2nvme_pseudo_bus",
-  .match = bus_match,
-  .probe = bus_driver_probe,
-  .remove = bus_remove
-};
+static struct bus_type pseudo_bus = {.name = "scsi2nvme_pseudo_bus",
+                                     .match = bus_match,
+                                     .probe = bus_driver_probe,
+                                     .remove = bus_remove};
 
-static void scsi_mock_release_device(struct device *dev) {}
+static void scsi_mock_release_device(struct device* dev) {}
 
 static int scsi_mock_add_device(void) {
   pseudo_adapter.parent = pseudo_root_dev;
