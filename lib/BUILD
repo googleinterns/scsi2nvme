@@ -10,3 +10,10 @@ cc_library(
   hdrs = ["scsi_defs.h"],
   visibility = ["//visibility:public"],
 )
+
+cc_library(
+  name = "nvme_lib",
+  hdrs = ["nvme.h"],
+  visibility = ["//visibility:public"],
+)
+
