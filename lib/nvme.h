@@ -20,7 +20,7 @@
 #include <linux/nvme_ioctl.h>
 #include <sys/ioctl.h>
 
-
+#include "third_party/spdk_defs/nvme_defs.h"
 
 
 namespace nvme {
