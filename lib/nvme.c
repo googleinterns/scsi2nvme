@@ -15,7 +15,7 @@
 #include "nvme.h"
 
 
-int nvme::send_passthru(int file_descriptor, unsigned long ioctl_command, uint8_t opcode, uint8_t flags, uint16_t rsvd1, uint32_t nsid,
+int send_passthru(int file_descriptor, unsigned long ioctl_command, uint8_t opcode, uint8_t flags, uint16_t rsvd1, uint32_t nsid,
                 uint32_t cdw2, uint32_t cdw3, void* metadata, void* addr,
                 uint32_t metadata_len, uint32_t data_len, uint32_t cdw10,
                 uint32_t cdw11, uint32_t cdw12, uint32_t cdw13, uint32_t cdw14,

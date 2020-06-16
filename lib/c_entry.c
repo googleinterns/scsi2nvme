@@ -1,26 +1,15 @@
-/*
- * C++ component inside the Linux kernel
- */
-
-#include "cpp_entry.h"
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <cstring>
 #include <fcntl.h>
 
+#include "c_entry.h"
 #include "print.h"
-#include "scsi_defs.h"
 #include "nvme.h"
 
-/* C++ functions */
+
 void init(void) {
   print("Hello, world!\n");
-  scsi_defs::ControlByte cb;
-  uint8_t val = 0x04;
-  memcpy(&cb, &val, 1);
-  print("%u\n", cb.naca);
 
   int file_descriptor = open("", O_RDWR);
   print("file descriptor %d" , file_descriptor);
@@ -43,10 +32,12 @@ void init(void) {
   uint32_t cdw15 = 0x0;
   uint32_t timeout_ms = 0x0;
   uint32_t* result = 0;
-  int status = nvme::send_passthru(file_descriptor, nvme_code, opcode, flags, rsvd1, nsid, 
+  int status = send_passthru(file_descriptor, nvme_code, opcode, flags, rsvd1, nsid, 
   cdw2, cdw3, metadata, addr, metadata_len, data_len, cdw10, cdw11, cdw12, 
   cdw13, cdw14, cdw15, timeout_ms, result);
   print("status is: %d", status);
 }
 
 void release(void) { print("Goodbye, world!\n"); }
+
+

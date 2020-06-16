@@ -5,7 +5,8 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include "cpp_entry.h"
+#include "nvme.h"
+#include "c_entry.h"
 
 MODULE_DESCRIPTION("SCSI to NVME kernel module");
 MODULE_VERSION("0.1");
