@@ -225,9 +225,9 @@ struct InquiryData {
   bool reserved_6 : 1;
   bool cmdque : 1;  // Command Management Model bit
   bool vs_2 : 1;    // vendor specific bit
-  uint64_t vendor_identification : 64;
+  char vendor_identification[8];
   uint8_t product_identification[16];
-  uint32_t product_revision_level : 32;
+  uint8_t product_revision_level[4];
   uint8_t vendor_specific_1[20];
   uint8_t reserved_7 : 4;
   uint8_t clocking : 2;
@@ -802,6 +802,53 @@ struct UnmapBlockDescriptor {
   uint32_t reserved_1 : 32;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
+
+// SCSI Reference Manual Table 483
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct SupportedVitalProductData {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  uint8_t page_code : 8;
+  uint8_t _reserved : 8;
+  uint8_t page_length : 8;
+  uint8_t supported_page_list[256];
+} ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 484
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct UnitSerialNumber {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  uint8_t page_code : 8;
+  uint8_t _reserved : 8;
+  uint8_t page_length : 8;
+  uint8_t product_serial_number[256];
+} ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 460
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct IdentificationDescriptor {
+  uint8_t protocol_identifier : 4;
+  uint8_t code_set : 4;
+  uint8_t piv : 1;
+  uint8_t _reserved1 : 1;
+  uint8_t association : 2;
+  uint8_t identifier_type : 4;
+  uint8_t _reserved2 : 8;
+  uint8_t identifier_length : 8;
+  uint8_t identifier[256];
+
+} ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 459
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct DeviceIdentificationVPD {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  uint8_t page_code : 8;
+  uint8_t page_length : 8;
+  IdentificationDescriptor identification_descriptor_list[256];
+} ABSL_ATTRIBUTE_PACKED;
 
 }  // namespace scsi_defs
 
