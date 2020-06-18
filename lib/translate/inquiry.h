@@ -21,13 +21,6 @@
 
 namespace inquiry {
 
-// scsi_defs::InquiryCommand* raw_to_scsi_command(uint32_t* raw_command, int length);
-// uint32_t* scsi_to_nvme_command(scsi_defs::InquiryCommand*);
-// uint32_t exec_nvme(uint32_t* nvme_command);
-// uint32_t* nvme_to_scsi_result_SPECIFIER(uint32_t*, uint32_t*);
-
-
-
 };
 
 #endif

@@ -15,79 +15,114 @@
 #include "inquiry.h"
 
 namespace inquiry {
-
-    scsi_defs::InquiryData* translate(uint32_t* raw_cmd, int buffer_length) {
+    scsi_defs::InquiryCommand raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length) {
         if (buffer_length == 0 || raw_cmd == nullptr) {
             printf("buffer is empty or nullptr\n");
-            return nullptr;
+            // TODO: Optionals?
+            // return nullptr;
         }
 
         uint8_t opcode = raw_cmd[0];
         if (static_cast<scsi_defs::OpCode>(opcode) != scsi_defs::OpCode::kInquiry) {
             printf("invalid opcode. expected %ux. got %ux.", static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
-            return nullptr;
+            // TODO: Optionals?
+            // return nullptr;
         }
 
-        scsi_defs::InquiryCommand* scsi_cmd = reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[0]);
- 
-        // TODO: check invalid parameters
-        if (scsi_cmd->evpd) {
+        // TODO: check invalid parameters in scsi_command
+        return *reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[1]);
+    }
 
+    nvme_defs::IdentifyControllerData nvme_identify_controller() {
+        // TODO
+        return nvme_defs::IdentifyControllerData();
+    }
+    
+    nvme_defs::IdentifyNamespace nvme_identify_namespace() {
+        // TODO
+        return nvme_defs::IdentifyNamespace();
+    }
+
+    scsi_defs::InquiryData build_scsi_inquiry_data(nvme_defs::IdentifyControllerData identify_controller_data, nvme_defs::IdentifyNamespace identify_namespace_data) {
+        // SCSI Inquiry Standard Result
+        // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
+        // Section 6.1.1
+        scsi_defs::InquiryData result = scsi_defs::InquiryData();
+        result.peripheral_qualifier = static_cast<scsi_defs::PeripheralQualifier>(0);
+        result.peripheral_device_type = static_cast<scsi_defs::PeripheralDeviceType>(0);
+        result.rmb = 0;
+        result.version = static_cast<scsi_defs::Version>(0x6);
+        result.normaca = 0;
+        result.hisup = 0;
+        result.response_data_format = static_cast<scsi_defs::ResponseDataFormat>(0b10);
+        result.additional_length = 0x1f;
+        result.sccs = 0;
+        result.acc = 0;
+        result.tpgs = static_cast<scsi_defs::TPGS>(0);
+        result.third_party_copy = 0;
+        result.protect = (identify_namespace_data.dps.pit == 0 and identify_namespace_data.dps.md_start == 0) ? 0 : 1;
+        result.encserv = 0;
+        result.multip = 0;
+        result.addr_16 = 0;
+        result.wbus_16 = 0;
+        result.sync = 0;
+        result.cmdque = 1;
+
+        // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
+        char NVME_VENDOR_IDENTIFICATION[9] = "NVMe    ";
+        for(int i = 0; i < 8; i++) {
+            result.vendor_identification <<= 8;
+            result.vendor_identification |= NVME_VENDOR_IDENTIFICATION[i];
+        }
+        // printf("%lux\n", result.vendor_identification);
+
+        // Shall be set to the first 16 bytes of the Model Number (MN) field within the Identify Controller Data Structure
+        for(int i = 0; i < 16; i++) {
+            result.product_identification[i] = identify_controller_data.mn[i];
+        }
+
+        // Shall be set to the first 4 bytes of the Firmware Revision (FR) field within the Identify Controller Data Structure
+        for(int i = 0; i < 4; i++) {
+            result.product_revision_level <<= 8;
+            result.product_revision_level |= identify_controller_data.fr[i];
+        }
+        return result;
+    }
+
+    scsi_defs::InquiryData translate(uint32_t* raw_cmd, int buffer_length) {
+        scsi_defs::InquiryCommand cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
+ 
+        if (cmd.evpd) {
+            switch (cmd.page_code) {
+                // Shall be supported by returning Supported VPD Pages data page to application client, refer to 6.1.2.
+                case 0x00:
+                    break;
+                //Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
+                case 0x80:
+                    break;
+                // Shall be supported by returning Device Identification data page to application client, refer to 6.1.4
+                case 0x83:
+                    break;
+                // May optionally be supported by returning Extended INQUIRY data page to application client, refer to 6.1.5.
+                case 0x86:
+                    break;
+                // Shall be supported by returning Block Device Characteristics VPD Page to application client, refer to 6.1.7.
+                case 0xB1:
+                    break;
+                // Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST sense key, and ILLEGAL FIELD IN CDB additional sense code
+                default:
+                    break;
+            }
         }
         else {
             // Shall be supported by returning Standard INQUIRY Data to application client
             
-            /*
-            TODO: actually execute nvme commands
-            The Identify command uses the Data Pointer, Command Dword 10, Command Dword 11, and Command
-            Dword 14 fields. All other command specific fields are reserved.
-            */
-
             // Identify controller results
-            nvme_defs::IdentifyControllerData *identify_controller_data = new nvme_defs::IdentifyControllerData();
+            nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
             // Identify namespace results
-            nvme_defs::IdentifyNamespace *identify_namespace_data = new nvme_defs::IdentifyNamespace();
-
-            // SCSI Inquiry Standard Result
-            scsi_defs::InquiryData *scsi_result = new scsi_defs::InquiryData();
-            scsi_result->peripheral_qualifier = static_cast<scsi_defs::PeripheralQualifier>(0);
-            scsi_result->peripheral_device_type = static_cast<scsi_defs::PeripheralDeviceType>(0);
-            scsi_result->rmb = 0;
-            scsi_result->version = static_cast<scsi_defs::Version>(0x6);
-            scsi_result->normaca = 0;
-            scsi_result->hisup = 0;
-            scsi_result->response_data_format = static_cast<scsi_defs::ResponseDataFormat>(0b10);
-            scsi_result->additional_length = 0x1f;
-            scsi_result->sccs = 0;
-            scsi_result->acc = 0;
-            scsi_result->tpgs = static_cast<scsi_defs::TPGS>(0);
-            scsi_result->third_party_copy = 0;
-            scsi_result->protect = (identify_namespace_data->dps.pit == 0 and identify_namespace_data->dps.md_start == 0) ? 0 : 1;
-            scsi_result->encserv = 0;
-            scsi_result->multip = 0;
-            scsi_result->addr_16 = 0;
-            scsi_result->wbus_16 = 0;
-            scsi_result->sync = 0;
-            scsi_result->cmdque = 1;
-
-            // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
-            char x[9] = "NVMe    ";
-            scsi_result->vendor_identification = *(reinterpret_cast<uint64_t*>(&x));
-            printf("%lux\n", scsi_result->vendor_identification);
-
-            // Shall be set to the first 16 bytes of the Model Number (MN) field within the Identify Controller Data Structure
-            for(int i = 0; i < 16; i++) {
-                scsi_result->product_identification[i] = identify_controller_data->mn[i];
-            }
-
-            // Shall be set to the first 4 bytes of the Firmware Revision (FR) field within the Identify Controller Data Structure
-            for(int i = 0; i < 4; i++) {
-                scsi_result->product_revision_level <<= 8;
-                scsi_result->product_revision_level |= identify_controller_data->fr[i];
-            }
-            return scsi_result;
+            nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+            return build_scsi_inquiry_data(identify_controller_data, identify_namespace_data);
+ 
         }
-
-        return nullptr;
     }
 };
