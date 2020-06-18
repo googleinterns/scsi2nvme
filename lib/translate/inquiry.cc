@@ -95,9 +95,9 @@ namespace inquiry {
         }
         return result;
     }
-    scsi_defs::SupportedVitalProductDataPages build_supported_vpd_pages_data()
+    scsi_defs::SupportedVitalProductData build_supported_vpd_pages_data()
     {
-        scsi_defs::SupportedVitalProductDataPages result = scsi_defs::SupportedVitalProductDataPages();
+        scsi_defs::SupportedVitalProductData result = scsi_defs::SupportedVitalProductData();
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
 
@@ -125,7 +125,7 @@ namespace inquiry {
                 // Shall be supported by returning Supported VPD Pages data page to application client, refer to 6.1.2.
                 case 0x00:
                  {
-                    scsi_defs::SupportedVitalProductDataPages result = build_supported_vpd_pages_data();
+                    scsi_defs::SupportedVitalProductData result = build_supported_vpd_pages_data();
                     break;
                  }
                 // Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
