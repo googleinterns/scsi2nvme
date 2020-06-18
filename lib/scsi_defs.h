@@ -803,17 +803,44 @@ struct UnmapBlockDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
-
 // SCSI Reference Manual Table 483
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
-struct SupportedVitalProductDataPages {
+struct SupportedVitalProductData {
   PeripheralQualifier peripheral_qualifier : 3;
   PeripheralDeviceType peripheral_device_type : 5;
   uint8_t page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
-  uint8_t supported_page_list[5]; // actually variable in length but so far all we need is 5...
+  uint8_t supported_page_list[10]; // TODO: actually variable in length
 } ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 484
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct UnitSerialNumber {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  uint8_t page_code : 8;
+  uint8_t _reserved : 8;
+  uint8_t page_length : 8;
+  uint8_t product_serial_number[20]; // TODO: actually variable in length
+} ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 460
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct IdentificationDescriptor {
+  // TODO
+} ABSL_ATTRIBUTE_PACKED;
+
+// SCSI Reference Manual Table 459
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct DeviceIdentificationVPD {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  uint8_t page_code : 8;
+  uint8_t page_length : 8;
+  IdentificationDescriptor identification_descriptor_list[10]; // TODO: actually variable in length
+} ABSL_ATTRIBUTE_PACKED;
+
 
 }  // namespace scsi_defs
 
