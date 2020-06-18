@@ -100,6 +100,7 @@ namespace inquiry {
         scsi_defs::SupportedVitalProductData result = scsi_defs::SupportedVitalProductData();
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
+        result.page_code = 0;
 
         // Shall be set to 5 indicating number of items supported VPD pages list requires.
         // NOTE: document says to set this to 5 but there are 7 entries....
@@ -112,6 +113,43 @@ namespace inquiry {
         result.supported_page_list[4] = 0xB0;
         result.supported_page_list[5] = 0xB1;
         result.supported_page_list[6] = 0xB2;
+        return result;
+    }
+    scsi_defs::UnitSerialNumber build_unit_serial_number_vpd_data() {
+        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+        scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
+        result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
+        result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
+        result.page_code = 0x80;
+        result.page_length = 20;
+
+        /*
+        Shall be set to a 20 byte value by translating the IEEE Extended
+        Unique Identifier.
+        The EUI64 field shall be translated by converting each nibble into an ASCII
+        equivalent representation, right aligning, and inserting a “_”
+        after the 4th, 8th, 12th position, and a “.” after the 16th position
+        in the string. For example, “0x0123456789ABCDEF” would be
+        converted to “0123_4567_89AB_CDEF.”
+        */
+        
+        char hex_string[17];
+        sprintf(hex_string, "%X", identify_namespace_data.eui64);
+        char formatted_hex_string[21];
+        formatted_hex_string[4] = formatted_hex_string[9] = formatted_hex_string[14] = '_';
+        formatted_hex_string[19] = '.';
+
+        int pos = 0;
+        for(int i = 0; i < 19; i++) {
+            if(formatted_hex_string[i] != '_') {
+                formatted_hex_string[i] = hex_string[pos++];
+            }
+        }
+
+        for(int i = 0; i < 20; i++) {
+            result.product_serial_number[i] = formatted_hex_string[i];
+        }
+
         return result;
     }
 
@@ -130,7 +168,10 @@ namespace inquiry {
                  }
                 // Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
                 case 0x80:
+                 {
+                    scsi_defs::UnitSerialNumber result = build_unit_serial_number_vpd_data();
                     break;
+                 }
                 // Shall be supported by returning Device Identification data page to application client, refer to 6.1.4
                 case 0x83:
                     break;
