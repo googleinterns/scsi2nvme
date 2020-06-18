@@ -15,6 +15,7 @@
 #include "inquiry.h"
 
 namespace inquiry {
+    // Creates and validates a Inquiry Command struct
     scsi_defs::InquiryCommand raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length) {
         if (buffer_length == 0 || raw_cmd == nullptr) {
             printf("buffer is empty or nullptr\n");
@@ -33,17 +34,23 @@ namespace inquiry {
         return *reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[1]);
     }
 
+    // Executes the NVME Identify Controller command
     nvme_defs::IdentifyControllerData nvme_identify_controller() {
         // TODO
         return nvme_defs::IdentifyControllerData();
     }
-    
+    // Executes the NVME Identify Namespace command
     nvme_defs::IdentifyNamespace nvme_identify_namespace() {
         // TODO
         return nvme_defs::IdentifyNamespace();
     }
 
-    scsi_defs::InquiryData build_scsi_inquiry_data(nvme_defs::IdentifyControllerData identify_controller_data, nvme_defs::IdentifyNamespace identify_namespace_data) {
+    scsi_defs::InquiryData build_standard_inquiry_data() {
+        // Identify controller results
+        nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
+        // Identify namespace results
+        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+
         // SCSI Inquiry Standard Result
         // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
         // Section 6.1.1
@@ -60,7 +67,7 @@ namespace inquiry {
         result.acc = 0;
         result.tpgs = static_cast<scsi_defs::TPGS>(0);
         result.third_party_copy = 0;
-        result.protect = (identify_namespace_data.dps.pit == 0 and identify_namespace_data.dps.md_start == 0) ? 0 : 1;
+        result.protect = (identify_namespace_data.dps.pit == 0 && identify_namespace_data.dps.md_start == 0) ? 0 : 1;
         result.encserv = 0;
         result.multip = 0;
         result.addr_16 = 0;
@@ -108,6 +115,8 @@ namespace inquiry {
         return result;
     }
 
+    // TODO: figure out return value...
+    // Main logic engine for the Inquiry command
     void translate(uint32_t* raw_cmd, int buffer_length) {
         scsi_defs::InquiryCommand cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
  
@@ -138,12 +147,7 @@ namespace inquiry {
         }
         else {
             // Shall be supported by returning Standard INQUIRY Data to application client
-            
-            // Identify controller results
-            nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
-            // Identify namespace results
-            nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
-            scsi_defs::InquiryData result = build_scsi_inquiry_data(identify_controller_data, identify_namespace_data);
+            scsi_defs::InquiryData result = build_standard_inquiry_data();
         }
         return;
     }
