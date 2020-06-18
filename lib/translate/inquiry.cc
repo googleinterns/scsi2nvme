@@ -88,16 +88,38 @@ namespace inquiry {
         }
         return result;
     }
+    scsi_defs::SupportedVitalProductDataPages build_supported_vpd_pages_data()
+    {
+        scsi_defs::SupportedVitalProductDataPages result = scsi_defs::SupportedVitalProductDataPages();
+        result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
+        result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
 
-    scsi_defs::InquiryData translate(uint32_t* raw_cmd, int buffer_length) {
+        // Shall be set to 5 indicating number of items supported VPD pages list requires.
+        // NOTE: document says to set this to 5 but there are 7 entries....
+        result.page_length = 5;
+
+        result.supported_page_list[0] = 0x00;
+        result.supported_page_list[1] = 0x80;
+        result.supported_page_list[2] = 0x83;
+        result.supported_page_list[3] = 0x86;
+        result.supported_page_list[4] = 0xB0;
+        result.supported_page_list[5] = 0xB1;
+        result.supported_page_list[6] = 0xB2;
+        return result;
+    }
+
+    void translate(uint32_t* raw_cmd, int buffer_length) {
         scsi_defs::InquiryCommand cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
  
         if (cmd.evpd) {
             switch (cmd.page_code) {
                 // Shall be supported by returning Supported VPD Pages data page to application client, refer to 6.1.2.
                 case 0x00:
+                 {
+                    scsi_defs::SupportedVitalProductDataPages result = build_supported_vpd_pages_data();
                     break;
-                //Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
+                 }
+                // Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
                 case 0x80:
                     break;
                 // Shall be supported by returning Device Identification data page to application client, refer to 6.1.4
@@ -121,8 +143,8 @@ namespace inquiry {
             nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
             // Identify namespace results
             nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
-            return build_scsi_inquiry_data(identify_controller_data, identify_namespace_data);
- 
+            scsi_defs::InquiryData result = build_scsi_inquiry_data(identify_controller_data, identify_namespace_data);
         }
+        return;
     }
 };
