@@ -18,6 +18,7 @@
 #include "../../third_party/spdk_defs/nvme_defs.h"
 #include "../scsi_defs.h"
 #include <cstdio>
+#include <optional>
 
 namespace inquiry {
 
