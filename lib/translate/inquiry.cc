@@ -16,22 +16,20 @@
 
 namespace inquiry {
     // Creates and validates a Inquiry Command struct
-    scsi_defs::InquiryCommand raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length) {
+    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length) {
         if (buffer_length == 0 || raw_cmd == nullptr) {
             printf("buffer is empty or nullptr\n");
-            // TODO: Optionals?
-            // return nullptr;
+            return std::nullopt;
         }
 
         uint8_t opcode = raw_cmd[0];
         if (static_cast<scsi_defs::OpCode>(opcode) != scsi_defs::OpCode::kInquiry) {
             printf("invalid opcode. expected %ux. got %ux.", static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
-            // TODO: Optionals?
-            // return nullptr;
+            return std::nullopt;
         }
 
         // TODO: check invalid parameters in scsi_command
-        return *reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[1]);
+        return std::make_optional(*reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[1]));
     }
 
     // Executes the NVME Identify Controller command
@@ -156,8 +154,10 @@ namespace inquiry {
     // TODO: figure out return value...
     // Main logic engine for the Inquiry command
     void translate(uint32_t* raw_cmd, int buffer_length) {
-        scsi_defs::InquiryCommand cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
- 
+        std::optional<scsi_defs::InquiryCommand> opt_cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
+        if (!opt_cmd.has_value()) return;
+
+        scsi_defs::InquiryCommand cmd = opt_cmd.value();
         if (cmd.evpd) {
             switch (cmd.page_code) {
                 // Shall be supported by returning Supported VPD Pages data page to application client, refer to 6.1.2.
