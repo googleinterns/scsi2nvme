@@ -122,8 +122,8 @@ namespace inquiry {
         result.page_length = 20;
 
         /*
-        Shall be set to a 20 byte value by translating the IEEE Extended
-        Unique Identifier.
+        Shall be set to a 20 byte value by translating the IEEE Extended Unique Identifier.
+
         The EUI64 field shall be translated by converting each nibble into an ASCII
         equivalent representation, right aligning, and inserting a “_”
         after the 4th, 8th, 12th position, and a “.” after the 16th position

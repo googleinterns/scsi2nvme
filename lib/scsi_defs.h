@@ -811,7 +811,7 @@ struct SupportedVitalProductData {
   uint8_t page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
-  uint8_t supported_page_list[10]; // TODO: actually variable in length
+  uint8_t supported_page_list[256];
 } ABSL_ATTRIBUTE_PACKED;
 
 // SCSI Reference Manual Table 484
@@ -822,13 +822,23 @@ struct UnitSerialNumber {
   uint8_t page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
-  uint8_t product_serial_number[20]; // TODO: actually variable in length
+  uint8_t product_serial_number[256];
 } ABSL_ATTRIBUTE_PACKED;
+
 
 // SCSI Reference Manual Table 460
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct IdentificationDescriptor {
-  // TODO
+  uint8_t protocol_identifier: 4;
+  uint8_t code_set: 4;
+  uint8_t piv : 1;
+  uint8_t _reserved1 : 1;
+  uint8_t association : 2;
+  uint8_t identifier_type : 4;
+  uint8_t _reserved2 : 8;
+  uint8_t identifier_length : 8;
+  uint8_t identifier[256];
+
 } ABSL_ATTRIBUTE_PACKED;
 
 // SCSI Reference Manual Table 459
@@ -838,7 +848,7 @@ struct DeviceIdentificationVPD {
   PeripheralDeviceType peripheral_device_type : 5;
   uint8_t page_code : 8;
   uint8_t page_length : 8;
-  IdentificationDescriptor identification_descriptor_list[10]; // TODO: actually variable in length
+  IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
 
 
