@@ -21,6 +21,19 @@
 #include <optional>
 
 namespace inquiry {
+    void translate(uint32_t* raw_cmd, int buffer_length);
+    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length);
+
+    nvme_defs::IdentifyControllerData nvme_identify_controller();
+    nvme_defs::IdentifyNamespace nvme_identify_namespace();
+
+    scsi_defs::InquiryData build_standard_inquiry();
+    scsi_defs::InquiryData translate_standard_inquiry_response(nvme_defs::IdentifyControllerData identify_controller_data, nvme_defs::IdentifyNamespace identify_namespace_data);
+
+    scsi_defs::SupportedVitalProductData build_supported_vpd_pages();
+
+    scsi_defs::UnitSerialNumber build_unit_serial_number_vpd();
+    scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(nvme_defs::IdentifyNamespace identify_namespace_data);
 
 };
 

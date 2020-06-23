@@ -43,12 +43,7 @@ namespace inquiry {
         return nvme_defs::IdentifyNamespace();
     }
 
-    scsi_defs::InquiryData build_standard_inquiry_data() {
-        // Identify controller results
-        nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
-        // Identify namespace results
-        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
-
+    scsi_defs::InquiryData translate_standard_inquiry_response(nvme_defs::IdentifyControllerData identify_controller_data, nvme_defs::IdentifyNamespace identify_namespace_data) {
         // SCSI Inquiry Standard Result
         // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
         // Section 6.1.1
@@ -93,7 +88,15 @@ namespace inquiry {
         }
         return result;
     }
-    scsi_defs::SupportedVitalProductData build_supported_vpd_pages_data()
+    scsi_defs::InquiryData build_standard_inquiry() {
+        // Identify controller results
+        nvme_defs::IdentifyControllerData identify_controller_data = nvme_identify_controller();
+        // Identify namespace results
+        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+        return translate_standard_inquiry_response(identify_controller_data, identify_namespace_data);
+    }
+
+    scsi_defs::SupportedVitalProductData build_supported_vpd_pages()
     {
         scsi_defs::SupportedVitalProductData result = scsi_defs::SupportedVitalProductData();
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
@@ -113,8 +116,9 @@ namespace inquiry {
         result.supported_page_list[6] = 0xB2;
         return result;
     }
-    scsi_defs::UnitSerialNumber build_unit_serial_number_vpd_data() {
-        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+
+
+    scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(nvme_defs::IdentifyNamespace identify_namespace_data) {
         scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
@@ -151,7 +155,12 @@ namespace inquiry {
         return result;
     }
 
-    // TODO: figure out return value...
+    scsi_defs::UnitSerialNumber build_unit_serial_number_vpd() {
+        nvme_defs::IdentifyNamespace identify_namespace_data = nvme_identify_namespace();
+        return translate_unit_serial_number_vpd_response(identify_namespace_data);
+    }
+
+    // TODO: write return value to a buffer
     // Main logic engine for the Inquiry command
     void translate(uint32_t* raw_cmd, int buffer_length) {
         std::optional<scsi_defs::InquiryCommand> opt_cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
@@ -163,13 +172,13 @@ namespace inquiry {
                 // Shall be supported by returning Supported VPD Pages data page to application client, refer to 6.1.2.
                 case 0x00:
                  {
-                    scsi_defs::SupportedVitalProductData result = build_supported_vpd_pages_data();
+                    scsi_defs::SupportedVitalProductData result = build_supported_vpd_pages();
                     break;
                  }
                 // Shall be supported by returning Unit Serial Number data page to application client. Refer to 6.1.3.
                 case 0x80:
                  {
-                    scsi_defs::UnitSerialNumber result = build_unit_serial_number_vpd_data();
+                    scsi_defs::UnitSerialNumber result = build_unit_serial_number_vpd();
                     break;
                  }
                 // Shall be supported by returning Device Identification data page to application client, refer to 6.1.4
@@ -188,7 +197,7 @@ namespace inquiry {
         }
         else {
             // Shall be supported by returning Standard INQUIRY Data to application client
-            scsi_defs::InquiryData result = build_standard_inquiry_data();
+            scsi_defs::InquiryData result = build_standard_inquiry();
         }
         return;
     }
