@@ -16,8 +16,8 @@
 
 namespace inquiry {
     // Creates and validates a Inquiry Command struct
-    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length) {
-        if (buffer_length == 0 || raw_cmd == nullptr) {
+    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(absl::Span<const uint32_t> raw_cmd) {
+        if (raw_cmd.length() == 0 || raw_cmd.data() == nullptr) {
             printf("buffer is empty or nullptr\n");
             return std::nullopt;
         }
@@ -162,8 +162,8 @@ namespace inquiry {
 
     // TODO: write return value to a buffer
     // Main logic engine for the Inquiry command
-    void translate(uint32_t* raw_cmd, int buffer_length) {
-        std::optional<scsi_defs::InquiryCommand> opt_cmd = raw_cmd_to_scsi_command(raw_cmd, buffer_length);
+    void translate(absl::Span<const uint32_t> raw_cmd) {
+        std::optional<scsi_defs::InquiryCommand> opt_cmd = raw_cmd_to_scsi_command(raw_cmd);
         if (!opt_cmd.has_value()) return;
 
         scsi_defs::InquiryCommand cmd = opt_cmd.value();

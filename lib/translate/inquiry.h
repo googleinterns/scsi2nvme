@@ -17,12 +17,13 @@
 
 #include "../../third_party/spdk_defs/nvme_defs.h"
 #include "../scsi_defs.h"
+#include "absl/types/span.h"
 #include <cstdio>
 #include <optional>
 
 namespace inquiry {
-    void translate(uint32_t* raw_cmd, int buffer_length);
-    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(uint32_t* raw_cmd, int buffer_length);
+    void translate(absl::Span<const uint32_t>);
+    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(absl::Span<const uint32_t>);
 
     nvme_defs::IdentifyControllerData nvme_identify_controller();
     nvme_defs::IdentifyNamespace nvme_identify_namespace();
