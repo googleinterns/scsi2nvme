@@ -35,7 +35,7 @@ TEST(translteInquiryRawToSCSI, wrongOp) {
     ASSERT_FALSE(result.has_value());
 }
 
-TEST(translteInquiryRawToSCSI, defaultHappyPath) {
+TEST(translteInquiryRawToSCSI, defaultSuccess) {
     uint32_t sz = 1+sizeof(scsi_defs::InquiryCommand);
     uint32_t * buf = (uint32_t*)malloc(4 * sz);
     buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
@@ -57,7 +57,7 @@ TEST(translteInquiryRawToSCSI, defaultHappyPath) {
 }
 
 // TODO: test invalid parameters in scsi_command
-TEST(translteInquiryRawToSCSI, customHappyPath) {
+TEST(translteInquiryRawToSCSI, customSuccess) {
     uint32_t sz = 1+sizeof(scsi_defs::InquiryCommand);
     uint32_t * buf = (uint32_t*)malloc(4 * sz);
     buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
@@ -81,7 +81,16 @@ TEST(translteInquiryRawToSCSI, customHappyPath) {
     ASSERT_EQ(result_cmd.page_code, 4);
     ASSERT_EQ(result_cmd.allocation_length, 29);
 }
-TEST(translateStandardInquiryResponse, happyPath) {
+TEST(translateStandardInquiryResponse, Success) {
+
+}
+TEST(translateStandardInquiryResponse, badControllerData) {
+
+}
+TEST(translateStandardInquiryResponse, badNamespaceData) {
+
+}
+TEST(translateStandardInquiryResponse, noData) {
 
 }
 }
