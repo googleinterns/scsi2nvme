@@ -143,4 +143,19 @@ TEST(translateStandardInquiryResponse, noData) {
 
 }
 
+TEST(supportedVPDPages, Success) {
+    scsi_defs::SupportedVitalProductData result = inquiry::build_supported_vpd_pages();
+
+    ASSERT_EQ(result.peripheral_qualifier , scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
+    ASSERT_EQ(result.peripheral_device_type , scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
+    ASSERT_EQ(result.page_code , 0);
+    ASSERT_EQ(result.page_length , 5);
+    ASSERT_EQ(result.supported_page_list[0] , 0x00);
+    ASSERT_EQ(result.supported_page_list[1] , 0x80);
+    ASSERT_EQ(result.supported_page_list[2] , 0x83);
+    ASSERT_EQ(result.supported_page_list[3] , 0x86);
+    ASSERT_EQ(result.supported_page_list[4] , 0xB0);
+    ASSERT_EQ(result.supported_page_list[5] , 0xB1);
+    ASSERT_EQ(result.supported_page_list[6] , 0xB2);
+}
 }
