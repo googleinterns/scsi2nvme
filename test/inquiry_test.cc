@@ -24,14 +24,14 @@ namespace {
 
 TEST(translteInquiryRawToSCSI, empty) {
     absl::Span<const uint32_t> raw_cmd;
-    std::optional<scsi_defs::InquiryCommand> result = inquiry::translteInquiryRawToSCSI(raw_cmd);
+    std::optional<scsi_defs::InquiryCommand> result = inquiry::raw_cmd_to_scsi_command(raw_cmd);
     ASSERT_FALSE(result.has_value());
 }
 
 TEST(translteInquiryRawToSCSI, wrongOp) {
     const uint32_t buf = 4;
     absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
-    std::optional<scsi_defs::InquiryCommand> result = inquiry::translteInquiryRawToSCSI(raw_cmd);
+    std::optional<scsi_defs::InquiryCommand> result = inquiry::raw_cmd_to_scsi_command(raw_cmd);
     ASSERT_FALSE(result.has_value());
 }
 
@@ -45,7 +45,7 @@ TEST(translteInquiryRawToSCSI, defaultSuccess) {
     absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
     ASSERT_FALSE(raw_cmd.empty());
 
-    std::optional<scsi_defs::InquiryCommand> result = inquiry::translteInquiryRawToSCSI(raw_cmd);
+    std::optional<scsi_defs::InquiryCommand> result = inquiry::raw_cmd_to_scsi_command(raw_cmd);
     ASSERT_TRUE(result.has_value());
 
     scsi_defs::InquiryCommand result_cmd = result.value();
@@ -71,7 +71,7 @@ TEST(translteInquiryRawToSCSI, customSuccess) {
     absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
     ASSERT_FALSE(raw_cmd.empty());
 
-    std::optional<scsi_defs::InquiryCommand> result = inquiry::translteInquiryRawToSCSI(raw_cmd);
+    std::optional<scsi_defs::InquiryCommand> result = inquiry::raw_cmd_to_scsi_command(raw_cmd);
     ASSERT_TRUE(result.has_value());
 
     scsi_defs::InquiryCommand result_cmd = result.value();
@@ -81,9 +81,55 @@ TEST(translteInquiryRawToSCSI, customSuccess) {
     ASSERT_EQ(result_cmd.page_code, 4);
     ASSERT_EQ(result_cmd.allocation_length, 29);
 }
-TEST(translateStandardInquiryResponse, Success) {
 
+TEST(translateStandardInquiryResponse, Success) {
+    nvme_defs::IdentifyNamespace ns_data = nvme_defs::IdentifyNamespace();
+    nvme_defs::IdentifyControllerData ctrl_data = nvme_defs::IdentifyControllerData();
+
+    ctrl_data.mn[0] = 0x42;
+    ctrl_data.mn[15] = 0x28;
+    ctrl_data.fr[0] = 0x42;
+
+    scsi_defs::InquiryData result = inquiry::translate_standard_inquiry_response(ctrl_data, ns_data);
+    ASSERT_EQ(result.peripheral_qualifier, static_cast<scsi_defs::PeripheralQualifier>(0));
+    ASSERT_EQ(result.peripheral_device_type, static_cast<scsi_defs::PeripheralDeviceType>(0));
+    ASSERT_EQ(result.rmb, 0);
+    ASSERT_EQ(result.version, static_cast<scsi_defs::Version>(0x6));
+    ASSERT_EQ(result.normaca, 0);
+    ASSERT_EQ(result.hisup, 0);
+    ASSERT_EQ(result.response_data_format, static_cast<scsi_defs::ResponseDataFormat>(0b10));
+    ASSERT_EQ(result.additional_length, 0x1f);
+    ASSERT_EQ(result.sccs, 0);
+    ASSERT_EQ(result.acc, 0);
+    ASSERT_EQ(result.tpgs, static_cast<scsi_defs::TPGS>(0));
+    ASSERT_EQ(result.third_party_copy, 0);
+    ASSERT_EQ(result.protect, (ns_data.dps.pit == 0 && ns_data.dps.md_start == 0) ? 0 : 1);
+    ASSERT_EQ(result.encserv, 0);
+    ASSERT_EQ(result.multip, 0);
+    ASSERT_EQ(result.addr_16, 0);
+    ASSERT_EQ(result.wbus_16, 0);
+    ASSERT_EQ(result.sync, 0);
+    ASSERT_EQ(result.cmdque, 1);
+
+    char *c = result.vendor_identification;
+    ASSERT_EQ(c[0], 'N');
+    ASSERT_EQ(c[1], 'V');
+    ASSERT_EQ(c[2], 'M');
+    ASSERT_EQ(c[3], 'e');
+    ASSERT_EQ(c[4], ' ');
+    ASSERT_EQ(c[5], ' ');
+    ASSERT_EQ(c[6], ' ');
+    ASSERT_EQ(c[7], ' ');
+
+    for(int i = 0; i < 16; i++) {
+        ASSERT_EQ(result.product_identification[i], ctrl_data.mn[i]);
+    }
+
+    for(int i = 0; i < 4; i++) {
+        ASSERT_EQ(result.product_revision_level[i], ctrl_data.fr[i]);
+    }
 }
+
 TEST(translateStandardInquiryResponse, badControllerData) {
 
 }

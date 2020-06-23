@@ -225,9 +225,9 @@ struct InquiryData {
   bool reserved_6 : 1;
   bool cmdque : 1;  // Command Management Model bit
   bool vs_2 : 1;    // vendor specific bit
-  uint64_t vendor_identification : 64;
+  char vendor_identification [8];
   uint8_t product_identification[16];
-  uint32_t product_revision_level : 32;
+  uint8_t product_revision_level[4];
   uint8_t vendor_specific_1[20];
   uint8_t reserved_7 : 4;
   uint8_t clocking : 2;

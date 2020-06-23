@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "inquiry.h"
-
+#include "string.h"
 namespace inquiry {
     // Creates and validates a Inquiry Command struct
     std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(absl::Span<const uint32_t> raw_cmd) {
@@ -71,11 +71,7 @@ namespace inquiry {
 
         // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
         char NVME_VENDOR_IDENTIFICATION[9] = "NVMe    ";
-        for(int i = 0; i < 8; i++) {
-            result.vendor_identification <<= 8;
-            result.vendor_identification |= NVME_VENDOR_IDENTIFICATION[i];
-        }
-        // printf("%lux\n", result.vendor_identification);
+        strncpy(result.vendor_identification, NVME_VENDOR_IDENTIFICATION, 8);
 
         // Shall be set to the first 16 bytes of the Model Number (MN) field within the Identify Controller Data Structure
         for(int i = 0; i < 16; i++) {
@@ -84,8 +80,7 @@ namespace inquiry {
 
         // Shall be set to the first 4 bytes of the Firmware Revision (FR) field within the Identify Controller Data Structure
         for(int i = 0; i < 4; i++) {
-            result.product_revision_level <<= 8;
-            result.product_revision_level |= identify_controller_data.fr[i];
+            result.product_revision_level[i] = identify_controller_data.fr[i];
         }
         return result;
     }
