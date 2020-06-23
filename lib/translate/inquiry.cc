@@ -17,7 +17,7 @@
 namespace inquiry {
     // Creates and validates a Inquiry Command struct
     std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(absl::Span<const uint32_t> raw_cmd) {
-        if (raw_cmd.length() == 0 || raw_cmd.data() == nullptr) {
+        if (raw_cmd.empty()) {
             printf("buffer is empty or nullptr\n");
             return std::nullopt;
         }
@@ -28,8 +28,9 @@ namespace inquiry {
             return std::nullopt;
         }
 
+        // printf("opcode is good, casting\n");
         // TODO: check invalid parameters in scsi_command
-        return std::make_optional(*reinterpret_cast<scsi_defs::InquiryCommand*>(raw_cmd[1]));
+        return std::make_optional(*reinterpret_cast<const scsi_defs::InquiryCommand*>(&raw_cmd[1]));
     }
 
     // Executes the NVME Identify Controller command
