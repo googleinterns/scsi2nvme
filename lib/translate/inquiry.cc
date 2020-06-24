@@ -38,6 +38,7 @@ namespace inquiry {
         // TODO
         return nvme_defs::IdentifyControllerData();
     }
+
     // Executes the NVME Identify Namespace command
     nvme_defs::IdentifyNamespace nvme_identify_namespace() {
         // TODO
@@ -74,20 +75,17 @@ namespace inquiry {
         strncpy(result.vendor_identification, NVME_VENDOR_IDENTIFICATION, 8);
 
         // Shall be set to the first 16 bytes of the Model Number (MN) field within the Identify Controller Data Structure
-        for(int i = 0; i < 16; i++) {
-            result.product_identification[i] = identify_controller_data.mn[i];
-        }
+        memcpy(result.product_identification, identify_controller_data.mn, 16);
 
-        /* Shall be set to the last 4 ASCII graphic characters in the range of 21h-7Eh (i.e. last 4 non-space
+        /* 
+        Shall be set to the last 4 ASCII graphic characters in the range of 21h-7Eh (i.e. last 4 non-space
         characters) of the Firmware Revision (FR) field within the Identify Controller Data Structure.
         */
         int idx = 3;
         for(int i = 7; i >= 0; i--) {
             if(identify_controller_data.fr[i] != ' ' && identify_controller_data.fr[i] >= 0x21 && identify_controller_data.fr[i] <= 0x7e) {
                 result.product_revision_level[idx] = identify_controller_data.fr[i];
-                // printf("IDX %d\n", idx);
-                idx--;
-                if(idx == -1) break;
+                if(idx-- == 0) break;
             }
         }
         if(idx >= 0) printf("less than four characters set\n");
@@ -128,16 +126,13 @@ namespace inquiry {
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
         result.page_code = 0x80;
-
         
         // check if nonzero
         bool nguid_nz = identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
         bool eui64_nz = identify_namespace_data.eui64;
-        printf("e %d n %d\n", eui64_nz, nguid_nz);
         if(eui64_nz) {
             if(nguid_nz) {
                 // 6.1.3.1.1
-                // nguid
                 result.page_length = 40;
                 char hex_string[33];
                 sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
@@ -161,9 +156,7 @@ namespace inquiry {
             }
             else {
                 // 6.1.3.1.2
-                // eui64
                 result.page_length = 20;
-                // printf("%llx\n", identify_namespace_data.eui64);
 
                 char hex_string[17];
                 sprintf(hex_string, "%llx", identify_namespace_data.eui64);
