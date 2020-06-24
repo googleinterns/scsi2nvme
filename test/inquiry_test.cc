@@ -88,7 +88,15 @@ TEST(translateStandardInquiryResponse, Success) {
 
     ctrl_data.mn[0] = 0x42;
     ctrl_data.mn[15] = 0x28;
-    ctrl_data.fr[0] = 0x42;
+
+    ctrl_data.fr[0] = 'a';
+    ctrl_data.fr[1] = ' ';
+    ctrl_data.fr[2] = 'b';
+    ctrl_data.fr[3] = 'c';
+    ctrl_data.fr[4] = ' ';
+    ctrl_data.fr[5] = ' ';
+    ctrl_data.fr[6] = ' ';
+    ctrl_data.fr[7] = 'd';
 
     scsi_defs::InquiryData result = inquiry::translate_standard_inquiry_response(ctrl_data, ns_data);
     ASSERT_EQ(result.peripheral_qualifier, static_cast<scsi_defs::PeripheralQualifier>(0));
@@ -125,9 +133,10 @@ TEST(translateStandardInquiryResponse, Success) {
         ASSERT_EQ(result.product_identification[i], ctrl_data.mn[i]);
     }
 
-    for(int i = 0; i < 4; i++) {
-        ASSERT_EQ(result.product_revision_level[i], ctrl_data.fr[i]);
-    }
+    ASSERT_EQ(result.product_revision_level[0], 'a');
+    ASSERT_EQ(result.product_revision_level[1], 'b');
+    ASSERT_EQ(result.product_revision_level[2], 'c');
+    ASSERT_EQ(result.product_revision_level[3], 'd');
 }
 
 // TODO?
@@ -158,4 +167,21 @@ TEST(supportedVPDPages, Success) {
     ASSERT_EQ(result.supported_page_list[5] , 0xB1);
     ASSERT_EQ(result.supported_page_list[6] , 0xB2);
 }
+TEST(translateUnitSerialNumberVPD, Success) {
+    nvme_defs::IdentifyNamespace identify_namespace_data = nvme_defs::IdentifyNamespace();
+
+    identify_namespace_data.eui64 = 0x123456789abcdefa;
+    char formatted_hex_string[21] = "1234_5678_9abc_defa.";
+
+    scsi_defs::UnitSerialNumber result = inquiry::translate_unit_serial_number_vpd_response(identify_namespace_data);
+    ASSERT_EQ(result.peripheral_qualifier, scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
+    ASSERT_EQ(result.peripheral_device_type, scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
+    ASSERT_EQ(result.page_code, 0x80);
+    ASSERT_EQ(result.page_length, 20);
+
+    for(int i = 0; i < 20; i++) {
+        ASSERT_EQ(result.product_serial_number[i], formatted_hex_string[i]);
+    }
+}
+
 }

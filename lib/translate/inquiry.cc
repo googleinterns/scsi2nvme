@@ -78,10 +78,19 @@ namespace inquiry {
             result.product_identification[i] = identify_controller_data.mn[i];
         }
 
-        // Shall be set to the first 4 bytes of the Firmware Revision (FR) field within the Identify Controller Data Structure
-        for(int i = 0; i < 4; i++) {
-            result.product_revision_level[i] = identify_controller_data.fr[i];
+        /* Shall be set to the last 4 ASCII graphic characters in the range of 21h-7Eh (i.e. last 4 non-space
+        characters) of the Firmware Revision (FR) field within the Identify Controller Data Structure.
+        */
+        int idx = 3;
+        for(int i = 7; i >= 0; i--) {
+            if(identify_controller_data.fr[i] != ' ' && identify_controller_data.fr[i] >= 0x21 && identify_controller_data.fr[i] <= 0x7e) {
+                result.product_revision_level[idx] = identify_controller_data.fr[i];
+                printf("IDX %d\n", idx);
+                idx--;
+                if(idx == -1) break;
+            }
         }
+        if(idx >= 0) printf("less than four characters set\n");
         return result;
     }
     scsi_defs::InquiryData build_standard_inquiry() {
@@ -119,7 +128,36 @@ namespace inquiry {
         result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
         result.page_code = 0x80;
-        result.page_length = 20;
+
+        // for(int i = 0;)
+        // identify_namespace_data
+        
+        // if(eui64) {
+        //     if(nguid) {
+        //         // 6.1.3.1.1
+        //         // nguid
+        //         result.page_length = 40;
+
+        //     }
+        //     else {
+        //         // 6.1.3.1.2
+        //         // eui64
+        //         result.page_length = 20;
+
+        //     }
+        // }
+        // else {
+        //     if(nguid) {
+        //         // 6.1.3.1.1
+        //         result.page_length = 40;
+
+        //     }
+        //     else {
+        //         // 6.1.3.1.3
+        //         // valid for NVMe 1.0 devices only
+                
+        //     }
+        // }
 
         /*
         Shall be set to a 20 byte value by translating the IEEE Extended Unique Identifier.
@@ -131,6 +169,7 @@ namespace inquiry {
         converted to “0123_4567_89AB_CDEF.”
         */
         
+        printf("%l\n", identify_namespace_data.eui64);
         char hex_string[17];
         sprintf(hex_string, "%X", identify_namespace_data.eui64);
         char formatted_hex_string[21];
