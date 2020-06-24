@@ -139,33 +139,24 @@ namespace inquiry {
                 // 6.1.3.1.1
                 // nguid
                 result.page_length = 40;
-                // char hex_string[17];
-                // sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
+                char hex_string[33];
+                sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
+                sprintf(&hex_string[16], "%llx", identify_namespace_data.nguid[1]);
 
-                // char formatted_hex_string[21];
-                // for(int i = 4; i < result.page_length; i+=5) {
-                //     formatted_hex_string[i] = '_';
-                // }
+                char formatted_hex_string[41];
+                for(int i = 4; i < result.page_length; i+=5) {
+                    formatted_hex_string[i] = '_';
+                }
+                formatted_hex_string[result.page_length - 1] = '.';
 
-                // int pos = 0;
-                // for(int i = 0; i < result.page_length - 1; i++) {
-                //     if(formatted_hex_string[i] != '_') {
-                //         formatted_hex_string[i] = hex_string[pos++];
-                //     }
-                // }
-                // formatted_hex_string[result.page_length - 1] = '_';
+                int pos = 0;
+                for(int i = 0; i < result.page_length - 1; i++) {
+                    if(formatted_hex_string[i] != '_') {
+                        formatted_hex_string[i] = hex_string[pos++];
+                    }
+                }
 
-                // memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
-
-                // sprintf(hex_string, "%llx", identify_namespace_data.nguid[1]);
-                // pos = 0;
-                // for(int i = 0; i < result.page_length - 1; i++) {
-                //     if(formatted_hex_string[i] != '_') {
-                //         formatted_hex_string[i] = hex_string[pos++];
-                //     }
-                // }
-                // formatted_hex_string[result.page_length - 1] = '.';
-                // memcpy(&result.product_serial_number[20], formatted_hex_string, result.page_length);
+                memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
 
             }
             else {
@@ -197,24 +188,31 @@ namespace inquiry {
             if(nguid_nz) {
                 // 6.1.3.1.1
                 result.page_length = 40;
+                char hex_string[33];
+                sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
+                sprintf(&hex_string[16], "%llx", identify_namespace_data.nguid[1]);
 
+                char formatted_hex_string[41];
+                for(int i = 4; i < result.page_length; i+=5) {
+                    formatted_hex_string[i] = '_';
+                }
+                formatted_hex_string[result.page_length - 1] = '.';
+
+                int pos = 0;
+                for(int i = 0; i < result.page_length - 1; i++) {
+                    if(formatted_hex_string[i] != '_') {
+                        formatted_hex_string[i] = hex_string[pos++];
+                    }
+                }
+
+                memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
             }
             else {
                 // 6.1.3.1.3
                 // valid for NVMe 1.0 devices only
-                
+                // TODO?
             }
         }
-
-        /*
-        Shall be set to a 20 byte value by translating the IEEE Extended Unique Identifier.
-
-        The EUI64 field shall be translated by converting each nibble into an ASCII
-        equivalent representation, right aligning, and inserting a “_”
-        after the 4th, 8th, 12th position, and a “.” after the 16th position
-        in the string. For example, “0x0123456789ABCDEF” would be
-        converted to “0123_4567_89AB_CDEF.”
-        */
         
         return result;
     }

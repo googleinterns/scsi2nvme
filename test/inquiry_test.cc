@@ -167,11 +167,13 @@ TEST(supportedVPDPages, Success) {
     ASSERT_EQ(result.supported_page_list[5] , 0xB1);
     ASSERT_EQ(result.supported_page_list[6] , 0xB2);
 }
-TEST(translateUnitSerialNumberVPD, Success) {
+
+TEST(translateUnitSerialNumberVPD, eui64) {
     nvme_defs::IdentifyNamespace identify_namespace_data = nvme_defs::IdentifyNamespace();
 
     identify_namespace_data.eui64 = 0x123456789abcdefa;
-    char formatted_hex_string[21] = "1234_5678_9abc_defa.";
+    identify_namespace_data.nguid[0] = 0;
+    identify_namespace_data.nguid[1] = 0;
 
     scsi_defs::UnitSerialNumber result = inquiry::translate_unit_serial_number_vpd_response(identify_namespace_data);
     ASSERT_EQ(result.peripheral_qualifier, scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -179,9 +181,46 @@ TEST(translateUnitSerialNumberVPD, Success) {
     ASSERT_EQ(result.page_code, 0x80);
     ASSERT_EQ(result.page_length, 20);
 
+    char formatted_hex_string[21] = "1234_5678_9abc_defa.";
     for(int i = 0; i < 20; i++) {
         ASSERT_EQ(result.product_serial_number[i], formatted_hex_string[i]);
     }
 }
 
+
+
+TEST(translateUnitSerialNumberVPD, nguid) {
+    nvme_defs::IdentifyNamespace identify_namespace_data = nvme_defs::IdentifyNamespace();
+
+    identify_namespace_data.eui64 = 0;
+    identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+    identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+
+    scsi_defs::UnitSerialNumber result = inquiry::translate_unit_serial_number_vpd_response(identify_namespace_data);
+    ASSERT_EQ(result.peripheral_qualifier, scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
+    ASSERT_EQ(result.peripheral_device_type, scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
+    ASSERT_EQ(result.page_code, 0x80);
+    ASSERT_EQ(result.page_length, 40);
+    char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
+    
+    ASSERT_STREQ((char*)result.product_serial_number, formatted_hex_string);
 }
+
+TEST(translateUnitSerialNumberVPD, both) {
+    nvme_defs::IdentifyNamespace identify_namespace_data = nvme_defs::IdentifyNamespace();
+
+    identify_namespace_data.eui64 = 0x123456789abcdefa;
+    identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+    identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+
+    scsi_defs::UnitSerialNumber result = inquiry::translate_unit_serial_number_vpd_response(identify_namespace_data);
+    ASSERT_EQ(result.peripheral_qualifier, scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
+    ASSERT_EQ(result.peripheral_device_type, scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
+    ASSERT_EQ(result.page_code, 0x80);
+    ASSERT_EQ(result.page_length, 40);
+    char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
+    
+    ASSERT_STREQ((char*)result.product_serial_number, formatted_hex_string);
+}
+}
+
