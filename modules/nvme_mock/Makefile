@@ -2,10 +2,10 @@ obj-m += nvme_mock_module.o
 ccflags-y := -I $(srctree)/drivers/nvme
 
 all:
-	make -C LINUX_SRC_PATH M=$(PWD) modules
+	make -C ~/Desktop/workspace/scsi2nvme/modules/nvme_mock/linux-5.6.14 M=$(PWD) modules
 
 install:
-	make -C LINUX_SRC_PATH M=$(PWD) modules_install
+	make -C ~/Desktop/workspace/scsi2nvme/modules/nvme_mock/linux-5.6.14 M=$(PWD) modules_install
 
 clean:
-	make -C LINUX_SRC_PATH M=$(PWD) clean
+	make -C ~/Desktop/workspace/scsi2nvme/modules/nvme_mock/linux-5.6.14 M=$(PWD) clean

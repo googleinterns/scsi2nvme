@@ -36,6 +36,6 @@ static void __exit nvme_mock_exit(void) {
   printk("GOODBYE!\n");
 }
 
-device_initcall(nvme_mock_init);
+module_init(nvme_mock_init);
 module_exit(nvme_mock_exit);
 MODULE_LICENSE("GPL");
