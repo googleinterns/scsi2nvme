@@ -25,7 +25,7 @@ namespace {
 TEST(translteInquiryRawToSCSI, empty) {
   absl::Span<const uint32_t> raw_cmd;
   std::optional<scsi_defs::InquiryCommand> result =
-      inquiry::raw_cmd_to_scsi_command(raw_cmd);
+      inquiry::RawToScsiCommand(raw_cmd);
   ASSERT_FALSE(result.has_value());
 }
 
@@ -33,7 +33,7 @@ TEST(translteInquiryRawToSCSI, wrongOp) {
   const uint32_t buf = 4;
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
   std::optional<scsi_defs::InquiryCommand> result =
-      inquiry::raw_cmd_to_scsi_command(raw_cmd);
+      inquiry::RawToScsiCommand(raw_cmd);
   ASSERT_FALSE(result.has_value());
 }
 
@@ -48,7 +48,7 @@ TEST(translteInquiryRawToSCSI, defaultSuccess) {
   ASSERT_FALSE(raw_cmd.empty());
 
   std::optional<scsi_defs::InquiryCommand> result =
-      inquiry::raw_cmd_to_scsi_command(raw_cmd);
+      inquiry::RawToScsiCommand(raw_cmd);
   ASSERT_TRUE(result.has_value());
 
   scsi_defs::InquiryCommand result_cmd = result.value();
@@ -75,7 +75,7 @@ TEST(translteInquiryRawToSCSI, customSuccess) {
   ASSERT_FALSE(raw_cmd.empty());
 
   std::optional<scsi_defs::InquiryCommand> result =
-      inquiry::raw_cmd_to_scsi_command(raw_cmd);
+      inquiry::RawToScsiCommand(raw_cmd);
   ASSERT_TRUE(result.has_value());
 
   scsi_defs::InquiryCommand result_cmd = result.value();
@@ -104,7 +104,7 @@ TEST(translateStandardInquiryResponse, Success) {
   ctrl_data.fr[7] = 'd';
 
   scsi_defs::InquiryData result =
-      inquiry::translate_standard_inquiry_response(ctrl_data, ns_data);
+      inquiry::TranslateStandardInquiryResponse(ctrl_data, ns_data);
   ASSERT_EQ(result.peripheral_qualifier,
             static_cast<scsi_defs::PeripheralQualifier>(0));
   ASSERT_EQ(result.peripheral_device_type,
@@ -158,7 +158,7 @@ TEST(translateStandardInquiryResponse, noData) {}
 
 TEST(supportedVPDPages, Success) {
   scsi_defs::SupportedVitalProductData result =
-      inquiry::build_supported_vpd_pages();
+      inquiry::BuildSupportedVPDPages();
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -184,7 +184,7 @@ TEST(translateUnitSerialNumberVPD, eui64) {
   identify_namespace_data.nguid[1] = 0;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::translate_unit_serial_number_vpd_response(
+      inquiry::TranslateUnitSerialNumberVPDResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -208,7 +208,7 @@ TEST(translateUnitSerialNumberVPD, nguid) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::translate_unit_serial_number_vpd_response(
+      inquiry::TranslateUnitSerialNumberVPDResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -230,7 +230,7 @@ TEST(translateUnitSerialNumberVPD, both) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::translate_unit_serial_number_vpd_response(
+      inquiry::TranslateUnitSerialNumberVPDResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);

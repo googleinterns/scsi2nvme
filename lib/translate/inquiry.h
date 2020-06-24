@@ -24,21 +24,21 @@
 
 namespace inquiry {
 void translate(absl::Span<const uint32_t>);
-std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(
+std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
     absl::Span<const uint32_t>);
 
-nvme_defs::IdentifyControllerData nvme_identify_controller();
-nvme_defs::IdentifyNamespace nvme_identify_namespace();
+nvme_defs::IdentifyControllerData NvmeIdentifyController();
+nvme_defs::IdentifyNamespace NvmeIdentifyNamespace();
 
-scsi_defs::InquiryData build_standard_inquiry();
-scsi_defs::InquiryData translate_standard_inquiry_response(
+scsi_defs::InquiryData BuildStandardInquiry();
+scsi_defs::InquiryData TranslateStandardInquiryResponse(
     nvme_defs::IdentifyControllerData identify_controller_data,
     nvme_defs::IdentifyNamespace identify_namespace_data);
 
-scsi_defs::SupportedVitalProductData build_supported_vpd_pages();
+scsi_defs::SupportedVitalProductData BuildSupportedVPDPages();
 
-scsi_defs::UnitSerialNumber build_unit_serial_number_vpd();
-scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(
+scsi_defs::UnitSerialNumber BuildUnitSerialNumberVPD();
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVPDResponse(
     nvme_defs::IdentifyNamespace identify_namespace_data);
 
 };  // namespace inquiry

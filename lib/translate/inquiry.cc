@@ -16,7 +16,7 @@
 #include "string.h"
 namespace inquiry {
 // Creates and validates a Inquiry Command struct
-std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(
+std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
     absl::Span<const uint32_t> raw_cmd) {
   if (raw_cmd.empty()) {
     printf("buffer is empty or nullptr\n");
@@ -37,18 +37,18 @@ std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(
 }
 
 // Executes the NVME Identify Controller command
-nvme_defs::IdentifyControllerData nvme_identify_controller() {
+nvme_defs::IdentifyControllerData NvmeIdentifyController() {
   // TODO
   return nvme_defs::IdentifyControllerData();
 }
 
 // Executes the NVME Identify Namespace command
-nvme_defs::IdentifyNamespace nvme_identify_namespace() {
+nvme_defs::IdentifyNamespace NvmeIdentifyNamespace() {
   // TODO
   return nvme_defs::IdentifyNamespace();
 }
 
-scsi_defs::InquiryData translate_standard_inquiry_response(
+scsi_defs::InquiryData TranslateStandardInquiryResponse(
     nvme_defs::IdentifyControllerData identify_controller_data,
     nvme_defs::IdentifyNamespace identify_namespace_data) {
   // SCSI Inquiry Standard Result
@@ -105,18 +105,18 @@ scsi_defs::InquiryData translate_standard_inquiry_response(
   if (idx >= 0) printf("less than four characters set\n");
   return result;
 }
-scsi_defs::InquiryData build_standard_inquiry() {
+scsi_defs::InquiryData BuildStandardInquiry() {
   // Identify controller results
   nvme_defs::IdentifyControllerData identify_controller_data =
-      nvme_identify_controller();
+      NvmeIdentifyController();
   // Identify namespace results
   nvme_defs::IdentifyNamespace identify_namespace_data =
-      nvme_identify_namespace();
-  return translate_standard_inquiry_response(identify_controller_data,
+      NvmeIdentifyNamespace();
+  return TranslateStandardInquiryResponse(identify_controller_data,
                                              identify_namespace_data);
 }
 
-scsi_defs::SupportedVitalProductData build_supported_vpd_pages() {
+scsi_defs::SupportedVitalProductData BuildSupportedVPDPages() {
   scsi_defs::SupportedVitalProductData result =
       scsi_defs::SupportedVitalProductData();
   result.peripheral_qualifier =
@@ -139,7 +139,7 @@ scsi_defs::SupportedVitalProductData build_supported_vpd_pages() {
   return result;
 }
 
-scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVPDResponse(
     nvme_defs::IdentifyNamespace identify_namespace_data) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
@@ -242,17 +242,17 @@ scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(
   return result;
 }
 
-scsi_defs::UnitSerialNumber build_unit_serial_number_vpd() {
+scsi_defs::UnitSerialNumber BuildUnitSerialNumberVPD() {
   nvme_defs::IdentifyNamespace identify_namespace_data =
-      nvme_identify_namespace();
-  return translate_unit_serial_number_vpd_response(identify_namespace_data);
+      NvmeIdentifyNamespace();
+  return TranslateUnitSerialNumberVPDResponse(identify_namespace_data);
 }
 
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
 void translate(absl::Span<const uint32_t> raw_cmd) {
   std::optional<scsi_defs::InquiryCommand> opt_cmd =
-      raw_cmd_to_scsi_command(raw_cmd);
+      RawToScsiCommand(raw_cmd);
   if (!opt_cmd.has_value()) return;
 
   scsi_defs::InquiryCommand cmd = opt_cmd.value();
@@ -262,13 +262,13 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
       // application client, refer to 6.1.2.
       case 0x00: {
         scsi_defs::SupportedVitalProductData result =
-            build_supported_vpd_pages();
+            BuildSupportedVPDPages();
         break;
       }
       // Shall be supported by returning Unit Serial Number data page to
       // application client. Refer to 6.1.3.
       case 0x80: {
-        scsi_defs::UnitSerialNumber result = build_unit_serial_number_vpd();
+        scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVPD();
         break;
       }
       // Shall be supported by returning Device Identification data page to
@@ -291,7 +291,7 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
   } else {
     // Shall be supported by returning Standard INQUIRY Data to application
     // client
-    scsi_defs::InquiryData result = build_standard_inquiry();
+    scsi_defs::InquiryData result = BuildStandardInquiry();
   }
   return;
 }
