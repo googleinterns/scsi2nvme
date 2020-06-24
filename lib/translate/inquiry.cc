@@ -105,6 +105,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   if (idx >= 0) printf("less than four characters set\n");
   return result;
 }
+
 scsi_defs::InquiryData BuildStandardInquiry() {
   // Identify controller results
   nvme_defs::IdentifyControllerData identify_controller_data =
@@ -295,4 +296,5 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
   }
   return;
 }
+
 };  // namespace inquiry

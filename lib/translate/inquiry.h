@@ -42,5 +42,4 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
     const nvme_defs::IdentifyNamespace &identify_namespace_data);
 
 };  // namespace inquiry
-
 #endif
