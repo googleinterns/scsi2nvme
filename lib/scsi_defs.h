@@ -156,7 +156,7 @@ static_assert(sizeof(ReadCapacity10Data) == 8);
 struct InquiryCommand {
   uint8_t reserved : 6;
   bool obsolete : 1;  // formerly CMDDT
-  bool evpd : 1;      // Enable Vital Product Data (EVPD)
+  bool evpd : 1;      // Enable Vital Product Data (EVpd)
   uint8_t page_code : 8;
   uint16_t allocation_length : 16;
   ControlByte control_byte;
@@ -844,14 +844,14 @@ static_assert(sizeof(IdentificationDescriptor) == 260);
 
 // SCSI Reference Manual Table 459
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
-struct DeviceIdentificationVPD {
+struct DeviceIdentificationVpd {
   PeripheralQualifier peripheral_qualifier : 3;
   PeripheralDeviceType peripheral_device_type : 5;
   uint8_t page_code : 8;
   uint8_t page_length : 8;
   IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
-static_assert(sizeof(DeviceIdentificationVPD) == 66563);
+static_assert(sizeof(DeviceIdentificationVpd) == 66563);
 
 }  // namespace scsi_defs
 

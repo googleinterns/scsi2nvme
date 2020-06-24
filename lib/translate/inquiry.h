@@ -35,10 +35,10 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
     nvme_defs::IdentifyControllerData identify_controller_data,
     nvme_defs::IdentifyNamespace identify_namespace_data);
 
-scsi_defs::SupportedVitalProductData BuildSupportedVPDPages();
+scsi_defs::SupportedVitalProductData BuildSupportedVpdPages();
 
-scsi_defs::UnitSerialNumber BuildUnitSerialNumberVPD();
-scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVPDResponse(
+scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd();
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
     nvme_defs::IdentifyNamespace identify_namespace_data);
 
 };  // namespace inquiry

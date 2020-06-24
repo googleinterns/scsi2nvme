@@ -22,14 +22,14 @@
 
 namespace {
 
-TEST(translteInquiryRawToSCSI, empty) {
+TEST(TranslteInquiryRawToScsi, empty) {
   absl::Span<const uint32_t> raw_cmd;
   std::optional<scsi_defs::InquiryCommand> result =
       inquiry::RawToScsiCommand(raw_cmd);
   ASSERT_FALSE(result.has_value());
 }
 
-TEST(translteInquiryRawToSCSI, wrongOp) {
+TEST(TranslteInquiryRawToScsi, wrongOp) {
   const uint32_t buf = 4;
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
   std::optional<scsi_defs::InquiryCommand> result =
@@ -37,7 +37,7 @@ TEST(translteInquiryRawToSCSI, wrongOp) {
   ASSERT_FALSE(result.has_value());
 }
 
-TEST(translteInquiryRawToSCSI, defaultSuccess) {
+TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
   uint32_t *buf = (uint32_t *)malloc(4 * sz);
   buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
@@ -60,7 +60,7 @@ TEST(translteInquiryRawToSCSI, defaultSuccess) {
 }
 
 // TODO: test invalid parameters in scsi_command
-TEST(translteInquiryRawToSCSI, customSuccess) {
+TEST(TranslteInquiryRawToScsi, customSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
   uint32_t *buf = (uint32_t *)malloc(4 * sz);
   buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
@@ -86,7 +86,7 @@ TEST(translteInquiryRawToSCSI, customSuccess) {
   ASSERT_EQ(result_cmd.allocation_length, 29);
 }
 
-TEST(translateStandardInquiryResponse, Success) {
+TEST(TranslateStandardInquiryResponse, Success) {
   nvme_defs::IdentifyNamespace ns_data = nvme_defs::IdentifyNamespace();
   nvme_defs::IdentifyControllerData ctrl_data =
       nvme_defs::IdentifyControllerData();
@@ -150,15 +150,15 @@ TEST(translateStandardInquiryResponse, Success) {
 }
 
 // TODO?
-TEST(translateStandardInquiryResponse, badControllerData) {}
+TEST(TranslateStandardInquiryResponse, badControllerData) {}
 // TODO?
-TEST(translateStandardInquiryResponse, badNamespaceData) {}
+TEST(TranslateStandardInquiryResponse, badNamespaceData) {}
 // TODO?
-TEST(translateStandardInquiryResponse, noData) {}
+TEST(TranslateStandardInquiryResponse, noData) {}
 
-TEST(supportedVPDPages, Success) {
+TEST(SupportedVpdPages, Success) {
   scsi_defs::SupportedVitalProductData result =
-      inquiry::BuildSupportedVPDPages();
+      inquiry::BuildSupportedVpdPages();
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -175,7 +175,7 @@ TEST(supportedVPDPages, Success) {
   ASSERT_EQ(result.supported_page_list[6], 0xB2);
 }
 
-TEST(translateUnitSerialNumberVPD, eui64) {
+TEST(TranslateUnitSerialNumberVpd, eui64) {
   nvme_defs::IdentifyNamespace identify_namespace_data =
       nvme_defs::IdentifyNamespace();
 
@@ -184,7 +184,7 @@ TEST(translateUnitSerialNumberVPD, eui64) {
   identify_namespace_data.nguid[1] = 0;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVPDResponse(
+      inquiry::TranslateUnitSerialNumberVpdResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -199,7 +199,7 @@ TEST(translateUnitSerialNumberVPD, eui64) {
   }
 }
 
-TEST(translateUnitSerialNumberVPD, nguid) {
+TEST(TranslateUnitSerialNumberVpd, nguid) {
   nvme_defs::IdentifyNamespace identify_namespace_data =
       nvme_defs::IdentifyNamespace();
 
@@ -208,7 +208,7 @@ TEST(translateUnitSerialNumberVPD, nguid) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVPDResponse(
+      inquiry::TranslateUnitSerialNumberVpdResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -221,7 +221,7 @@ TEST(translateUnitSerialNumberVPD, nguid) {
   ASSERT_STREQ((char *)result.product_serial_number, formatted_hex_string);
 }
 
-TEST(translateUnitSerialNumberVPD, both) {
+TEST(TranslateUnitSerialNumberVpd, both) {
   nvme_defs::IdentifyNamespace identify_namespace_data =
       nvme_defs::IdentifyNamespace();
 
@@ -230,7 +230,7 @@ TEST(translateUnitSerialNumberVPD, both) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVPDResponse(
+      inquiry::TranslateUnitSerialNumberVpdResponse(
           identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);

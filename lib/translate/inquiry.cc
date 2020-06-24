@@ -116,7 +116,7 @@ scsi_defs::InquiryData BuildStandardInquiry() {
                                              identify_namespace_data);
 }
 
-scsi_defs::SupportedVitalProductData BuildSupportedVPDPages() {
+scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
   scsi_defs::SupportedVitalProductData result =
       scsi_defs::SupportedVitalProductData();
   result.peripheral_qualifier =
@@ -125,7 +125,7 @@ scsi_defs::SupportedVitalProductData BuildSupportedVPDPages() {
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.page_code = 0;
 
-  // Shall be set to 5 indicating number of items supported VPD pages list
+  // Shall be set to 5 indicating number of items supported Vpd pages list
   // requires. NOTE: document says to set this to 5 but there are 7 entries....
   result.page_length = 5;
 
@@ -139,7 +139,7 @@ scsi_defs::SupportedVitalProductData BuildSupportedVPDPages() {
   return result;
 }
 
-scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVPDResponse(
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
     nvme_defs::IdentifyNamespace identify_namespace_data) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
@@ -242,10 +242,10 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVPDResponse(
   return result;
 }
 
-scsi_defs::UnitSerialNumber BuildUnitSerialNumberVPD() {
+scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
   nvme_defs::IdentifyNamespace identify_namespace_data =
       NvmeIdentifyNamespace();
-  return TranslateUnitSerialNumberVPDResponse(identify_namespace_data);
+  return TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
 }
 
 // TODO: write return value to a buffer
@@ -258,17 +258,17 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
   scsi_defs::InquiryCommand cmd = opt_cmd.value();
   if (cmd.evpd) {
     switch (cmd.page_code) {
-      // Shall be supported by returning Supported VPD Pages data page to
+      // Shall be supported by returning Supported Vpd Pages data page to
       // application client, refer to 6.1.2.
       case 0x00: {
         scsi_defs::SupportedVitalProductData result =
-            BuildSupportedVPDPages();
+            BuildSupportedVpdPages();
         break;
       }
       // Shall be supported by returning Unit Serial Number data page to
       // application client. Refer to 6.1.3.
       case 0x80: {
-        scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVPD();
+        scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
         break;
       }
       // Shall be supported by returning Device Identification data page to
@@ -279,7 +279,7 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
       // application client, refer to 6.1.5.
       case 0x86:
         break;
-      // Shall be supported by returning Block Device Characteristics VPD Page
+      // Shall be supported by returning Block Device Characteristics Vpd Page
       // to application client, refer to 6.1.7.
       case 0xB1:
         break;
