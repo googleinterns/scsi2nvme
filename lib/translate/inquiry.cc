@@ -21,18 +21,22 @@ namespace inquiry {
 std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
     absl::Span<const uint32_t> raw_cmd) {
   if (raw_cmd.empty()) {
-    printf("buffer is empty or nullptr\n");
+    char debug_buffer[100];
+    sprintf(debug_buffer, "buffer is empty or nullptr\n");
+    if (debug_callback != NULL) debug_callback(debug_buffer);
     return std::nullopt;
   }
 
   uint8_t opcode = raw_cmd[0];
   if (static_cast<scsi_defs::OpCode>(opcode) != scsi_defs::OpCode::kInquiry) {
-    printf("invalid opcode. expected %ux. got %ux.",
-           static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
+    char debug_buffer[100];
+    sprintf(debug_buffer, "invalid opcode. expected %ux. got %ux.",
+            static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
+    if (debug_callback != NULL) debug_callback(debug_buffer);
+
     return std::nullopt;
   }
 
-  // printf("opcode is good, casting\n");
   // TODO: check invalid parameters in scsi_command
   return std::make_optional(
       *reinterpret_cast<const scsi_defs::InquiryCommand *>(&raw_cmd[1]));
@@ -83,7 +87,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   result.cmdque = 1;
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
-  strncpy(result.vendor_identification, translator::NVME_VENDOR_IDENTIFICATION,
+  strncpy(result.vendor_identification, NVME_VENDOR_IDENTIFICATION,
           8);
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
@@ -104,7 +108,12 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
       if (idx-- == 0) break;
     }
   }
-  if (idx >= 0) printf("less than four characters set\n");
+
+  if (idx >= 0) {
+    char debug_buffer[100];
+    sprintf(debug_buffer, "less than four characters set\n");
+    if (debug_callback != NULL) debug_callback(debug_buffer);
+  }
   return result;
 }
 
