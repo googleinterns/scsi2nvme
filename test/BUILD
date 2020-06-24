@@ -7,6 +7,6 @@ cc_test(
         "//third_party/spdk_defs:nvme_defs_lib",
         "@googletest//:gtest_main",
         "@com_google_absl//absl/base",
-        "//lib/translate:inquiry_lib"
+        "//lib/translate:translation_lib"
     ],
 )
