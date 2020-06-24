@@ -85,7 +85,7 @@ namespace inquiry {
         for(int i = 7; i >= 0; i--) {
             if(identify_controller_data.fr[i] != ' ' && identify_controller_data.fr[i] >= 0x21 && identify_controller_data.fr[i] <= 0x7e) {
                 result.product_revision_level[idx] = identify_controller_data.fr[i];
-                printf("IDX %d\n", idx);
+                // printf("IDX %d\n", idx);
                 idx--;
                 if(idx == -1) break;
             }
