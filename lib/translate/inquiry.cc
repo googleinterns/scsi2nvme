@@ -131,19 +131,42 @@ namespace inquiry {
 
         
         // check if nonzero
-        bool eui64_nz = false, nguid_nz = false;
-        for(int i = 0; i < 16; i++) {
-            if(identify_namespace_data.nguid[i] != 0) {
-                nguid_nz = true; break;
-            }
-        }
-        eui64_nz = identify_namespace_data.eui64 != 0;
+        bool nguid_nz = identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
+        bool eui64_nz = identify_namespace_data.eui64;
         printf("e %d n %d\n", eui64_nz, nguid_nz);
         if(eui64_nz) {
             if(nguid_nz) {
                 // 6.1.3.1.1
                 // nguid
                 result.page_length = 40;
+                // char hex_string[17];
+                // sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
+
+                // char formatted_hex_string[21];
+                // for(int i = 4; i < result.page_length; i+=5) {
+                //     formatted_hex_string[i] = '_';
+                // }
+
+                // int pos = 0;
+                // for(int i = 0; i < result.page_length - 1; i++) {
+                //     if(formatted_hex_string[i] != '_') {
+                //         formatted_hex_string[i] = hex_string[pos++];
+                //     }
+                // }
+                // formatted_hex_string[result.page_length - 1] = '_';
+
+                // memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
+
+                // sprintf(hex_string, "%llx", identify_namespace_data.nguid[1]);
+                // pos = 0;
+                // for(int i = 0; i < result.page_length - 1; i++) {
+                //     if(formatted_hex_string[i] != '_') {
+                //         formatted_hex_string[i] = hex_string[pos++];
+                //     }
+                // }
+                // formatted_hex_string[result.page_length - 1] = '.';
+                // memcpy(&result.product_serial_number[20], formatted_hex_string, result.page_length);
+
             }
             else {
                 // 6.1.3.1.2
