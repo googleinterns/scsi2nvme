@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "inquiry.h"
-#include "string.h"
 #include "common.h"
+#include "string.h"
 
 namespace inquiry {
 // Creates and validates a Inquiry Command struct
@@ -35,7 +35,7 @@ std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
   // printf("opcode is good, casting\n");
   // TODO: check invalid parameters in scsi_command
   return std::make_optional(
-      *reinterpret_cast<const scsi_defs::InquiryCommand*>(&raw_cmd[1]));
+      *reinterpret_cast<const scsi_defs::InquiryCommand *>(&raw_cmd[1]));
 }
 
 // Executes the NVME Identify Controller command
@@ -83,7 +83,8 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   result.cmdque = 1;
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
-  strncpy(result.vendor_identification, translator::NVME_VENDOR_IDENTIFICATION, 8);
+  strncpy(result.vendor_identification, translator::NVME_VENDOR_IDENTIFICATION,
+          8);
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
   // the Identify Controller Data Structure
@@ -115,7 +116,7 @@ scsi_defs::InquiryData BuildStandardInquiry() {
   nvme_defs::IdentifyNamespace identify_namespace_data =
       NvmeIdentifyNamespace();
   return TranslateStandardInquiryResponse(identify_controller_data,
-                                             identify_namespace_data);
+                                          identify_namespace_data);
 }
 
 scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
@@ -253,8 +254,7 @@ scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
 void translate(absl::Span<const uint32_t> raw_cmd) {
-  std::optional<scsi_defs::InquiryCommand> opt_cmd =
-      RawToScsiCommand(raw_cmd);
+  std::optional<scsi_defs::InquiryCommand> opt_cmd = RawToScsiCommand(raw_cmd);
   if (!opt_cmd.has_value()) return;
 
   scsi_defs::InquiryCommand cmd = opt_cmd.value();
@@ -263,8 +263,7 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
       // Shall be supported by returning Supported Vpd Pages data page to
       // application client, refer to 6.1.2.
       case 0x00: {
-        scsi_defs::SupportedVitalProductData result =
-            BuildSupportedVpdPages();
+        scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
         break;
       }
       // Shall be supported by returning Unit Serial Number data page to

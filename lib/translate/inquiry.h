@@ -18,9 +18,9 @@
 #include <cstdio>
 #include <optional>
 
-#include "third_party/spdk_defs/nvme_defs.h"
-#include "lib/scsi_defs.h"
 #include "absl/types/span.h"
+#include "lib/scsi_defs.h"
+#include "third_party/spdk_defs/nvme_defs.h"
 
 namespace inquiry {
 void translate(absl::Span<const uint32_t>);

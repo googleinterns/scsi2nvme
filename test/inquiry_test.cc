@@ -184,8 +184,7 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   identify_namespace_data.nguid[1] = 0;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVpdResponse(
-          identify_namespace_data);
+      inquiry::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -208,8 +207,7 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVpdResponse(
-          identify_namespace_data);
+      inquiry::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -230,8 +228,7 @@ TEST(TranslateUnitSerialNumberVpd, both) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      inquiry::TranslateUnitSerialNumberVpdResponse(
-          identify_namespace_data);
+      inquiry::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
