@@ -1,7 +1,7 @@
 cc_library(
   name = "translation_lib",
   srcs = ["inquiry.cc"],
-  hdrs = ["inquiry.h"],
+  hdrs = ["inquiry.h", "common.h"],
   deps = [
       "//third_party/spdk_defs:nvme_defs_lib",
       "//lib:scsi_defs_lib",

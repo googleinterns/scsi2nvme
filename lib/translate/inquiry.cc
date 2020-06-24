@@ -14,6 +14,8 @@
 
 #include "inquiry.h"
 #include "string.h"
+#include "common.h"
+
 namespace inquiry {
 // Creates and validates a Inquiry Command struct
 std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
@@ -81,8 +83,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   result.cmdque = 1;
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
-  char NVME_VENDOR_IDENTIFICATION[9] = "NVMe    ";
-  strncpy(result.vendor_identification, NVME_VENDOR_IDENTIFICATION, 8);
+  strncpy(result.vendor_identification, translator::NVME_VENDOR_IDENTIFICATION, 8);
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
   // the Identify Controller Data Structure
