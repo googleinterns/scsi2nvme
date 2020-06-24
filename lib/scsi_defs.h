@@ -813,6 +813,7 @@ struct SupportedVitalProductData {
   uint8_t page_length : 8;
   uint8_t supported_page_list[256];
 } ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(SupportedVitalProductData) == 260);
 
 // SCSI Reference Manual Table 484
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
@@ -824,6 +825,7 @@ struct UnitSerialNumber {
   uint8_t page_length : 8;
   uint8_t product_serial_number[256];
 } ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(UnitSerialNumber) == 260);
 
 // SCSI Reference Manual Table 460
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
@@ -837,8 +839,8 @@ struct IdentificationDescriptor {
   uint8_t _reserved2 : 8;
   uint8_t identifier_length : 8;
   uint8_t identifier[256];
-
 } ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(IdentificationDescriptor) == 260);
 
 // SCSI Reference Manual Table 459
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
@@ -849,6 +851,7 @@ struct DeviceIdentificationVPD {
   uint8_t page_length : 8;
   IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DeviceIdentificationVPD) == 66563);
 
 }  // namespace scsi_defs
 
