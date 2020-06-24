@@ -134,16 +134,20 @@ namespace inquiry {
             if(nguid_nz) {
                 // 6.1.3.1.1
                 result.page_length = 40;
+
+                // convert 128-bit number into hex string
                 char hex_string[33];
                 sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
                 sprintf(&hex_string[16], "%llx", identify_namespace_data.nguid[1]);
 
+                // insert _ and . in the correct positions
                 char formatted_hex_string[41];
                 for(int i = 4; i < result.page_length; i+=5) {
                     formatted_hex_string[i] = '_';
                 }
                 formatted_hex_string[result.page_length - 1] = '.';
 
+                // insert numbers
                 int pos = 0;
                 for(int i = 0; i < result.page_length - 1; i++) {
                     if(formatted_hex_string[i] != '_') {
@@ -152,21 +156,23 @@ namespace inquiry {
                 }
 
                 memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
-
             }
             else {
                 // 6.1.3.1.2
                 result.page_length = 20;
 
+                // convert 128-bit number into hex string
                 char hex_string[17];
                 sprintf(hex_string, "%llx", identify_namespace_data.eui64);
 
+                // insert _ and . in the correct positions
                 char formatted_hex_string[21];
                 for(int i = 4; i < result.page_length; i+=5) {
                     formatted_hex_string[i] = '_';
                 }
                 formatted_hex_string[result.page_length - 1] = '.';
 
+                // insert numbers
                 int pos = 0;
                 for(int i = 0; i < result.page_length - 1; i++) {
                     if(formatted_hex_string[i] != '_') {
@@ -181,16 +187,20 @@ namespace inquiry {
             if(nguid_nz) {
                 // 6.1.3.1.1
                 result.page_length = 40;
+
+                // convert 128-bit number into hex string
                 char hex_string[33];
                 sprintf(hex_string, "%llx", identify_namespace_data.nguid[0]);
                 sprintf(&hex_string[16], "%llx", identify_namespace_data.nguid[1]);
 
+                // insert _ and . in the correct positions
                 char formatted_hex_string[41];
                 for(int i = 4; i < result.page_length; i+=5) {
                     formatted_hex_string[i] = '_';
                 }
                 formatted_hex_string[result.page_length - 1] = '.';
 
+                // insert numbers
                 int pos = 0;
                 for(int i = 0; i < result.page_length - 1; i++) {
                     if(formatted_hex_string[i] != '_') {
