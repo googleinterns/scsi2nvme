@@ -129,35 +129,59 @@ namespace inquiry {
         result.peripheral_device_type = scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
         result.page_code = 0x80;
 
-        // for(int i = 0;)
-        // identify_namespace_data
         
-        // if(eui64) {
-        //     if(nguid) {
-        //         // 6.1.3.1.1
-        //         // nguid
-        //         result.page_length = 40;
+        // check if nonzero
+        bool eui64_nz = false, nguid_nz = false;
+        for(int i = 0; i < 16; i++) {
+            if(identify_namespace_data.nguid[i] != 0) {
+                nguid_nz = true; break;
+            }
+        }
+        eui64_nz = identify_namespace_data.eui64 != 0;
+        printf("e %d n %d\n", eui64_nz, nguid_nz);
+        if(eui64_nz) {
+            if(nguid_nz) {
+                // 6.1.3.1.1
+                // nguid
+                result.page_length = 40;
+            }
+            else {
+                // 6.1.3.1.2
+                // eui64
+                result.page_length = 20;
+                // printf("%llx\n", identify_namespace_data.eui64);
 
-        //     }
-        //     else {
-        //         // 6.1.3.1.2
-        //         // eui64
-        //         result.page_length = 20;
+                char hex_string[17];
+                sprintf(hex_string, "%llx", identify_namespace_data.eui64);
 
-        //     }
-        // }
-        // else {
-        //     if(nguid) {
-        //         // 6.1.3.1.1
-        //         result.page_length = 40;
+                char formatted_hex_string[21];
+                for(int i = 4; i < result.page_length; i+=5) {
+                    formatted_hex_string[i] = '_';
+                }
+                formatted_hex_string[result.page_length - 1] = '.';
 
-        //     }
-        //     else {
-        //         // 6.1.3.1.3
-        //         // valid for NVMe 1.0 devices only
+                int pos = 0;
+                for(int i = 0; i < result.page_length - 1; i++) {
+                    if(formatted_hex_string[i] != '_') {
+                        formatted_hex_string[i] = hex_string[pos++];
+                    }
+                }
+
+                memcpy(result.product_serial_number, formatted_hex_string, result.page_length);
+            }
+        }
+        else {
+            if(nguid_nz) {
+                // 6.1.3.1.1
+                result.page_length = 40;
+
+            }
+            else {
+                // 6.1.3.1.3
+                // valid for NVMe 1.0 devices only
                 
-        //     }
-        // }
+            }
+        }
 
         /*
         Shall be set to a 20 byte value by translating the IEEE Extended Unique Identifier.
@@ -169,24 +193,6 @@ namespace inquiry {
         converted to “0123_4567_89AB_CDEF.”
         */
         
-        printf("%l\n", identify_namespace_data.eui64);
-        char hex_string[17];
-        sprintf(hex_string, "%X", identify_namespace_data.eui64);
-        char formatted_hex_string[21];
-        formatted_hex_string[4] = formatted_hex_string[9] = formatted_hex_string[14] = '_';
-        formatted_hex_string[19] = '.';
-
-        int pos = 0;
-        for(int i = 0; i < 19; i++) {
-            if(formatted_hex_string[i] != '_') {
-                formatted_hex_string[i] = hex_string[pos++];
-            }
-        }
-
-        for(int i = 0; i < 20; i++) {
-            result.product_serial_number[i] = formatted_hex_string[i];
-        }
-
         return result;
     }
 
