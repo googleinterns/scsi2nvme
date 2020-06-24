@@ -15,27 +15,31 @@
 #ifndef LIB_INQUIRY_H
 #define LIB_INQUIEY_H
 
+#include <cstdio>
+#include <optional>
 #include "../../third_party/spdk_defs/nvme_defs.h"
 #include "../scsi_defs.h"
 #include "absl/types/span.h"
-#include <cstdio>
-#include <optional>
 
 namespace inquiry {
-    void translate(absl::Span<const uint32_t>);
-    std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(absl::Span<const uint32_t>);
+void translate(absl::Span<const uint32_t>);
+std::optional<scsi_defs::InquiryCommand> raw_cmd_to_scsi_command(
+    absl::Span<const uint32_t>);
 
-    nvme_defs::IdentifyControllerData nvme_identify_controller();
-    nvme_defs::IdentifyNamespace nvme_identify_namespace();
+nvme_defs::IdentifyControllerData nvme_identify_controller();
+nvme_defs::IdentifyNamespace nvme_identify_namespace();
 
-    scsi_defs::InquiryData build_standard_inquiry();
-    scsi_defs::InquiryData translate_standard_inquiry_response(nvme_defs::IdentifyControllerData identify_controller_data, nvme_defs::IdentifyNamespace identify_namespace_data);
+scsi_defs::InquiryData build_standard_inquiry();
+scsi_defs::InquiryData translate_standard_inquiry_response(
+    nvme_defs::IdentifyControllerData identify_controller_data,
+    nvme_defs::IdentifyNamespace identify_namespace_data);
 
-    scsi_defs::SupportedVitalProductData build_supported_vpd_pages();
+scsi_defs::SupportedVitalProductData build_supported_vpd_pages();
 
-    scsi_defs::UnitSerialNumber build_unit_serial_number_vpd();
-    scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(nvme_defs::IdentifyNamespace identify_namespace_data);
+scsi_defs::UnitSerialNumber build_unit_serial_number_vpd();
+scsi_defs::UnitSerialNumber translate_unit_serial_number_vpd_response(
+    nvme_defs::IdentifyNamespace identify_namespace_data);
 
-};
+};  // namespace inquiry
 
 #endif

@@ -225,7 +225,7 @@ struct InquiryData {
   bool reserved_6 : 1;
   bool cmdque : 1;  // Command Management Model bit
   bool vs_2 : 1;    // vendor specific bit
-  char vendor_identification [8];
+  char vendor_identification[8];
   uint8_t product_identification[16];
   uint8_t product_revision_level[4];
   uint8_t vendor_specific_1[20];
@@ -825,12 +825,11 @@ struct UnitSerialNumber {
   uint8_t product_serial_number[256];
 } ABSL_ATTRIBUTE_PACKED;
 
-
 // SCSI Reference Manual Table 460
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct IdentificationDescriptor {
-  uint8_t protocol_identifier: 4;
-  uint8_t code_set: 4;
+  uint8_t protocol_identifier : 4;
+  uint8_t code_set : 4;
   uint8_t piv : 1;
   uint8_t _reserved1 : 1;
   uint8_t association : 2;
@@ -850,7 +849,6 @@ struct DeviceIdentificationVPD {
   uint8_t page_length : 8;
   IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
-
 
 }  // namespace scsi_defs
 
