@@ -49,8 +49,8 @@ nvme_defs::IdentifyNamespace NvmeIdentifyNamespace() {
 }
 
 scsi_defs::InquiryData TranslateStandardInquiryResponse(
-    nvme_defs::IdentifyControllerData identify_controller_data,
-    nvme_defs::IdentifyNamespace identify_namespace_data) {
+    const nvme_defs::IdentifyControllerData &identify_controller_data,
+    const nvme_defs::IdentifyNamespace &identify_namespace_data) {
   // SCSI Inquiry Standard Result
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
@@ -140,7 +140,7 @@ scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
-    nvme_defs::IdentifyNamespace identify_namespace_data) {
+    const nvme_defs::IdentifyNamespace &identify_namespace_data) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
       scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
