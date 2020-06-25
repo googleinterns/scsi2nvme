@@ -17,6 +17,18 @@
 #include "string.h"
 
 namespace translator {
+
+StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode & opcode) {
+  if(val > 0xaf) {
+      char debug_buffer[100];
+    sprintf(debug_buffer, "invalid opcode. %ux is out of range.", val);
+    if (debug_callback != NULL) debug_callback(debug_buffer);
+    return StatusCode::kInvalidInput;
+  }
+  opcode = static_cast<scsi_defs::OpCode>(val);
+  return StatusCode::kSuccess;
+}
+
 // Creates and validates a Inquiry Command struct
 StatusCode RawToScsiCommand(
     absl::Span<const uint32_t> raw_cmd, scsi_defs::InquiryCommand &cmd)  {
@@ -27,11 +39,15 @@ StatusCode RawToScsiCommand(
     return StatusCode::kInvalidInput;
   }
 
-  uint8_t opcode = raw_cmd[0];
-  if (static_cast<scsi_defs::OpCode>(opcode) != scsi_defs::OpCode::kInquiry) {
+  scsi_defs::OpCode opcode;
+  StatusCode opcode_status = MakeScsiOpcode(raw_cmd[0], opcode);
+  if (opcode_status != StatusCode::kSuccess) {
+    return opcode_status;
+  }
+  if (opcode != scsi_defs::OpCode::kInquiry) {
     char debug_buffer[100];
-    sprintf(debug_buffer, "invalid opcode. expected %ux. got %ux.",
-            static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
+    sprintf(debug_buffer, "invalid opcode. expected x. got y."
+            );
     if (debug_callback != NULL) debug_callback(debug_buffer);
 
     return StatusCode::kInvalidInput;
