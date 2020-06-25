@@ -61,32 +61,29 @@ static int __init nvme_mock_init(void) {
   bdev = lookup_bdev("/dev/nvme0");
   struct block_device_operations *fops;
   fops = bdev->bd_disk->fops;
-  struct nvme_passthru_cmd64 *pass_thru;
-  pass_thru->opcode = 0x1;
-  //  {
-  //   .opcode = 0x1,
-  //   .flags = 0,
-  //   .rsvd1 = 0,
-  //   .nsid = 0,
-  //   .rsvd = 0,
-  //   .cdw2 = 0,
-  //   .cdw3 = 0,
-  //   .metadata = (__u64)(uintptr_t) null,
-  //   .addr = (__u64)(uintptr_t) null,
-  //   .metadata_len = 0,
-  //   .data_len = 0,
-  //   .cdw10 = 0,
-  //   .cdw11 = 0,
-  //   .cdw12 = 0,
-  //   .cdw13 = 0,
-  //   .cdw14 = 0,
-  //   .cdw15 = 0,
-  //   .timeout_ms = 0,
-  //   .rsvd2 = 0,
-  //   .result = 0,
-  // };
-  fops->ioctl(bdev, 0, NVME_IOCTL_SUBMIT_IO, (long) pass_thru);
-  printk("Status is: %d", pass_thru->result);
+  struct nvme_passthru_cmd64 pass_thru = {
+    .opcode = 0x1,
+    .flags = 0,
+    .rsvd1 = 0,
+    .nsid = 0,
+    .cdw2 = 0,
+    .cdw3 = 0,
+    .metadata = 0,
+    .addr = 0,
+    .metadata_len = 0,
+    .data_len = 0,
+    .cdw10 = 0,
+    .cdw11 = 0,
+    .cdw12 = 0,
+    .cdw13 = 0,
+    .cdw14 = 0,
+    .cdw15 = 0,
+    .timeout_ms = 0,
+    .rsvd2 = 0,
+    .result = 0,
+  };
+  fops->ioctl(bdev, 0, NVME_IOCTL_SUBMIT_IO, &pass_thru);
+  printk("Status is: %d", pass_thru.result);
   return 0;
 }
 
