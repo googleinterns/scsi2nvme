@@ -156,7 +156,7 @@ static_assert(sizeof(ReadCapacity10Data) == 8);
 struct InquiryCommand {
   uint8_t reserved : 6;
   bool obsolete : 1;  // formerly CMDDT
-  bool evpd : 1;      // Enable Vital Product Data (EVpd)
+  bool evpd : 1;      // Enable Vital Product Data (EVPD)
   uint8_t page_code : 8;
   uint16_t allocation_length : 16;
   ControlByte control_byte;
