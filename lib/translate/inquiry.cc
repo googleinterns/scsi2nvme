@@ -16,15 +16,15 @@
 #include "common.h"
 #include "string.h"
 
-namespace translate {
+namespace translator {
 // Creates and validates a Inquiry Command struct
-std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
-    absl::Span<const uint32_t> raw_cmd) {
+StatusCode RawToScsiCommand(
+    absl::Span<const uint32_t> raw_cmd, scsi_defs::InquiryCommand &cmd)  {
   if (raw_cmd.empty()) {
     char debug_buffer[100];
     sprintf(debug_buffer, "buffer is empty or nullptr\n");
     if (debug_callback != NULL) debug_callback(debug_buffer);
-    return std::nullopt;
+    return StatusCode::kInvalidInput;
   }
 
   uint8_t opcode = raw_cmd[0];
@@ -34,12 +34,12 @@ std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
             static_cast<uint8_t>(scsi_defs::OpCode::kInquiry), opcode);
     if (debug_callback != NULL) debug_callback(debug_buffer);
 
-    return std::nullopt;
+    return StatusCode::kInvalidInput;
   }
 
   // TODO: check invalid parameters in scsi_command
-  return std::make_optional(
-      *reinterpret_cast<const scsi_defs::InquiryCommand *>(&raw_cmd[1]));
+  cmd = *reinterpret_cast<const scsi_defs::InquiryCommand *>(&raw_cmd[1]);
+  return StatusCode::kSuccess;
 }
 
 // Executes the NVME Identify Controller command
@@ -262,10 +262,10 @@ scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
 void translate(absl::Span<const uint32_t> raw_cmd) {
-  std::optional<scsi_defs::InquiryCommand> opt_cmd = RawToScsiCommand(raw_cmd);
-  if (!opt_cmd.has_value()) return;
+  scsi_defs::InquiryCommand cmd;
+  StatusCode status = RawToScsiCommand(raw_cmd, cmd);
+  if (status != StatusCode::kSuccess) return;
 
-  scsi_defs::InquiryCommand cmd = opt_cmd.value();
   if (cmd.evpd) {
     switch (cmd.page_code) {
       // Shall be supported by returning Supported Vpd Pages data page to

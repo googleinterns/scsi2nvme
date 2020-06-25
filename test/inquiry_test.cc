@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../lib/translate/inquiry.h"
 
 #include <stdlib.h>
 
+#include "lib/translate/inquiry.h"
+#include "lib/translate/common.h"
 #include "gtest/gtest.h"
 
 // Tests
@@ -24,17 +25,17 @@ namespace {
 
 TEST(TranslteInquiryRawToScsi, empty) {
   absl::Span<const uint32_t> raw_cmd;
-  std::optional<scsi_defs::InquiryCommand> result =
-      translate::RawToScsiCommand(raw_cmd);
-  ASSERT_FALSE(result.has_value());
+  scsi_defs::InquiryCommand result_cmd;
+translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  ASSERT_FALSE(status == translator::StatusCode::kSuccess);
 }
 
 TEST(TranslteInquiryRawToScsi, wrongOp) {
   const uint32_t buf = 4;
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
-  std::optional<scsi_defs::InquiryCommand> result =
-      translate::RawToScsiCommand(raw_cmd);
-  ASSERT_FALSE(result.has_value());
+  scsi_defs::InquiryCommand result_cmd;
+translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  ASSERT_FALSE(status == translator::StatusCode::kSuccess);
 }
 
 TEST(TranslteInquiryRawToScsi, defaultSuccess) {
@@ -47,11 +48,10 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
   ASSERT_FALSE(raw_cmd.empty());
 
-  std::optional<scsi_defs::InquiryCommand> result =
-      translate::RawToScsiCommand(raw_cmd);
-  ASSERT_TRUE(result.has_value());
+  scsi_defs::InquiryCommand result_cmd;
+translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  ASSERT_TRUE(status == translator::StatusCode::kSuccess);
 
-  scsi_defs::InquiryCommand result_cmd = result.value();
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
   ASSERT_EQ(result_cmd.evpd, 0);
@@ -74,11 +74,10 @@ TEST(TranslteInquiryRawToScsi, customSuccess) {
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
   ASSERT_FALSE(raw_cmd.empty());
 
-  std::optional<scsi_defs::InquiryCommand> result =
-      translate::RawToScsiCommand(raw_cmd);
-  ASSERT_TRUE(result.has_value());
+  scsi_defs::InquiryCommand result_cmd;
+translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  ASSERT_TRUE(status == translator::StatusCode::kSuccess);
 
-  scsi_defs::InquiryCommand result_cmd = result.value();
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
   ASSERT_EQ(result_cmd.evpd, 1);
@@ -104,7 +103,7 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ctrl_data.fr[7] = 'd';
 
   scsi_defs::InquiryData result =
-      translate::TranslateStandardInquiryResponse(ctrl_data, ns_data);
+      translator::TranslateStandardInquiryResponse(ctrl_data, ns_data);
   ASSERT_EQ(result.peripheral_qualifier,
             static_cast<scsi_defs::PeripheralQualifier>(0));
   ASSERT_EQ(result.peripheral_device_type,
@@ -158,7 +157,7 @@ TEST(TranslateStandardInquiryResponse, noData) {}
 
 TEST(SupportedVpdPages, Success) {
   scsi_defs::SupportedVitalProductData result =
-      translate::BuildSupportedVpdPages();
+      translator::BuildSupportedVpdPages();
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -184,7 +183,7 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   identify_namespace_data.nguid[1] = 0;
 
   scsi_defs::UnitSerialNumber result =
-      translate::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -207,7 +206,7 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      translate::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -228,7 +227,7 @@ TEST(TranslateUnitSerialNumberVpd, both) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      translate::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
