@@ -22,10 +22,34 @@
 #include <linux/genhd.h>
 #include <linux/bio.h>
 #include <linux/completion.h>
+#include <linux/nvme_ioctl.h>
 
 // #include <host/nvme.h>
 
 #define NAME "NVMe Mock"
+
+
+// struct nvme_passthru_cmd64 {
+// 	__u8	opcode;
+// 	__u8	flags;
+// 	__u16	rsvd1;
+// 	__u32	nsid;
+// 	__u32	cdw2;
+// 	__u32	cdw3;
+// 	__u64	metadata;
+// 	__u64	addr;
+// 	__u32	metadata_len;
+// 	__u32	data_len;
+// 	__u32	cdw10;
+// 	__u32	cdw11;
+// 	__u32	cdw12;
+// 	__u32	cdw13;
+// 	__u32	cdw14;
+// 	__u32	cdw15;
+// 	__u32	timeout_ms;
+// 	__u32   rsvd2;
+// 	__u64	result;
+// };
 
 
 static int __init nvme_mock_init(void) {
@@ -37,7 +61,32 @@ static int __init nvme_mock_init(void) {
   bdev = lookup_bdev("/dev/nvme0");
   struct block_device_operations *fops;
   fops = bdev->bd_disk->fops;
- //fops->ioctl
+  struct nvme_passthru_cmd64 *pass_thru;
+  pass_thru->opcode = 0x1;
+  //  {
+  //   .opcode = 0x1,
+  //   .flags = 0,
+  //   .rsvd1 = 0,
+  //   .nsid = 0,
+  //   .rsvd = 0,
+  //   .cdw2 = 0,
+  //   .cdw3 = 0,
+  //   .metadata = (__u64)(uintptr_t) null,
+  //   .addr = (__u64)(uintptr_t) null,
+  //   .metadata_len = 0,
+  //   .data_len = 0,
+  //   .cdw10 = 0,
+  //   .cdw11 = 0,
+  //   .cdw12 = 0,
+  //   .cdw13 = 0,
+  //   .cdw14 = 0,
+  //   .cdw15 = 0,
+  //   .timeout_ms = 0,
+  //   .rsvd2 = 0,
+  //   .result = 0,
+  // };
+  fops->ioctl(bdev, 0, NVME_IOCTL_SUBMIT_IO, (long) pass_thru);
+  printk("Status is: %d", pass_thru->result);
   return 0;
 }
 
