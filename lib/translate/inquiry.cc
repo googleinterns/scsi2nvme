@@ -59,19 +59,19 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
   scsi_defs::InquiryData result = scsi_defs::InquiryData();
-  result.peripheral_qualifier = static_cast<scsi_defs::PeripheralQualifier>(0);
+  result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
   result.peripheral_device_type =
-      static_cast<scsi_defs::PeripheralDeviceType>(0);
+      scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.rmb = 0;
-  result.version = static_cast<scsi_defs::Version>(0x6);
+  result.version = scsi_defs::Version::kSpc4;
   result.normaca = 0;
   result.hisup = 0;
   result.response_data_format =
-      static_cast<scsi_defs::ResponseDataFormat>(0b10);
+      scsi_defs::ResponseDataFormat::kCompliant;
   result.additional_length = 0x1f;
   result.sccs = 0;
   result.acc = 0;
-  result.tpgs = static_cast<scsi_defs::TPGS>(0);
+  result.tpgs = scsi_defs::TPGS::kNotSupported;
   result.third_party_copy = 0;
   result.protect = (identify_namespace_data.dps.pit == 0 &&
                     identify_namespace_data.dps.md_start == 0)
@@ -168,8 +168,8 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
 
       // convert 128-bit number into hex string
       char hex_string[33];
-      sprintf(hex_string, "%08llx", identify_namespace_data.nguid[0]);
-      sprintf(&hex_string[16], "%08llx", identify_namespace_data.nguid[1]);
+      sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
+      sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
 
       // insert _ and . in the correct positions
       char formatted_hex_string[41];
@@ -194,7 +194,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
 
       // convert 128-bit number into hex string
       char hex_string[17];
-      sprintf(hex_string, "%08llx", identify_namespace_data.eui64);
+      sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
 
       // insert _ and . in the correct positions
       char formatted_hex_string[21];
@@ -221,8 +221,8 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
 
       // convert 128-bit number into hex string
       char hex_string[33];
-      sprintf(hex_string, "%08llx", identify_namespace_data.nguid[0]);
-      sprintf(&hex_string[16], "%08llx", identify_namespace_data.nguid[1]);
+      sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
+      sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
 
       // insert _ and . in the correct positions
       char formatted_hex_string[41];
