@@ -268,38 +268,31 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
 
   if (cmd.evpd) {
     switch (cmd.page_code) {
-      // Shall be supported by returning Supported Vpd Pages data page to
-      // application client, refer to 6.1.2.
       case 0x00: {
+      // Return Supported Vpd Pages data page to application client, refer to 6.1.2.
         scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
         break;
       }
-      // Shall be supported by returning Unit Serial Number data page to
-      // application client. Refer to 6.1.3.
       case 0x80: {
+      // Return Unit Serial Number data page toapplication client. Refer to 6.1.3.
         scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
         break;
       }
-      // Shall be supported by returning Device Identification data page to
-      // application client, refer to 6.1.4
       case 0x83:
+      // Return Device Identification data page toapplication client, refer to 6.1.4
         break;
-      // May optionally be supported by returning Extended INQUIRY data page to
-      // application client, refer to 6.1.5.
       case 0x86:
+      // May optionally be supported by returning Extended INQUIRY data page toapplication client, refer to 6.1.5.
         break;
-      // Shall be supported by returning Block Device Characteristics Vpd Page
-      // to application client, refer to 6.1.7.
       case 0xB1:
+      // Return Block Device Characteristics Vpd Page to application client, refer to 6.1.7.
         break;
-      // Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST
-      // sense key, and ILLEGAL FIELD IN CDB additional sense code
       default:
+      // Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
         break;
     }
   } else {
-    // Shall be supported by returning Standard INQUIRY Data to application
-    // client
+    // Return Standard INQUIRY Data to application client
     scsi_defs::InquiryData result = BuildStandardInquiry();
   }
   return;
