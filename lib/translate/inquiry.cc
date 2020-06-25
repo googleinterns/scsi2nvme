@@ -16,7 +16,7 @@
 #include "common.h"
 #include "string.h"
 
-namespace inquiry {
+namespace translate {
 // Creates and validates a Inquiry Command struct
 std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
     absl::Span<const uint32_t> raw_cmd) {

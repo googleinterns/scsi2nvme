@@ -22,7 +22,7 @@
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
-namespace inquiry {
+namespace translate {
 void translate(absl::Span<const uint32_t>);
 std::optional<scsi_defs::InquiryCommand> RawToScsiCommand(
     absl::Span<const uint32_t>);
