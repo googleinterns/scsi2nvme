@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #ifndef LIB_INQUIRY_H
-#define LIB_INQUIEY_H
+#define LIB_INQUIRY_H
 
 #include <cstdio>
 

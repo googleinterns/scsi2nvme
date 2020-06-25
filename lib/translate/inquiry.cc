@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "inquiry.h"
-#include "common.h"
 #include "string.h"
 
 namespace translator {

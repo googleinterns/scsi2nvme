@@ -10,16 +10,31 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.
+// limitations under the License.i// Copyright 2020 Google LLC
+
+#ifndef COMMON_H
+#define COMMON_H
+
+#include <stdarg.h>
+#include <stdio.h>
+
+#include "common.h"
 
 namespace translator {
-const char NVME_VENDOR_IDENTIFICATION[9] = "NVMe    ";
-static void (*debug_callback)(const char*);
 
-enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
+void DebugLog(const char* format, ...) {
+  if (debug_callback == nullptr) return;
+  char buffer[1024];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(buffer, 1024, format, args);
+  debug_callback(buffer);
+  va_end(args);
+}
 
-void DebugLog(const char* format, ...);
-
-void SetDebugCallback(void (*callback)(const char*));
+void SetDebugCallback(void (*callback)(const char*)) {
+  debug_callback = callback;
+}
 
 }  // namespace translator
+#endif
