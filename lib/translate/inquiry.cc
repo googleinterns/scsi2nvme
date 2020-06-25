@@ -42,15 +42,13 @@ StatusCode RawToScsiCommand(
   return StatusCode::kSuccess;
 }
 
-// Executes the NVME Identify Controller command
+// TODO: Executes the NVME Identify Controller command
 nvme_defs::IdentifyControllerData NvmeIdentifyController() {
-  // TODO
   return nvme_defs::IdentifyControllerData();
 }
 
-// Executes the NVME Identify Namespace command
+// TODO: Executes the NVME Identify Namespace command
 nvme_defs::IdentifyNamespace NvmeIdentifyNamespace() {
-  // TODO
   return nvme_defs::IdentifyNamespace();
 }
 
@@ -271,6 +269,7 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
       case 0x00: {
       // Return Supported Vpd Pages data page to application client, refer to 6.1.2.
         scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
+       
         break;
       }
       case 0x80: {
@@ -279,16 +278,16 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
         break;
       }
       case 0x83:
-      // Return Device Identification data page toapplication client, refer to 6.1.4
+      // TODO: Return Device Identification data page toapplication client, refer to 6.1.4
         break;
       case 0x86:
-      // May optionally be supported by returning Extended INQUIRY data page toapplication client, refer to 6.1.5.
+      // TODO: May optionally be supported by returning Extended INQUIRY data page toapplication client, refer to 6.1.5.
         break;
       case 0xB1:
-      // Return Block Device Characteristics Vpd Page to application client, refer to 6.1.7.
+      // TODO: Return Block Device Characteristics Vpd Page to application client, refer to 6.1.7.
         break;
       default:
-      // Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
+      // TODO: Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
         break;
     }
   } else {
