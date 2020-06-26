@@ -27,6 +27,7 @@ void DebugLog(const char *format, ...);
 void SetDebugCallback(void (*callback)(const char *));
 
 const char *ScsiOpcodeToString(scsi_defs::OpCode opcode);
+
 StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode &opcode);
 
 }  // namespace translator
