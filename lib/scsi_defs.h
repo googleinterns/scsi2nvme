@@ -119,7 +119,9 @@ enum class PageCode : uint8_t {
   kUnitSerialNumber = 0x80,
   kDeviceIdentification = 0x83,
   kExtended = 0x86,
-  kReturnBlockDeviceCharacteristicsVpd = 0xB1
+  kBlockLimitsVpd = 0xb0,
+  kBlockDeviceCharacteristicsVpd = 0xB1,
+  kLogicalBlockProvisioningVpd = 0xB2
 };
 
 // SCSI Reference Manual Table 10
@@ -819,7 +821,7 @@ struct SupportedVitalProductData {
   uint8_t page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
-  uint8_t supported_page_list[256];
+  PageCode supported_page_list[256];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(SupportedVitalProductData) == 260);
 
