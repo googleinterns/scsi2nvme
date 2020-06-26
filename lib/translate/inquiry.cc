@@ -34,7 +34,9 @@ StatusCode RawToScsiCommand(absl::Span<const uint32_t> raw_cmd,
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
     char debug_buffer[100];
-    sprintf(debug_buffer, "invalid opcode. expected x. got y.");
+    const char* expected_cmd_str = ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
+    const char* cmd_str = ScsiOpcodeToString(opcode);
+    sprintf(debug_buffer, "invalid opcode. expected %s got %s.", expected_cmd_str, cmd_str);
     if (debug_callback != NULL) debug_callback(debug_buffer);
 
     return StatusCode::kInvalidInput;
