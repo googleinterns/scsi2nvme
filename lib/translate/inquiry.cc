@@ -136,12 +136,6 @@ scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
       scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
 
   return scsi_defs::SupportedVitalProductData{
-      .peripheral_qualifier =
-          scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
-      .peripheral_device_type =
-          scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
-      .page_code = 0,
-
       // Shall be set to 5 indicating number of items supported Vpd pages list
       // requires. NOTE: document says to set this to 5 but there are 7
       // entries....
