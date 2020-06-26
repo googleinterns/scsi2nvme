@@ -10,6 +10,6 @@ static struct bus_type pseudo_bus;
 static struct device* pseudo_root_dev;
 static struct device pseudo_adapter;
 static struct device_driver scsi_mock_driverfs = {.name = kName,
-	                                          .bus = &pseudo_bus};
+                                                  .bus = &pseudo_bus};
 
 #endif

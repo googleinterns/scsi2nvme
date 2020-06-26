@@ -4,7 +4,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/scatterlist.h>
-
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
 
