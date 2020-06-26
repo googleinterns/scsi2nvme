@@ -13,9 +13,11 @@
 // limitations under the License.
 
 #include "lib/scsi_defs.h"
+#include "absl/strings/string_view.h"
 
 namespace translator {
-const char NVME_VENDOR_IDENTIFICATION[9] = "NVMe    ";
+
+constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
 static void (*debug_callback)(const char *);
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };

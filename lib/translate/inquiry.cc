@@ -92,7 +92,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   result.cmdque = 1;
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
-  strncpy(result.vendor_identification, NVME_VENDOR_IDENTIFICATION, 8);
+  strncpy(result.vendor_identification, kNvmeVendorIdentification.data(), 8);
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
   // the Identify Controller Data Structure
