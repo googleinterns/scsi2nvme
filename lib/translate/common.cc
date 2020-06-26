@@ -45,104 +45,41 @@ StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode &opcode) {
 }
 
 const char *ScsiOpcodeToString(scsi_defs::OpCode opcode) {
-  uint32_t opcode_val = static_cast<uint32_t>(opcode);
-  switch (opcode_val) {
-    case 0x0:
-      return "kTestUnitReady";
-      
-    case 0x3:
-      return "kRequestSense";
-      
-    case 0x08:
-      return "kRead6";
-      
-    case 0x0a:
-      return "kWrite6";
-      
-    case 0x12:
-      return "kInquiry";
-      
-    case 0x16:
-      return "kReserve6";
-      
-    case 0x17:
-      return "kRelease6";
-      
-    case 0x1a:
-      return "kModeSense6";
-      
-    case 0x1b:
-      return "kStartStopUnit";
-      
-    case 0x1e:
-      return "kDoPreventAllowMediumRemoval";
-      
-    case 0x25:
-      return "kReadCapacity10";
-      
-    case 0x28:
-      return "kRead10";
-      
-    case 0x2a:
-      return "kWrite10";
-      
-    case 0x2f:
-      return "kVerify10";
-      
-    case 0x35:
-      return "kSync10";
-      
-    case 0x42:
-      return "kUnmap";
-      
-    case 0x43:
-      return "kReadToc";
-      
-    case 0x5a:
-      return "kModeSense10";
-      
-    case 0x5e:
-      return "kPersistentReserveIn";
-      
-    case 0x5f:
-      return "kPersistentReserveOut";
-      
-    case 0x7f:
-      return "kRead32 / kWrite32 / kVerify32";
-      
-    case 0x88:
-      return "kRead16";
-      
-    case 0x8a:
-      return "kWrite16";
-      
-    case 0x8f:
-      return "kVerify16";
-      
-    case 0x91:
-      return "kSync16";
-      
-    case 0x9e:
-      return "kServiceActionIn";
-      
-    case 0xa0:
-      return "kReportLuns";
-      
-    case 0xa3:
-      return "kMaintenanceIn";
-      
-    case 0xa8:
-      return "kRead12";
-      
-    case 0xaa:
-      return "kWrite12";
-      
-    case 0xaf:
-      return "kVerify12";
-      
-    default:
-      return "INVALID_OPCODE";
-      
+  switch (opcode) {
+        case scsi_defs::OpCode::kTestUnitReady: return "kTestUnitReady";
+  case scsi_defs::OpCode::kRequestSense: return "kRequestSense";
+  case scsi_defs::OpCode::kRead6: return "kRead6";
+  case scsi_defs::OpCode::kWrite6: return "kWrite6";
+  case scsi_defs::OpCode::kInquiry: return "kInquiry";
+  case scsi_defs::OpCode::kReserve6: return "kReserve6";
+  case scsi_defs::OpCode::kRelease6: return "kRelease6";
+  case scsi_defs::OpCode::kModeSense6: return "kModeSense6";
+  case scsi_defs::OpCode::kStartStopUnit: return "kStartStopUnit";
+  case scsi_defs::OpCode::kDoPreventAllowMediumRemoval: return "kDoPreventAllowMediumRemoval";
+  case scsi_defs::OpCode::kReadCapacity10: return "kReadCapacity10";
+  case scsi_defs::OpCode::kRead10: return "kRead10";
+  case scsi_defs::OpCode::kWrite10: return "kWrite10";
+  case scsi_defs::OpCode::kVerify10: return "kVerify10";
+  case scsi_defs::OpCode::kSync10: return "kSync10";
+  case scsi_defs::OpCode::kUnmap: return "kUnmap";
+  case scsi_defs::OpCode::kReadToc: return "kReadToc";
+  case scsi_defs::OpCode::kModeSense10: return "kModeSense10";
+  case scsi_defs::OpCode::kPersistentReserveIn: return "kPersistentReserveIn";
+  case scsi_defs::OpCode::kPersistentReserveOut: return "kPersistentReserveOut";
+
+  // same opcode
+  case scsi_defs::OpCode::kRead32: return "kRead32 / kWrite32 /  kVerify32";
+  
+  case scsi_defs::OpCode::kRead16: return "kRead16";
+  case scsi_defs::OpCode::kWrite16: return "kWrite16";
+  case scsi_defs::OpCode::kVerify16: return "kVerify16";
+  case scsi_defs::OpCode::kSync16: return "kSync16";
+  case scsi_defs::OpCode::kServiceActionIn: return "kServiceActionIn";
+  case scsi_defs::OpCode::kReportLuns: return "kReportLuns";
+  case scsi_defs::OpCode::kMaintenanceIn: return "kMaintenanceIn";
+  case scsi_defs::OpCode::kRead12: return "kRead12";
+  case scsi_defs::OpCode::kWrite12: return "kWrite12";
+  case scsi_defs::OpCode::kVerify12: return "kVerify12";
   }
 }
 
