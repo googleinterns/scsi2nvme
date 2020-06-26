@@ -133,18 +133,24 @@ scsi_defs::InquiryData BuildStandardInquiry() {
 }
 
 scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
-  return scsi_defs::SupportedVitalProductData {
-  .peripheral_qualifier =
-      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
-  .peripheral_device_type =
-      scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
-  .page_code = 0,
+  return scsi_defs::SupportedVitalProductData{
+      .peripheral_qualifier =
+          scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
+      .peripheral_device_type =
+          scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
+      .page_code = 0,
 
-  // Shall be set to 5 indicating number of items supported Vpd pages list
-  // requires. NOTE: document says to set this to 5 but there are 7 entries....
-  .page_length = 5,
-  .supported_page_list = {scsi_defs::PageCode::kSupportedVpd, scsi_defs::PageCode::kUnitSerialNumber, scsi_defs::PageCode::kDeviceIdentification,scsi_defs::PageCode::kExtended,scsi_defs::PageCode::kBlockLimitsVpd,scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,scsi_defs::PageCode::kLogicalBlockProvisioningVpd}
-  };
+      // Shall be set to 5 indicating number of items supported Vpd pages list
+      // requires. NOTE: document says to set this to 5 but there are 7
+      // entries....
+      .page_length = 5,
+      .supported_page_list = {
+          scsi_defs::PageCode::kSupportedVpd,
+          scsi_defs::PageCode::kUnitSerialNumber,
+          scsi_defs::PageCode::kDeviceIdentification,
+          scsi_defs::PageCode::kExtended, scsi_defs::PageCode::kBlockLimitsVpd,
+          scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
+          scsi_defs::PageCode::kLogicalBlockProvisioningVpd}};
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
@@ -266,30 +272,37 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case scsi_defs::PageCode::kSupportedVpd: {
-        // Return Supported Vpd Pages data page to application client, refer to 6.1.2.
+        // Return Supported Vpd Pages data page to application client, refer
+        // to 6.1.2.
         scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
 
         break;
       }
       case scsi_defs::PageCode::kUnitSerialNumber: {
-        // Return Unit Serial Number data page toapplication client. Referto 6.1.3.
+        // Return Unit Serial Number data page toapplication client.
+        // Referto 6.1.3.
         scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
-        // TODO: Return Device Identification data page toapplication client, refer to 6.1.4
+        // TODO: Return Device Identification data page toapplication client,
+        // refer to 6.1.4
         break;
       case scsi_defs::PageCode::kExtended:
-        // TODO: May optionally be supported by returning Extended INQUIRY data page toapplication client, refer to 6.1.5.
+        // TODO: May optionally be supported by returning Extended INQUIRY data
+        // page toapplication client, refer to 6.1.5.
         break;
       case scsi_defs::PageCode::kBlockLimitsVpd:
-        // TODO: May be supported by returning Block Limits VPD data page to application client, refer to 6.1.6.
+        // TODO: May be supported by returning Block Limits VPD data page to
+        // application client, refer to 6.1.6.
         break;
       case scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd:
-        // TODO: Return Block Device Characteristics Vpd Page to application client, refer to 6.1.7.
+        // TODO: Return Block Device Characteristics Vpd Page to application
+        // client, refer to 6.1.7.
         break;
       case scsi_defs::PageCode::kLogicalBlockProvisioningVpd:
-      // May be supported by returning Logical Block Provisioning VPD Page to application client, refer to 6.1.8.
+      // May be supported by returning Logical Block Provisioning VPD Page to
+      // application client, refer to 6.1.8.
       default:
         // TODO: Command may be terminated with CHECK CONDITION status, ILLEGAL
         // REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code

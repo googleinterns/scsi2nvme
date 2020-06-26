@@ -14,8 +14,8 @@
 
 #include <stdlib.h>
 
-#include "lib/translate/inquiry.h"
 #include "gtest/gtest.h"
+#include "lib/translate/inquiry.h"
 
 // Tests
 
@@ -169,12 +169,17 @@ TEST(SupportedVpdPages, Success) {
   ASSERT_EQ(result.page_length, 5);
 
   ASSERT_EQ(result.supported_page_list[0], scsi_defs::PageCode::kSupportedVpd);
-  ASSERT_EQ(result.supported_page_list[1], scsi_defs::PageCode::kUnitSerialNumber);
-  ASSERT_EQ(result.supported_page_list[2], scsi_defs::PageCode::kDeviceIdentification);
+  ASSERT_EQ(result.supported_page_list[1],
+            scsi_defs::PageCode::kUnitSerialNumber);
+  ASSERT_EQ(result.supported_page_list[2],
+            scsi_defs::PageCode::kDeviceIdentification);
   ASSERT_EQ(result.supported_page_list[3], scsi_defs::PageCode::kExtended);
-  ASSERT_EQ(result.supported_page_list[4], scsi_defs::PageCode::kBlockLimitsVpd);
-  ASSERT_EQ(result.supported_page_list[5], scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd);
-  ASSERT_EQ(result.supported_page_list[6], scsi_defs::PageCode::kLogicalBlockProvisioningVpd);
+  ASSERT_EQ(result.supported_page_list[4],
+            scsi_defs::PageCode::kBlockLimitsVpd);
+  ASSERT_EQ(result.supported_page_list[5],
+            scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd);
+  ASSERT_EQ(result.supported_page_list[6],
+            scsi_defs::PageCode::kLogicalBlockProvisioningVpd);
 }
 
 TEST(TranslateUnitSerialNumberVpd, eui64) {

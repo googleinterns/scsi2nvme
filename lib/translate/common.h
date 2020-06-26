@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/scsi_defs.h"
 #include "absl/strings/string_view.h"
+#include "lib/scsi_defs.h"
 
 namespace translator {
 

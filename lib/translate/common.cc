@@ -46,40 +46,71 @@ StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode &opcode) {
 
 const char *ScsiOpcodeToString(scsi_defs::OpCode opcode) {
   switch (opcode) {
-        case scsi_defs::OpCode::kTestUnitReady: return "kTestUnitReady";
-  case scsi_defs::OpCode::kRequestSense: return "kRequestSense";
-  case scsi_defs::OpCode::kRead6: return "kRead6";
-  case scsi_defs::OpCode::kWrite6: return "kWrite6";
-  case scsi_defs::OpCode::kInquiry: return "kInquiry";
-  case scsi_defs::OpCode::kReserve6: return "kReserve6";
-  case scsi_defs::OpCode::kRelease6: return "kRelease6";
-  case scsi_defs::OpCode::kModeSense6: return "kModeSense6";
-  case scsi_defs::OpCode::kStartStopUnit: return "kStartStopUnit";
-  case scsi_defs::OpCode::kDoPreventAllowMediumRemoval: return "kDoPreventAllowMediumRemoval";
-  case scsi_defs::OpCode::kReadCapacity10: return "kReadCapacity10";
-  case scsi_defs::OpCode::kRead10: return "kRead10";
-  case scsi_defs::OpCode::kWrite10: return "kWrite10";
-  case scsi_defs::OpCode::kVerify10: return "kVerify10";
-  case scsi_defs::OpCode::kSync10: return "kSync10";
-  case scsi_defs::OpCode::kUnmap: return "kUnmap";
-  case scsi_defs::OpCode::kReadToc: return "kReadToc";
-  case scsi_defs::OpCode::kModeSense10: return "kModeSense10";
-  case scsi_defs::OpCode::kPersistentReserveIn: return "kPersistentReserveIn";
-  case scsi_defs::OpCode::kPersistentReserveOut: return "kPersistentReserveOut";
+    case scsi_defs::OpCode::kTestUnitReady:
+      return "kTestUnitReady";
+    case scsi_defs::OpCode::kRequestSense:
+      return "kRequestSense";
+    case scsi_defs::OpCode::kRead6:
+      return "kRead6";
+    case scsi_defs::OpCode::kWrite6:
+      return "kWrite6";
+    case scsi_defs::OpCode::kInquiry:
+      return "kInquiry";
+    case scsi_defs::OpCode::kReserve6:
+      return "kReserve6";
+    case scsi_defs::OpCode::kRelease6:
+      return "kRelease6";
+    case scsi_defs::OpCode::kModeSense6:
+      return "kModeSense6";
+    case scsi_defs::OpCode::kStartStopUnit:
+      return "kStartStopUnit";
+    case scsi_defs::OpCode::kDoPreventAllowMediumRemoval:
+      return "kDoPreventAllowMediumRemoval";
+    case scsi_defs::OpCode::kReadCapacity10:
+      return "kReadCapacity10";
+    case scsi_defs::OpCode::kRead10:
+      return "kRead10";
+    case scsi_defs::OpCode::kWrite10:
+      return "kWrite10";
+    case scsi_defs::OpCode::kVerify10:
+      return "kVerify10";
+    case scsi_defs::OpCode::kSync10:
+      return "kSync10";
+    case scsi_defs::OpCode::kUnmap:
+      return "kUnmap";
+    case scsi_defs::OpCode::kReadToc:
+      return "kReadToc";
+    case scsi_defs::OpCode::kModeSense10:
+      return "kModeSense10";
+    case scsi_defs::OpCode::kPersistentReserveIn:
+      return "kPersistentReserveIn";
+    case scsi_defs::OpCode::kPersistentReserveOut:
+      return "kPersistentReserveOut";
 
-  // same opcode
-  case scsi_defs::OpCode::kRead32: return "kRead32 / kWrite32 /  kVerify32";
-  
-  case scsi_defs::OpCode::kRead16: return "kRead16";
-  case scsi_defs::OpCode::kWrite16: return "kWrite16";
-  case scsi_defs::OpCode::kVerify16: return "kVerify16";
-  case scsi_defs::OpCode::kSync16: return "kSync16";
-  case scsi_defs::OpCode::kServiceActionIn: return "kServiceActionIn";
-  case scsi_defs::OpCode::kReportLuns: return "kReportLuns";
-  case scsi_defs::OpCode::kMaintenanceIn: return "kMaintenanceIn";
-  case scsi_defs::OpCode::kRead12: return "kRead12";
-  case scsi_defs::OpCode::kWrite12: return "kWrite12";
-  case scsi_defs::OpCode::kVerify12: return "kVerify12";
+    // same opcode
+    case scsi_defs::OpCode::kRead32:
+      return "kRead32 / kWrite32 /  kVerify32";
+
+    case scsi_defs::OpCode::kRead16:
+      return "kRead16";
+    case scsi_defs::OpCode::kWrite16:
+      return "kWrite16";
+    case scsi_defs::OpCode::kVerify16:
+      return "kVerify16";
+    case scsi_defs::OpCode::kSync16:
+      return "kSync16";
+    case scsi_defs::OpCode::kServiceActionIn:
+      return "kServiceActionIn";
+    case scsi_defs::OpCode::kReportLuns:
+      return "kReportLuns";
+    case scsi_defs::OpCode::kMaintenanceIn:
+      return "kMaintenanceIn";
+    case scsi_defs::OpCode::kRead12:
+      return "kRead12";
+    case scsi_defs::OpCode::kWrite12:
+      return "kWrite12";
+    case scsi_defs::OpCode::kVerify12:
+      return "kVerify12";
   }
 }
 
