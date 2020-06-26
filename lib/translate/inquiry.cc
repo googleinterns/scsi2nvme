@@ -133,26 +133,19 @@ scsi_defs::InquiryData BuildStandardInquiry() {
 }
 
 scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
-  scsi_defs::SupportedVitalProductData result =
-      scsi_defs::SupportedVitalProductData();
-  result.peripheral_qualifier =
-      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
-  result.peripheral_device_type =
-      scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
-  result.page_code = 0;
+  return scsi_defs::SupportedVitalProductData {
+  .peripheral_qualifier =
+      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
+  .peripheral_device_type =
+      scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
+  .page_code = 0,
 
   // Shall be set to 5 indicating number of items supported Vpd pages list
   // requires. NOTE: document says to set this to 5 but there are 7 entries....
-  result.page_length = 5;
+  .page_length = 5,
 
-  result.supported_page_list[0] = 0x00;
-  result.supported_page_list[1] = 0x80;
-  result.supported_page_list[2] = 0x83;
-  result.supported_page_list[3] = 0x86;
-  result.supported_page_list[4] = 0xB0;
-  result.supported_page_list[5] = 0xB1;
-  result.supported_page_list[6] = 0xB2;
-  return result;
+  .supported_page_list = {0x00, 0x80, 0x83,0x86,0xB0,0xB1,0xB2}
+  };
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
