@@ -173,7 +173,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
       // 6.1.3.1.1
       result.page_length = 40;
 
-      // convert 128-bit number into hex string
+      // convert 128-bit number into hex string, 64-bits at a time
       char hex_string[33];
       sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
       sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
@@ -199,7 +199,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
       // 6.1.3.1.2
       result.page_length = 20;
 
-      // convert 128-bit number into hex string
+      // convert 64-bit number into hex string
       char hex_string[17];
       sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
 
@@ -226,7 +226,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
       // 6.1.3.1.1
       result.page_length = 40;
 
-      // convert 128-bit number into hex string
+      // convert 128-bit number into hex string, 64-bits at a time
       char hex_string[33];
       sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
       sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
