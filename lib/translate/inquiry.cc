@@ -17,58 +17,10 @@
 
 namespace translator {
 
-StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode & opcode) {
-  if(val > 0xaf) {
-      char debug_buffer[100];
-    sprintf(debug_buffer, "invalid opcode. %ux is out of range.", val);
-    if (debug_callback != NULL) debug_callback(debug_buffer);
-    return StatusCode::kInvalidInput;
-  }
-  opcode = static_cast<scsi_defs::OpCode>(val);
-  return StatusCode::kSuccess;
-}
-
-const char* ScsiOpcodeToString(scsi_defs::OpCode opcode) {
-  uint32_t opcode_val = static_cast<uint32_t>(opcode);
-  switch (opcode_val) {
-      case 0x0: return "kTestUnitReady"; break;
-  case 0x3: return "kRequestSense"; break;
-  case 0x08: return "kRead6"; break;
-  case 0x0a: return "kWrite6"; break;
-  case 0x12: return "kInquiry"; break;
-  case 0x16: return "kReserve6"; break;
-  case 0x17: return "kRelease6"; break;
-  case 0x1a: return "kModeSense6"; break;
-  case 0x1b: return "kStartStopUnit"; break;
-  case 0x1e: return "kDoPreventAllowMediumRemoval"; break;
-  case 0x25: return "kReadCapacity10"; break;
-  case 0x28: return "kRead10"; break;
-  case 0x2a: return "kWrite10"; break;
-  case 0x2f: return "kVerify10"; break;
-  case 0x35: return "kSync10"; break;
-  case 0x42: return "kUnmap"; break;
-  case 0x43: return "kReadToc"; break;
-  case 0x5a: return "kModeSense10"; break;
-  case 0x5e: return "kPersistentReserveIn"; break;
-  case 0x5f: return "kPersistentReserveOut"; break;
-  case 0x7f: return "kRead32 / kWrite32 / kVerify32"; break;
-  case 0x88: return "kRead16"; break;
-  case 0x8a: return "kWrite16"; break;
-  case 0x8f: return "kVerify16"; break;
-  case 0x91: return "kSync16"; break;
-  case 0x9e: return "kServiceActionIn"; break;
-  case 0xa0: return "kReportLuns"; break;
-  case 0xa3: return "kMaintenanceIn"; break;
-  case 0xa8: return "kRead12"; break;
-  case 0xaa: return "kWrite12"; break;
-  case 0xaf: return "kVerify12"; break;
-  default: return "INVALID_OPCODE"; break;
-  }
-}
 
 // Creates and validates a Inquiry Command struct
-StatusCode RawToScsiCommand(
-    absl::Span<const uint32_t> raw_cmd, scsi_defs::InquiryCommand &cmd)  {
+StatusCode RawToScsiCommand(absl::Span<const uint32_t> raw_cmd,
+                            scsi_defs::InquiryCommand &cmd) {
   if (raw_cmd.empty()) {
     char debug_buffer[100];
     sprintf(debug_buffer, "buffer is empty or nullptr\n");
@@ -83,8 +35,7 @@ StatusCode RawToScsiCommand(
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
     char debug_buffer[100];
-    sprintf(debug_buffer, "invalid opcode. expected x. got y."
-            );
+    sprintf(debug_buffer, "invalid opcode. expected x. got y.");
     if (debug_callback != NULL) debug_callback(debug_buffer);
 
     return StatusCode::kInvalidInput;
@@ -112,15 +63,15 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
   scsi_defs::InquiryData result = scsi_defs::InquiryData();
-  result.peripheral_qualifier = scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
+  result.peripheral_qualifier =
+      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
   result.peripheral_device_type =
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.rmb = 0;
   result.version = scsi_defs::Version::kSpc4;
   result.normaca = 0;
   result.hisup = 0;
-  result.response_data_format =
-      scsi_defs::ResponseDataFormat::kCompliant;
+  result.response_data_format = scsi_defs::ResponseDataFormat::kCompliant;
   result.additional_length = 0x1f;
   result.sccs = 0;
   result.acc = 0;
@@ -320,27 +271,33 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case 0x00: {
-      // Return Supported Vpd Pages data page to application client, refer to 6.1.2.
+        // Return Supported Vpd Pages data page to application client, refer
+        // to 6.1.2.
         scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
-       
+
         break;
       }
       case 0x80: {
-      // Return Unit Serial Number data page toapplication client. Refer to 6.1.3.
+        // Return Unit Serial Number data page toapplication client. Refer
+        // to 6.1.3.
         scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
         break;
       }
       case 0x83:
-      // TODO: Return Device Identification data page toapplication client, refer to 6.1.4
+        // TODO: Return Device Identification data page toapplication client,
+        // refer to 6.1.4
         break;
       case 0x86:
-      // TODO: May optionally be supported by returning Extended INQUIRY data page toapplication client, refer to 6.1.5.
+        // TODO: May optionally be supported by returning Extended INQUIRY data
+        // page toapplication client, refer to 6.1.5.
         break;
       case 0xB1:
-      // TODO: Return Block Device Characteristics Vpd Page to application client, refer to 6.1.7.
+        // TODO: Return Block Device Characteristics Vpd Page to application
+        // client, refer to 6.1.7.
         break;
       default:
-      // TODO: Command may be terminated with CHECK CONDITION status, ILLEGAL REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
+        // TODO: Command may be terminated with CHECK CONDITION status, ILLEGAL
+        // REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
         break;
     }
   } else {
@@ -350,4 +307,4 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
   return;
 }
 
-};  // namespace inquiry
+};  // namespace translator

@@ -17,15 +17,15 @@
 
 #include <cstdio>
 
-#include "common.h"
 #include "absl/types/span.h"
+#include "common.h"
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
 void translate(absl::Span<const uint32_t>);
-StatusCode RawToScsiCommand(
-    absl::Span<const uint32_t>, scsi_defs::InquiryCommand&);
+StatusCode RawToScsiCommand(absl::Span<const uint32_t>,
+                            scsi_defs::InquiryCommand &);
 
 nvme_defs::IdentifyControllerData NvmeIdentifyController();
 nvme_defs::IdentifyNamespace NvmeIdentifyNamespace();
@@ -41,5 +41,5 @@ scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd();
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
     const nvme_defs::IdentifyNamespace &identify_namespace_data);
 
-};  // namespace inquiry
+};  // namespace translator
 #endif
