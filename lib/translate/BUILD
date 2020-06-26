@@ -1,5 +1,5 @@
 cc_library(
-  name = "translation_lib",
+  name = "inquiry_lib",
   srcs = ["inquiry.cc", "common.cc"],
   hdrs = ["inquiry.h", "common.h"],
   deps = [
