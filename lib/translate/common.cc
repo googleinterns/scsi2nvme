@@ -19,6 +19,8 @@
 
 namespace translator {
 
+constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
+
 void DebugLog(const char *format, ...) {
   if (debug_callback == nullptr) return;
   char buffer[1024];
