@@ -26,7 +26,7 @@ TEST(TranslteInquiryRawToScsi, empty) {
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
-  ASSERT_FALSE(status == translator::StatusCode::kSuccess);
+  ASSERT_NE(status, translator::StatusCode::kSuccess);
 }
 
 TEST(TranslteInquiryRawToScsi, wrongOp) {
@@ -35,7 +35,7 @@ TEST(TranslteInquiryRawToScsi, wrongOp) {
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
-  ASSERT_FALSE(status == translator::StatusCode::kSuccess);
+  ASSERT_NE(status, translator::StatusCode::kSuccess);
 }
 
 TEST(TranslteInquiryRawToScsi, defaultSuccess) {
@@ -51,7 +51,7 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
-  ASSERT_TRUE(status == translator::StatusCode::kSuccess);
+  ASSERT_EQ(status, translator::StatusCode::kSuccess);
 
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
@@ -77,7 +77,7 @@ TEST(TranslteInquiryRawToScsi, customSuccess) {
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
-  ASSERT_TRUE(status == translator::StatusCode::kSuccess);
+  ASSERT_EQ(status, translator::StatusCode::kSuccess);
 
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
