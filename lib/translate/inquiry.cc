@@ -133,6 +133,17 @@ scsi_defs::InquiryData BuildStandardInquiry() {
 }
 
 scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
+  // TODO: write this after SupportedVitalProductData in the return buffer when
+  // we agree on how to return SCSI responses
+  scsi_defs::PageCode supported_page_list[7] = {
+      scsi_defs::PageCode::kSupportedVpd,
+      scsi_defs::PageCode::kUnitSerialNumber,
+      scsi_defs::PageCode::kDeviceIdentification,
+      scsi_defs::PageCode::kExtended,
+      scsi_defs::PageCode::kBlockLimitsVpd,
+      scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
+      scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
+
   return scsi_defs::SupportedVitalProductData{
       .peripheral_qualifier =
           scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
@@ -144,13 +155,7 @@ scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
       // requires. NOTE: document says to set this to 5 but there are 7
       // entries....
       .page_length = 5,
-      .supported_page_list = {
-          scsi_defs::PageCode::kSupportedVpd,
-          scsi_defs::PageCode::kUnitSerialNumber,
-          scsi_defs::PageCode::kDeviceIdentification,
-          scsi_defs::PageCode::kExtended, scsi_defs::PageCode::kBlockLimitsVpd,
-          scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
-          scsi_defs::PageCode::kLogicalBlockProvisioningVpd}};
+  };
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
@@ -161,6 +166,9 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
   result.peripheral_device_type =
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.page_code = 0x80;
+
+  // TODO: write this after scsi response in buffer.
+  char *product_serial_number[100];
 
   // check if nonzero
   bool nguid_nz =
@@ -191,8 +199,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
         }
       }
 
-      memcpy(result.product_serial_number, formatted_hex_string,
-             result.page_length);
+      memcpy(product_serial_number, formatted_hex_string, result.page_length);
     } else {
       // 6.1.3.1.2
       result.page_length = 20;
@@ -216,8 +223,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
         }
       }
 
-      memcpy(result.product_serial_number, formatted_hex_string,
-             result.page_length);
+      memcpy(product_serial_number, formatted_hex_string, result.page_length);
     }
   } else {
     if (nguid_nz) {
@@ -244,8 +250,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
         }
       }
 
-      memcpy(result.product_serial_number, formatted_hex_string,
-             result.page_length);
+      memcpy(product_serial_number, formatted_hex_string, result.page_length);
     } else {
       // 6.1.3.1.3
       // valid for NVMe 1.0 devices only
