@@ -1,4 +1,5 @@
-#include <linux/device.h>
+#include "scsi_mock_module.h"
+
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -6,18 +7,6 @@
 
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
-
-#define NAME "SCSI2NVMe Mock"
-#define QUEUE_COUNT 1
-
-static struct bus_type pseudo_bus;
-
-static struct device* pseudo_root_dev;
-
-static struct device pseudo_adapter;
-
-static struct device_driver scsi_mock_driverfs = {.name = NAME,
-                                                  .bus = &pseudo_bus};
 
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   printk("RECIEVED COMMAND");
@@ -33,10 +22,10 @@ static const char* scsi_mock_info(struct Scsi_Host* host) {
 static struct scsi_host_template scsi_mock_template = {
     .info = scsi_mock_info,
     .module = THIS_MODULE,
-    .name = NAME,
+    .name = kName,
     .queuecommand = scsi_queuecommand,
     .eh_abort_handler = scsi_abort,
-    .proc_name = NAME,
+    .proc_name = kName,
     .can_queue = 64,
     .this_id = 7,
     .sg_tablesize = SG_MAX_SEGMENTS,
@@ -54,7 +43,7 @@ static int bus_driver_probe(struct device* dev) {
     printk("SCSI Host failed to allocate");
     return -ENODEV;
   }
-  scsi_host->nr_hw_queues = QUEUE_COUNT;
+  scsi_host->nr_hw_queues = kQueueCount;
   err = scsi_add_host(scsi_host, NULL);
   if (err) {
     scsi_host_put(scsi_host);
