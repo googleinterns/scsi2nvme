@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_INQUIRY_H
-#define LIB_INQUIRY_H
+#ifndef LIB_TRANSLATOR_INQUIRY_H
+#define LIB_TRANSLATOR_INQUIRY_H
 
 #include <cstdio>
 
