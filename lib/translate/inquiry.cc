@@ -66,11 +66,6 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
   scsi_defs::InquiryData result = scsi_defs::InquiryData{
-
-      .peripheral_qualifier =
-          scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
-      .peripheral_device_type =
-          scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
       .version = scsi_defs::Version::kSpc4,
       .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
       .additional_length = 0x1f,
