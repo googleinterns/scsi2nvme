@@ -22,7 +22,7 @@
 
 namespace translator {
 
-void DebugLog(const char* format, ...) {
+void DebugLog(const char *format, ...) {
   if (debug_callback == nullptr) return;
   char buffer[1024];
   va_list args;
@@ -32,7 +32,7 @@ void DebugLog(const char* format, ...) {
   va_end(args);
 }
 
-void SetDebugCallback(void (*callback)(const char*)) {
+void SetDebugCallback(void (*callback)(const char *)) {
   debug_callback = callback;
 }
 

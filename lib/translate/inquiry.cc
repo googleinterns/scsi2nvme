@@ -17,7 +17,6 @@
 
 namespace translator {
 
-
 // Creates and validates a Inquiry Command struct
 StatusCode RawToScsiCommand(absl::Span<const uint32_t> raw_cmd,
                             scsi_defs::InquiryCommand &cmd) {

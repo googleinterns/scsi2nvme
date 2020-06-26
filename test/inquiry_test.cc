@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include <stdlib.h>
 
-#include "lib/translate/inquiry.h"
 #include "gtest/gtest.h"
+#include "lib/translate/inquiry.h"
 
 // Tests
 
@@ -25,7 +24,8 @@ namespace {
 TEST(TranslteInquiryRawToScsi, empty) {
   absl::Span<const uint32_t> raw_cmd;
   scsi_defs::InquiryCommand result_cmd;
-translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  translator::StatusCode status =
+      translator::RawToScsiCommand(raw_cmd, result_cmd);
   ASSERT_FALSE(status == translator::StatusCode::kSuccess);
 }
 
@@ -33,7 +33,8 @@ TEST(TranslteInquiryRawToScsi, wrongOp) {
   const uint32_t buf = 4;
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
   scsi_defs::InquiryCommand result_cmd;
-translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  translator::StatusCode status =
+      translator::RawToScsiCommand(raw_cmd, result_cmd);
   ASSERT_FALSE(status == translator::StatusCode::kSuccess);
 }
 
@@ -48,7 +49,8 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   ASSERT_FALSE(raw_cmd.empty());
 
   scsi_defs::InquiryCommand result_cmd;
-translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  translator::StatusCode status =
+      translator::RawToScsiCommand(raw_cmd, result_cmd);
   ASSERT_TRUE(status == translator::StatusCode::kSuccess);
 
   ASSERT_EQ(result_cmd.reserved, 0);
@@ -74,7 +76,8 @@ TEST(TranslteInquiryRawToScsi, customSuccess) {
   ASSERT_FALSE(raw_cmd.empty());
 
   scsi_defs::InquiryCommand result_cmd;
-translator::StatusCode status =      translator::RawToScsiCommand(raw_cmd, result_cmd);
+  translator::StatusCode status =
+      translator::RawToScsiCommand(raw_cmd, result_cmd);
   ASSERT_TRUE(status == translator::StatusCode::kSuccess);
 
   ASSERT_EQ(result_cmd.reserved, 0);
