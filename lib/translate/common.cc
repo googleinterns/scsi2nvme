@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.i// Copyright 2020 Google LLC
 
-#ifndef COMMON_H
-#define COMMON_H
-
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -150,4 +147,3 @@ const char *ScsiOpcodeToString(scsi_defs::OpCode opcode) {
 }
 
 }  // namespace translator
-#endif
