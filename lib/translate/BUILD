@@ -14,6 +14,9 @@ cc_library(
   name = "common",
   hdrs = ["common.h"],
   srcs = ["common.cc"],
-  deps = [ ],
+  deps = [
+    "//lib:scsi_defs_lib", 
+    "@com_google_absl//absl/base",
+  ],
   visibility = ["//visibility:public"],
 )
