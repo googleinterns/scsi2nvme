@@ -65,23 +65,22 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   // SCSI Inquiry Standard Result
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
-  scsi_defs::InquiryData result = scsi_defs::InquiryData {
+  scsi_defs::InquiryData result = scsi_defs::InquiryData{
 
-  .peripheral_qualifier =
-      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
-  .peripheral_device_type =
-      scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
-  .version = scsi_defs::Version::kSpc4,
-  .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
-  .additional_length = 0x1f,
-  .tpgs = scsi_defs::TPGS::kNotSupported,
-  .protect = (identify_namespace_data.dps.pit == 0 &&
-                    identify_namespace_data.dps.md_start == 0)
-                       ? 0
-                       : 1,
+      .peripheral_qualifier =
+          scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected,
+      .peripheral_device_type =
+          scsi_defs::PeripheralDeviceType::kDirectAccessBlock,
+      .version = scsi_defs::Version::kSpc4,
+      .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
+      .additional_length = 0x1f,
+      .tpgs = scsi_defs::TPGS::kNotSupported,
+      .protect = (identify_namespace_data.dps.pit == 0 &&
+                  identify_namespace_data.dps.md_start == 0)
+                     ? 0
+                     : 1,
 
-  .cmdque = 1
-  };
+      .cmdque = 1};
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe “
   strncpy(result.vendor_identification, kNvmeVendorIdentification.data(), 8);
