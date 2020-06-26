@@ -840,8 +840,8 @@ static_assert(sizeof(UnitSerialNumber) == 260);
 struct IdentificationDescriptor {
   uint8_t protocol_identifier : 4;
   uint8_t code_set : 4;
-  uint8_t piv : 1;
-  uint8_t _reserved1 : 1;
+  bool piv : 1;
+  bool _reserved1 : 1;
   uint8_t association : 2;
   uint8_t identifier_type : 4;
   uint8_t _reserved2 : 8;
