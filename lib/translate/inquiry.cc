@@ -34,9 +34,11 @@ StatusCode RawToScsiCommand(absl::Span<const uint32_t> raw_cmd,
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
     char debug_buffer[100];
-    const char* expected_cmd_str = ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
-    const char* cmd_str = ScsiOpcodeToString(opcode);
-    sprintf(debug_buffer, "invalid opcode. expected %s got %s.", expected_cmd_str, cmd_str);
+    const char *expected_cmd_str =
+        ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
+    const char *cmd_str = ScsiOpcodeToString(opcode);
+    sprintf(debug_buffer, "invalid opcode. expected %s got %s.",
+            expected_cmd_str, cmd_str);
     if (debug_callback != NULL) debug_callback(debug_buffer);
 
     return StatusCode::kInvalidInput;
@@ -271,28 +273,28 @@ void translate(absl::Span<const uint32_t> raw_cmd) {
 
   if (cmd.evpd) {
     switch (cmd.page_code) {
-      case 0x00: {
+      case scsi_defs::PageCode::kSupportedVpd: {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
         scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
 
         break;
       }
-      case 0x80: {
+      case scsi_defs::PageCode::kUnitSerialNumber: {
         // Return Unit Serial Number data page toapplication client. Refer
         // to 6.1.3.
         scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
         break;
       }
-      case 0x83:
+      case scsi_defs::PageCode::kDeviceIdentification:
         // TODO: Return Device Identification data page toapplication client,
         // refer to 6.1.4
         break;
-      case 0x86:
+      case scsi_defs::PageCode::kExtended:
         // TODO: May optionally be supported by returning Extended INQUIRY data
         // page toapplication client, refer to 6.1.5.
         break;
-      case 0xB1:
+      case scsi_defs::PageCode::kReturnBlockDeviceCharacteristicsVpd:
         // TODO: Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
         break;

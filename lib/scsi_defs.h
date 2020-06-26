@@ -114,6 +114,14 @@ enum class OpCode : uint8_t {
   kVerify12 = 0xaf,
 };
 
+enum class PageCode : uint8_t {
+  kSupportedVpd = 0x00,
+  kUnitSerialNumber = 0x80,
+  kDeviceIdentification = 0x83,
+  kExtended = 0x86,
+  kReturnBlockDeviceCharacteristicsVpd = 0xB1
+};
+
 // SCSI Reference Manual Table 10
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct ControlByte {
@@ -157,7 +165,7 @@ struct InquiryCommand {
   uint8_t reserved : 6;
   bool obsolete : 1;  // formerly CMDDT
   bool evpd : 1;      // Enable Vital Product Data (EVPD)
-  uint8_t page_code : 8;
+  PageCode page_code : 8;
   uint16_t allocation_length : 16;
   ControlByte control_byte;
 } ABSL_ATTRIBUTE_PACKED;

@@ -56,11 +56,11 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
   ASSERT_EQ(result_cmd.evpd, 0);
-  ASSERT_EQ(result_cmd.page_code, 0);
   ASSERT_EQ(result_cmd.allocation_length, 0);
 }
 
 // TODO: test invalid parameters in scsi_command
+
 TEST(TranslteInquiryRawToScsi, customSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
   uint32_t *buf = (uint32_t *)malloc(4 * sz);
@@ -69,7 +69,6 @@ TEST(TranslteInquiryRawToScsi, customSuccess) {
   scsi_defs::InquiryCommand *cmd = (scsi_defs::InquiryCommand *)&buf[1];
   *cmd = scsi_defs::InquiryCommand();
   cmd->evpd = 1;
-  cmd->page_code = 4;
   cmd->allocation_length = 29;
 
   absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
@@ -83,7 +82,6 @@ TEST(TranslteInquiryRawToScsi, customSuccess) {
   ASSERT_EQ(result_cmd.reserved, 0);
   ASSERT_EQ(result_cmd.obsolete, 0);
   ASSERT_EQ(result_cmd.evpd, 1);
-  ASSERT_EQ(result_cmd.page_code, 4);
   ASSERT_EQ(result_cmd.allocation_length, 29);
 }
 
