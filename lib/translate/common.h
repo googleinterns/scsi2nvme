@@ -17,6 +17,8 @@
 
 namespace translator {
 
+constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
+
 static void (*debug_callback)(const char *);
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };

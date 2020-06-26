@@ -19,8 +19,6 @@
 
 namespace translator {
 
-constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
-
 void DebugLog(const char *format, ...) {
   if (debug_callback == nullptr) return;
   char buffer[1024];
@@ -113,6 +111,8 @@ const char *ScsiOpcodeToString(scsi_defs::OpCode opcode) {
       return "kWrite12";
     case scsi_defs::OpCode::kVerify12:
       return "kVerify12";
+    default:
+      return "INVALID_OPCODE";
   }
 }
 
