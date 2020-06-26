@@ -14,8 +14,8 @@
 
 #include <stdlib.h>
 
-#include "gtest/gtest.h"
 #include "lib/translate/inquiry.h"
+#include "gtest/gtest.h"
 
 // Tests
 
@@ -148,11 +148,13 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ASSERT_EQ(result.product_revision_level[3], 'd');
 }
 
-// TODO?
+// TODO: relies on nvme exec function impl
 TEST(TranslateStandardInquiryResponse, badControllerData) {}
-// TODO?
+
+// TODO: relies on nvme exec function impl
 TEST(TranslateStandardInquiryResponse, badNamespaceData) {}
-// TODO?
+
+// TODO: relies on nvme exec function impl
 TEST(TranslateStandardInquiryResponse, noData) {}
 
 TEST(SupportedVpdPages, Success) {
