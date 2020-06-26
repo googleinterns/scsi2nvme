@@ -1,7 +1,7 @@
 // Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //      https://www.apache.org/licenses/LICENSE-2.0
@@ -12,26 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/translate/common.h"
+#ifndef LIB_TRANSLATOR_COMMON_H
+#define LIB_TRANSLATOR_COMMON_H
 
-#include "gtest/gtest.h"
+namespace translator {
 
-namespace {
+enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 
-/*
-   Tests the logging methods
-*/
+void DebugLog(const char* format, ...);
 
-TEST(Common, ShouldCorrectlyCallback) {
-  const char* buf = "Testing%d";
-  auto callback = [](const char* buf) {
-    const char* expected_buf = "Testing123";
-    for (uint32_t i = 0; i < 11; ++i) {
-      EXPECT_EQ(expected_buf[i], buf[i]);
-    }
-  };
-  translator::SetDebugCallback(callback);
-  translator::DebugLog(buf, 123);
-}
+void SetDebugCallback(void (*callback)(const char*));
 
-}  // namespace
+}  // namespace translator
+
+#endif
