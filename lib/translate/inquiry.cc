@@ -18,7 +18,7 @@
 namespace translator {
 
 // Creates and validates a Inquiry Command struct
-StatusCode RawToScsiCommand(absl::Span<const uint32_t> raw_cmd,
+StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
                             scsi_defs::InquiryCommand &cmd) {
   if (raw_cmd.empty()) {
     char debug_buffer[100];
@@ -259,7 +259,7 @@ scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
 
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
-void translate(absl::Span<const uint32_t> raw_cmd) {
+void translate(absl::Span<const uint8_t> raw_cmd) {
   scsi_defs::InquiryCommand cmd;
   StatusCode status = RawToScsiCommand(raw_cmd, cmd);
   if (status != StatusCode::kSuccess) return;

@@ -22,7 +22,7 @@
 namespace {
 
 TEST(TranslteInquiryRawToScsi, empty) {
-  absl::Span<const uint32_t> raw_cmd;
+  absl::Span<const uint8_t> raw_cmd;
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
@@ -30,8 +30,8 @@ TEST(TranslteInquiryRawToScsi, empty) {
 }
 
 TEST(TranslteInquiryRawToScsi, wrongOp) {
-  const uint32_t buf = 4;
-  absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(&buf, 1);
+  const uint8_t buf = 4;
+  absl::Span<const uint8_t> raw_cmd = absl::MakeSpan(&buf, 1);
   scsi_defs::InquiryCommand result_cmd;
   translator::StatusCode status =
       translator::RawToScsiCommand(raw_cmd, result_cmd);
@@ -40,12 +40,12 @@ TEST(TranslteInquiryRawToScsi, wrongOp) {
 
 TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
-  uint32_t *buf = (uint32_t *)malloc(4 * sz);
-  buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
+  uint8_t *buf = (uint8_t *)malloc(4 * sz);
+  buf[0] = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
 
   scsi_defs::InquiryCommand *cmd = (scsi_defs::InquiryCommand *)&buf[1];
   *cmd = scsi_defs::InquiryCommand();
-  absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
+  absl::Span<const uint8_t> raw_cmd = absl::MakeSpan(buf, sz);
   ASSERT_FALSE(raw_cmd.empty());
 
   scsi_defs::InquiryCommand result_cmd;
@@ -63,15 +63,15 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
 
 TEST(TranslteInquiryRawToScsi, customSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
-  uint32_t *buf = (uint32_t *)malloc(4 * sz);
-  buf[0] = static_cast<uint32_t>(scsi_defs::OpCode::kInquiry);
+  uint8_t *buf = (uint8_t *)malloc(4 * sz);
+  buf[0] = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
 
   scsi_defs::InquiryCommand *cmd = (scsi_defs::InquiryCommand *)&buf[1];
   *cmd = scsi_defs::InquiryCommand();
   cmd->evpd = 1;
   cmd->allocation_length = 29;
 
-  absl::Span<const uint32_t> raw_cmd = absl::MakeSpan(buf, sz);
+  absl::Span<const uint8_t> raw_cmd = absl::MakeSpan(buf, sz);
   ASSERT_FALSE(raw_cmd.empty());
 
   scsi_defs::InquiryCommand result_cmd;
