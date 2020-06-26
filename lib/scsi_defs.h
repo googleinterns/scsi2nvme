@@ -120,8 +120,8 @@ enum class PageCode : uint8_t {
   kDeviceIdentification = 0x83,
   kExtended = 0x86,
   kBlockLimitsVpd = 0xb0,
-  kBlockDeviceCharacteristicsVpd = 0xB1,
-  kLogicalBlockProvisioningVpd = 0xB2
+  kBlockDeviceCharacteristicsVpd = 0xb1,
+  kLogicalBlockProvisioningVpd = 0xb2
 };
 
 // SCSI Reference Manual Table 10
