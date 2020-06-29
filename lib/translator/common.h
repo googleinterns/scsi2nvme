@@ -28,9 +28,9 @@ void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
 
-void* AllocBlock(uint8_t count);
+void* AllocPage(uint8_t count);
 
-void SetAllocBlockCallback(void* (*callback)(uint8_t));
+void SetAllocPageCallback(void* (*callback)(uint8_t));
 
 struct ScsiContext {
   scsi_defs::LunAddress lun;

@@ -20,7 +20,7 @@
 namespace translator {
 
 static void (*debug_callback)(const char*);
-static void* (*alloc_block_callback)(uint8_t);
+static void* (*alloc_page_callback)(uint8_t);
 
 void DebugLog(const char* format, ...) {
   if (debug_callback == nullptr) return;
@@ -36,13 +36,13 @@ void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
 
-void* AllocBlock(uint8_t count) {
-  if (alloc_block_callback == nullptr) return nullptr;
-  return alloc_block_callback(count);
+void* AllocPage(uint8_t count) {
+  if (alloc_page_callback == nullptr) return nullptr;
+  return alloc_page_callback(count);
 }
 
-void SetAllocBlockCallback(void* (*callback)(uint8_t)) {
-  alloc_block_callback = callback;
+void SetAllocPageCallback(void* (*callback)(uint8_t)) {
+  alloc_page_callback = callback;
 }
 
 }  // namespace translator
