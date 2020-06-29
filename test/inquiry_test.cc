@@ -40,7 +40,7 @@ TEST(TranslteInquiryRawToScsi, wrongOp) {
 
 TEST(TranslteInquiryRawToScsi, defaultSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
-  uint8_t *buf = (uint8_t *)malloc(4 * sz);
+  uint8_t*buf = (uint8_t*)malloc(4 * sz);
   buf[0] = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
 
   scsi_defs::InquiryCommand *cmd = (scsi_defs::InquiryCommand *)&buf[1];
@@ -63,7 +63,7 @@ TEST(TranslteInquiryRawToScsi, defaultSuccess) {
 
 TEST(TranslteInquiryRawToScsi, customSuccess) {
   uint32_t sz = 1 + sizeof(scsi_defs::InquiryCommand);
-  uint8_t *buf = (uint8_t *)malloc(4 * sz);
+  uint8_t*buf = (uint8_t*)malloc(4 * sz);
   buf[0] = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
 
   scsi_defs::InquiryCommand *cmd = (scsi_defs::InquiryCommand *)&buf[1];
@@ -128,7 +128,7 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ASSERT_EQ(result.sync, 0);
   ASSERT_EQ(result.cmdque, 1);
 
-  char *c = result.vendor_identification;
+  char* c = result.vendor_identification;
   ASSERT_EQ(c[0], 'N');
   ASSERT_EQ(c[1], 'V');
   ASSERT_EQ(c[2], 'M');
@@ -218,7 +218,7 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
 
   // TODO: will test when response buffer is implemented
-  // ASSERT_STREQ((char *)result.product_serial_number, formatted_hex_string);
+  // ASSERT_STREQ((char* )result.product_serial_number, formatted_hex_string);
 }
 
 TEST(TranslateUnitSerialNumberVpd, both) {
@@ -240,6 +240,6 @@ TEST(TranslateUnitSerialNumberVpd, both) {
 
   // TODO: will test when response buffer is implemented
   // char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
-  // ASSERT_STREQ((char *)result.product_serial_number, formatted_hex_string);
+  // ASSERT_STREQ((char* )result.product_serial_number, formatted_hex_string);
 }
 }  // namespace

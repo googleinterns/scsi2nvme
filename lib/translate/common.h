@@ -19,15 +19,15 @@ namespace translator {
 
 constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
 
-static void (*debug_callback)(const char *);
+static void (*debug_callback)(const char* );
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 
-void DebugLog(const char *format, ...);
+void DebugLog(const char* format, ...);
 
-void SetDebugCallback(void (*callback)(const char *));
+void SetDebugCallback(void (*callback)(const char* ));
 
-const char *ScsiOpcodeToString(scsi_defs::OpCode opcode);
+const char* ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode &opcode);
 
