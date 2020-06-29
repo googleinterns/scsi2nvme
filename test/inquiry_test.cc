@@ -148,15 +148,6 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ASSERT_EQ(result.product_revision_level[3], 'd');
 }
 
-// TODO: relies on nvme exec function impl
-TEST(TranslateStandardInquiryResponse, badControllerData) {}
-
-// TODO: relies on nvme exec function impl
-TEST(TranslateStandardInquiryResponse, badNamespaceData) {}
-
-// TODO: relies on nvme exec function impl
-TEST(TranslateStandardInquiryResponse, noData) {}
-
 TEST(SupportedVpdPages, Success) {
   scsi_defs::SupportedVitalProductData result =
       translator::BuildSupportedVpdPages();

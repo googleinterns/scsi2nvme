@@ -27,9 +27,6 @@ void translate(absl::Span<const uint8_t>);
 StatusCode RawToScsiCommand(absl::Span<const uint8_t>,
                             scsi_defs::InquiryCommand &);
 
-nvme_defs::IdentifyControllerData NvmeIdentifyController();
-nvme_defs::IdentifyNamespace NvmeIdentifyNamespace();
-
 scsi_defs::InquiryData BuildStandardInquiry();
 scsi_defs::InquiryData TranslateStandardInquiryResponse(
     const nvme_defs::IdentifyControllerData &identify_controller_data,

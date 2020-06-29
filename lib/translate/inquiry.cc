@@ -49,16 +49,6 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
   return StatusCode::kSuccess;
 }
 
-// TODO: Executes the NVME Identify Controller command
-nvme_defs::IdentifyControllerData NvmeIdentifyController() {
-  return nvme_defs::IdentifyControllerData();
-}
-
-// TODO: Executes the NVME Identify Namespace command
-nvme_defs::IdentifyNamespace NvmeIdentifyNamespace() {
-  return nvme_defs::IdentifyNamespace();
-}
-
 scsi_defs::InquiryData TranslateStandardInquiryResponse(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data) {
@@ -109,11 +99,9 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
 
 scsi_defs::InquiryData BuildStandardInquiry() {
   // Identify controller results
-  nvme_defs::IdentifyControllerData identify_controller_data =
-      NvmeIdentifyController();
+  nvme_defs::IdentifyControllerData identify_controller_data;
   // Identify namespace results
-  nvme_defs::IdentifyNamespace identify_namespace_data =
-      NvmeIdentifyNamespace();
+  nvme_defs::IdentifyNamespace identify_namespace_data;
   return TranslateStandardInquiryResponse(identify_controller_data,
                                           identify_namespace_data);
 }
@@ -242,8 +230,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
 }
 
 scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
-  nvme_defs::IdentifyNamespace identify_namespace_data =
-      NvmeIdentifyNamespace();
+  nvme_defs::IdentifyNamespace identify_namespace_data;
   return TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
 }
 
