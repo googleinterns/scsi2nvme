@@ -36,6 +36,7 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
     DebugLog("invalid opcode - does not exist.");
     return StatusCode::kInvalidInput;
   }
+  
   if (opcode != scsi_defs::OpCode::kInquiry) {
     const char *expected_cmd_str =
         ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
