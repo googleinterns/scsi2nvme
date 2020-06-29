@@ -25,16 +25,22 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::OpCode opcode;
-  StatusCode opcode_status = MakeScsiOpcode(raw_cmd[0], opcode);
-  if (opcode_status != StatusCode::kSuccess) {
-    return opcode_status;
+  uint8_t raw_opcode = raw_cmd[0];
+  if (raw_opcode > 0xaf) {
+    DebugLog("raw opcode is out of range: %x", raw_opcode);
+    return StatusCode::kInvalidInput;
+  }
+
+  scsi_defs::OpCode opcode = static_cast<scsi_defs::OpCode>(raw_opcode);
+  if (!strcmp(ScsiOpcodeToString(opcode), "INVALID OPCODE")) {
+      DebugLog("invalid opcode - does not exist.");
+      return StatusCode::kInvalidInput;
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
     const char* expected_cmd_str =
         ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
     const char* cmd_str = ScsiOpcodeToString(opcode);
-    DebugLog("invalid opcode. expected %s got %s.",
+    DebugLog("wrong opcode. expected %s got %s.",
             expected_cmd_str, cmd_str);
     return StatusCode::kInvalidInput;
   }

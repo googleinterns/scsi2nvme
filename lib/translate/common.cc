@@ -33,15 +33,6 @@ void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
 
-StatusCode MakeScsiOpcode(uint8_t val, scsi_defs::OpCode &opcode) {
-  if (val > 0xaf) {
-    DebugLog("invalid opcode. %ux is out of range.", val);
-    return StatusCode::kInvalidInput;
-  }
-  opcode = static_cast<scsi_defs::OpCode>(val);
-  return StatusCode::kSuccess;
-}
-
 const char* ScsiOpcodeToString(scsi_defs::OpCode opcode) {
   switch (opcode) {
     case scsi_defs::OpCode::kTestUnitReady:
