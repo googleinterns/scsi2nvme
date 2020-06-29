@@ -25,6 +25,7 @@ void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
 
-const char* ScsiOpcodeToString(scsi_defs::OpCode opcode);
+
+absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 }  // namespace translator

@@ -35,7 +35,7 @@ void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
 
-const char* ScsiOpcodeToString(scsi_defs::OpCode opcode) {
+absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode) {
   switch (opcode) {
     case scsi_defs::OpCode::kTestUnitReady:
       return "kTestUnitReady";
