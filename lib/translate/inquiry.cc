@@ -21,9 +21,7 @@ namespace translator {
 StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
                             scsi_defs::InquiryCommand &cmd) {
   if (raw_cmd.empty()) {
-    char debug_buffer[100];
-    sprintf(debug_buffer, "buffer is empty or nullptr\n");
-    if (debug_callback != NULL) debug_callback(debug_buffer);
+    DebugLog("buffer is empty or nullptr\n");
     return StatusCode::kInvalidInput;
   }
 
@@ -33,14 +31,11 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
     return opcode_status;
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
-    char debug_buffer[100];
     const char* expected_cmd_str =
         ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
     const char* cmd_str = ScsiOpcodeToString(opcode);
-    sprintf(debug_buffer, "invalid opcode. expected %s got %s.",
+    DebugLog("invalid opcode. expected %s got %s.",
             expected_cmd_str, cmd_str);
-    if (debug_callback != NULL) debug_callback(debug_buffer);
-
     return StatusCode::kInvalidInput;
   }
 
@@ -90,9 +85,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   }
 
   if (idx >= 0) {
-    char debug_buffer[100];
-    sprintf(debug_buffer, "less than four characters set\n");
-    if (debug_callback != NULL) debug_callback(debug_buffer);
+    DebugLog("less than four characters set\n");
   }
   return result;
 }
