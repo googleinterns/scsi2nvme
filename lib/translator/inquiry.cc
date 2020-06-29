@@ -70,11 +70,13 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe    “
   // Vendor Identification is not null terminated.
-  memcpy(result.vendor_identification, kNvmeVendorIdentification.data(), kNvmeVendorIdentification.size());
+  memcpy(result.vendor_identification, kNvmeVendorIdentification.data(),
+         kNvmeVendorIdentification.size());
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
   // the Identify Controller Data Structure
-  memcpy(result.product_identification, identify_controller_data.mn, sizeof(result.product_identification));
+  memcpy(result.product_identification, identify_controller_data.mn,
+         sizeof(result.product_identification));
 
   /*
   Shall be set to the last 4 ASCII graphic characters in the range of 21h-7Eh
