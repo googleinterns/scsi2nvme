@@ -19,6 +19,8 @@
 
 namespace translator {
 
+static void (*debug_callback)(const char*);
+
 void DebugLog(const char* format, ...) {
   if (debug_callback == nullptr) return;
   char buffer[1024];
@@ -32,8 +34,7 @@ void DebugLog(const char* format, ...) {
 void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
-
-const char* ScsiOpcodeToString(scsi_defs::OpCode opcode) {
+in const char* ScsiOpcodeToString(scsi_defs::OpCode opcode) {
   switch (opcode) {
     case scsi_defs::OpCode::kTestUnitReady:
       return "kTestUnitReady";

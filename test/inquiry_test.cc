@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 #include "gtest/gtest.h"
-#include "lib/translate/inquiry.h"
+#include "lib/translator/inquiry.h"
 
 // Tests
 

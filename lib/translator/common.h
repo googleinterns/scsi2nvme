@@ -28,5 +28,3 @@ void SetDebugCallback(void (*callback)(const char*));
 const char* ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 }  // namespace translator
-
-#endif
