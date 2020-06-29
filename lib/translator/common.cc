@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.i// Copyright 2020 Google LLC
 
+#include "common.h"
+
 #include <stdarg.h>
 #include <stdio.h>
-
-#include "common.h"
 
 namespace translator {
 
