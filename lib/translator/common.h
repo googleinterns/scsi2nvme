@@ -15,6 +15,9 @@
 #ifndef LIB_TRANSLATOR_COMMON_H
 #define LIB_TRANSLATOR_COMMON_H
 
+#include "lib/scsi_defs.h"
+#include "third_party/spdk_defs/nvme_defs.h"
+
 namespace translator {
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
@@ -22,6 +25,29 @@ enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
+
+struct ScsiContext {
+  scsi_defs::LunAddress lun;
+}
+
+struct NvmeCompletionData {
+  nvme_data::GenericQueueEntryCpl nvme_cpl[3];
+}
+
+class Translation {
+ public:
+  Translation() = default;
+  StatusCode ScsiToNvme(absl::span<const uint8_t> scsi_cmd,
+                        const ScsiContext& scsi_context);
+  StatusCode NvmeToScsi(const NvmeCompletionData cpl_data, void* data_in);
+  absl::span<const GenericSubmissionQueueCmd> GetNvmeCmds();
+
+ private:
+  absl::span<const uint8_t> scsi_cmd;
+  ScsiContext scsi_context;
+  uint32_t nvme_cmd_count;
+  nvme_defs::GenericSubmissionQueueCmd nvme_cmds[3];
+}
 
 }  // namespace translator
 
