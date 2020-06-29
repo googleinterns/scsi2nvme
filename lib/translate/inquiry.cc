@@ -33,15 +33,14 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
 
   scsi_defs::OpCode opcode = static_cast<scsi_defs::OpCode>(raw_opcode);
   if (!strcmp(ScsiOpcodeToString(opcode), "INVALID OPCODE")) {
-      DebugLog("invalid opcode - does not exist.");
-      return StatusCode::kInvalidInput;
+    DebugLog("invalid opcode - does not exist.");
+    return StatusCode::kInvalidInput;
   }
   if (opcode != scsi_defs::OpCode::kInquiry) {
-    const char* expected_cmd_str =
+    const char *expected_cmd_str =
         ScsiOpcodeToString(scsi_defs::OpCode::kInquiry);
-    const char* cmd_str = ScsiOpcodeToString(opcode);
-    DebugLog("wrong opcode. expected %s got %s.",
-            expected_cmd_str, cmd_str);
+    const char *cmd_str = ScsiOpcodeToString(opcode);
+    DebugLog("wrong opcode. expected %s got %s.", expected_cmd_str, cmd_str);
     return StatusCode::kInvalidInput;
   }
 
@@ -135,7 +134,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
   result.page_code = 0x80;
 
   // TODO: write this after scsi response in buffer.
-  char* product_serial_number[100];
+  char *product_serial_number[100];
 
   // check if nonzero
   bool nguid_nz =
