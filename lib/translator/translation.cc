@@ -17,7 +17,7 @@
 namespace translator {
 
 StatusCode Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
-                                   scsi_defs::LunAddress lun) {
+                              scsi_defs::LunAddress lun) {
   this->pipeline_status = StatusCode::kSuccess;
   // Verify buffer is large enough to contain opcode (one byte)
   if (scsi_cmd.size() < 1) {
@@ -39,8 +39,9 @@ StatusCode Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   }
 }
 
-StatusCode Translation::Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
-                                 absl::Span<uint8_t> buffer) {
+StatusCode Translation::Complete(
+    absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+    absl::Span<uint8_t> buffer) {
   if (this->pipeline_status == StatusCode::kFailure) {
     // TODO fill buffer with SCSI failure response
     return StatusCode::kFailure;

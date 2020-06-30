@@ -35,11 +35,14 @@ void SetAllocPageCallback(void* (*callback)(uint8_t));
 
 class Translation {
  public:
-  // Translates from SCSI to NVMe. Translated commands available through GetNvmeCmds()
-  StatusCode Begin(absl::Span<const uint8_t> scsi_cmd, scsi_defs::LunAddress lun);
+  // Translates from SCSI to NVMe. Translated commands available through
+  // GetNvmeCmds()
+  StatusCode Begin(absl::Span<const uint8_t> scsi_cmd,
+                   scsi_defs::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  StatusCode Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
-		      absl::Span<uint8_t> buffer);
+  StatusCode Complete(
+      absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+      absl::Span<uint8_t> buffer);
   // Returns a span containing translated NVMe commands.
   absl::Span<const nvme_defs::GenericQueueEntryCmd> GetNvmeCmds();
 
