@@ -28,30 +28,24 @@ void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
 
-void* AllocPage(uint8_t count);
+// Max consecutive pages required by NVMe PRP list is 512
+void* AllocPage(uint16_t count);
 
 void SetAllocPageCallback(void* (*callback)(uint8_t));
 
-struct ScsiContext {
-  scsi_defs::LunAddress lun;
-};
-
-struct NvmeCompletionData {
-  nvme_defs::GenericQueueEntryCpl nvme_cpl[3];
-};
-
 class Translation {
  public:
-  Translation() = default;
-  StatusCode ScsiToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        const ScsiContext& scsi_context);
-  StatusCode NvmeToScsi(const NvmeCompletionData& cpl_data, void* data_in);
+  // Translates from SCSI to NVMe. Translated commands available through GetNvmeCmds()
+  StatusCode Begin(absl::Span<const uint8_t> scsi_cmd, scsi_defs::LunAddress lun);
+  // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
+  StatusCode Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+		      absl::Span<uint8_t> buffer);
+  // Returns a span containing translated NVMe commands.
   absl::Span<const nvme_defs::GenericQueueEntryCmd> GetNvmeCmds();
 
  private:
   StatusCode pipeline_status;
   absl::Span<const uint8_t> scsi_cmd;
-  ScsiContext scsi_context;
   uint32_t nvme_cmd_count;
   nvme_defs::GenericQueueEntryCmd nvme_cmds[3];
 };

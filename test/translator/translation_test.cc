@@ -26,8 +26,7 @@ TEST(Translation, ShouldReturnUnknownOpCode) {
   translator::Translation translation;
   uint8_t opc = 233;
   absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(&opc, 1);
-  translator::ScsiContext context;
-  translator::StatusCode sc = translation.ScsiToNvme(scsi_cmd, context);
+  translator::StatusCode sc = translation.Begin(scsi_cmd, 0);
   EXPECT_EQ(translator::StatusCode::kNoTranslation, sc);
 }
 
@@ -35,8 +34,7 @@ TEST(Translation, ShouldReturnSuccess) {
   translator::Translation translation;
   uint8_t opc = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
   absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(&opc, 1);
-  translator::ScsiContext context;
-  translator::StatusCode sc = translation.ScsiToNvme(scsi_cmd, context);
+  translator::StatusCode sc = translation.Begin(scsi_cmd, 0);
   EXPECT_EQ(translator::StatusCode::kSuccess, sc);
 }
 

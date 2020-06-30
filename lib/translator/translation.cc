@@ -16,8 +16,8 @@
 
 namespace translator {
 
-StatusCode Translation::ScsiToNvme(absl::Span<const uint8_t> scsi_cmd,
-                                   const ScsiContext& scsi_context) {
+StatusCode Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
+                                   scsi_defs::LunAddress lun) {
   this->pipeline_status = StatusCode::kSuccess;
   // Verify buffer is large enough to contain opcode (one byte)
   if (scsi_cmd.size() < 1) {
@@ -27,7 +27,6 @@ StatusCode Translation::ScsiToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   this->scsi_cmd = scsi_cmd;
-  this->scsi_context = scsi_context;
 
   scsi_defs::OpCode opc = static_cast<scsi_defs::OpCode>(scsi_cmd[0]);
   switch (opc) {
@@ -40,18 +39,14 @@ StatusCode Translation::ScsiToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 }
 
-StatusCode Translation::NvmeToScsi(const NvmeCompletionData& cpl_data,
-                                   void* data_in) {
+StatusCode Translation::Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+                                 absl::Span<uint8_t> buffer) {
   if (this->pipeline_status == StatusCode::kFailure) {
-    // TODO fill data-in buffer with SCSI failure response
+    // TODO fill buffer with SCSI failure response
     return StatusCode::kFailure;
   }
 
-  if (scsi_cmd.size() < 1) {
-    DebugLog("Empty SCSI Buffer");
-    return StatusCode::kFailure;
-  }
-  if (data_in == nullptr) {
+  if (buffer.empty()) {
     DebugLog("Null data_in buffer");
     return StatusCode::kFailure;
   }
