@@ -1,7 +1,7 @@
 cc_library(
     name = "hello_world_lib",
-    srcs = glob(["**/*.cc"]),
-    hdrs = glob(["**/*.h"]),
+    srcs = ["hello_world.cc"],
+    hdrs = ["hello_world.h"],
     visibility = ["//visibility:public"],
 )
 
