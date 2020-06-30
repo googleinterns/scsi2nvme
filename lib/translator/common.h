@@ -29,9 +29,12 @@ void DebugLog(const char* format, ...);
 void SetDebugCallback(void (*callback)(const char*));
 
 // Max consecutive pages required by NVMe PRP list is 512
-void* AllocPage(uint16_t count);
+void* AllocPages(uint16_t count);
 
-void SetAllocPageCallback(void* (*callback)(uint8_t));
+void* DeallocPages(uint16_t count);
+
+void SetPageCallback(void* (*alloc_callback)(uint16_t),
+                     void* (*dealloc_callback)(uint16_t));
 
 class Translation {
  public:
