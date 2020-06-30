@@ -156,7 +156,7 @@ TEST(SupportedVpdPages, Success) {
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
-  ASSERT_EQ(result.page_code, 0);
+  ASSERT_EQ(result.page_code, scsi_defs::PageCode::kSupportedVpd);
   ASSERT_EQ(result.page_length, 5);
 
   // TODO: will test when response buffer is implemented
@@ -189,7 +189,7 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
-  ASSERT_EQ(result.page_code, 0x80);
+  ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 20);
 
   // TODO: will test when response buffer is implemented
@@ -213,7 +213,7 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
-  ASSERT_EQ(result.page_code, 0x80);
+  ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
 
@@ -235,7 +235,7 @@ TEST(TranslateUnitSerialNumberVpd, both) {
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
-  ASSERT_EQ(result.page_code, 0x80);
+  ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
 
   // TODO: will test when response buffer is implemented

@@ -131,7 +131,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
       scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
   result.peripheral_device_type =
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
-  result.page_code = 0x80;
+  result.page_code = scsi_defs::PageCode::kUnitSerialNumber;
 
   // TODO: write this after scsi response in buffer.
   char *product_serial_number[100];

@@ -818,7 +818,7 @@ static_assert(sizeof(UnmapBlockDescriptor) == 16);
 struct SupportedVitalProductData {
   PeripheralQualifier peripheral_qualifier : 3;
   PeripheralDeviceType peripheral_device_type : 5;
-  uint8_t page_code : 8;
+  PageCode page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
   // PageCode supported_page_list[256];
@@ -830,7 +830,7 @@ static_assert(sizeof(SupportedVitalProductData) == 4);
 struct UnitSerialNumber {
   PeripheralQualifier peripheral_qualifier : 3;
   PeripheralDeviceType peripheral_device_type : 5;
-  uint8_t page_code : 8;
+  PageCode page_code : 8;
   uint8_t _reserved : 8;
   uint8_t page_length : 8;
   // uint8_t product_serial_number[256];
@@ -857,7 +857,7 @@ static_assert(sizeof(IdentificationDescriptor) == 4);
 struct DeviceIdentificationVpd {
   PeripheralQualifier peripheral_qualifier : 3;
   PeripheralDeviceType peripheral_device_type : 5;
-  uint8_t page_code : 8;
+  PageCode page_code : 8;
   uint8_t page_length : 8;
   // IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;

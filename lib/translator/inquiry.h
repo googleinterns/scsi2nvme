@@ -23,6 +23,7 @@
 #include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
+
 void translate(absl::Span<const uint8_t>);
 StatusCode RawToScsiCommand(absl::Span<const uint8_t>,
                             scsi_defs::InquiryCommand &);
