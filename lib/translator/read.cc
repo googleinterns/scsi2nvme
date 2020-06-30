@@ -49,6 +49,21 @@ uint8_t GetPrinfo(uint8_t rd_protect) {
   return prinfo;
 }
 
+StatusCode SetProtection(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
+                         nvme_defs::GenericQueueEntryCmd& queue_entry) {
+  bool namespace_formatted = false;
+  if (namespace_formatted) {
+    queue_entry.cdw[4] =
+        eilbrt;  // expected initial logical block reference eilbrt
+    queue_entry.cdw[5] |=
+        elbat;  // expected logical block application tag ELBAT
+    queue_entry.cdw[5] |= (elbatm << 16);  // bits  31:16 expected logical block
+                                           // application tag mask elbatm
+  }
+
+  return StatusCode::kSuccess;
+}
+
 StatusCode GenericRead(uint32_t lba, uint16_t transfer_length,
                        nvme_defs::GenericQueueEntryCmd& queue_entry,
                        uint64_t prp_ptr) {
@@ -99,13 +114,6 @@ StatusCode AdvancedRead(uint8_t rd_protect, bool fua, uint32_t lba,
   uint8_t dsm;  // indicates attributes for lbas being read, e.g. compressible,
                 // sequential request, access latency, access frequency
   queue_entry.cdw[3] |= dsm;
-
-  bool namespace_formatted = false;
-  if (namespace_formatted) {
-    queue_entry.cdw[4] = 0;  // expected initial logical block reference eilbrt
-    queue_entry.cdw[5] = 0;  // expected logical block application tag ELBAT
-    // bits  31:16 expected logical block application tag mask elbatm
-  }
   return StatusCode::kSuccess;
 }
 
@@ -139,6 +147,45 @@ StatusCode Read12ToNvme(
   for (int i = 1; i <= num_calls; i++) {
     AdvancedRead(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
                  queue_entries[i], prp_ptr + i * pow(2, 16));
+  }
+
+  return StatusCode::kSuccess;
+}
+
+StatusCode Read16ToNvme(
+    scsi_defs::Read16Command cmd,
+    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
+    uint64_t prp_ptr) {
+  uint32_t transfer_length = cmd.transfer_length;
+  uint8_t num_calls = transfer_length / pow(2, 16);
+
+  AdvancedRead(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+               transfer_length % (uint16_t)pow(2, 16), queue_entries[0],
+               prp_ptr);
+
+  for (int i = 1; i <= num_calls; i++) {
+    AdvancedRead(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
+                 queue_entries[i], prp_ptr + i * pow(2, 16));
+  }
+
+  return StatusCode::kSuccess;
+}
+
+StatusCode Read32ToNvme(
+    scsi_defs::Read32Command cmd,
+    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
+    uint64_t prp_ptr) {
+  uint32_t transfer_length = cmd.transfer_length;
+  uint8_t num_calls = transfer_length / pow(2, 16);
+
+  AdvancedRead(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+               transfer_length % (uint16_t)pow(2, 16), queue_entries[0],
+               prp_ptr);
+
+  for (int i = 1; i <= num_calls; i++) {
+    AdvancedRead(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
+                 queue_entries[i], prp_ptr + i * pow(2, 16));
+    SetProtection(cmd.eilbrt, cmd.elbat, cmd.lbatm, queue_entries[i]);
   }
 
   return StatusCode::kSuccess;
