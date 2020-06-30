@@ -21,7 +21,7 @@ namespace translator {
 StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
                             scsi_defs::InquiryCommand &cmd) {
   if (raw_cmd.empty()) {
-    DebugLog("buffer is empty or nullptr\n");
+    DebugLog("buffer is empty or nullptr");
     return StatusCode::kInvalidInput;
   }
 
@@ -32,10 +32,6 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::OpCode opcode = static_cast<scsi_defs::OpCode>(raw_opcode);
-  // if (!strcmp(ScsiOpcodeToString(opcode), "INVALID OPCODE")) {
-  //   DebugLog("invalid opcode - does not exist.");
-  //   return StatusCode::kInvalidInput;
-  // }
 
   if (opcode != scsi_defs::OpCode::kInquiry) {
     absl::string_view expected_cmd_str =
@@ -94,7 +90,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   }
 
   if (idx >= 0) {
-    DebugLog("less than four characters set\n");
+    DebugLog("less than four characters set");
   }
   return result;
 }
