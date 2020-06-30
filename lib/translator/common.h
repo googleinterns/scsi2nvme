@@ -17,7 +17,10 @@
 
 namespace translator {
 
+// Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
+// This value is not null terminated and should be size 8
 constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
+static_assert(kNvmeVendorIdentification.size() == 8);
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 
