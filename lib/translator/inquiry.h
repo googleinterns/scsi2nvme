@@ -35,7 +35,7 @@ void TranslateStandardInquiry(
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t);
 
-scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages();
+void TranslateSupportedVpdPages(absl::Span<uint8_t> buffer);
 
 };  // namespace translator
 #endif

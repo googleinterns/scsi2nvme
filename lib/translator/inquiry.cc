@@ -92,7 +92,7 @@ void TranslateStandardInquiry(
   memcpy(buffer.data(), &result, sizeof(result));
 }
 
-scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages() {
+void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
   // TODO: write this after SupportedVitalProductData in the return buffer when
   // we agree on how to return SCSI responses
   scsi_defs::PageCode supported_page_list[7] = {
@@ -104,12 +104,14 @@ scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages() {
       scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
       scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
 
-  return scsi_defs::SupportedVitalProductData{
+  scsi_defs::SupportedVitalProductData result = scsi_defs::SupportedVitalProductData{
       // Shall be set to 5 indicating number of items supported Vpd pages list
       // requires. NOTE: document says to set this to 5 but there are 7
       // entries....
-      .page_length = 5,
+      .page_length = sizeof(supported_page_list),
   };
+  memcpy(buf.data(), &result, sizeof(result));
+  memcpy(&buf[sizeof(result)], &supported_page_list, sizeof(supported_page_list));
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(

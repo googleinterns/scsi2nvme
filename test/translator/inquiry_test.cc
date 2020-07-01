@@ -152,30 +152,42 @@ TEST(TranslateStandardInquiryResponse, Success) {
 }
 
 TEST(SupportedVpdPages, Success) {
-  scsi_defs::SupportedVitalProductData result =
-      translator::TranslateSupportedVpdPages();
+  uint8_t buf[100];
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
+
+  translator::TranslateSupportedVpdPages(span_buf);
+  scsi_defs::SupportedVitalProductData result = *reinterpret_cast<scsi_defs::SupportedVitalProductData*>(span_buf.data());
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kSupportedVpd);
-  ASSERT_EQ(result.page_length, 5);
+  ASSERT_EQ(result.page_length, 7);
 
-  // TODO: will test when response buffer is implemented
-  // ASSERT_EQ(result.supported_page_list[0],
-  // scsi_defs::PageCode::kSupportedVpd);
-  // ASSERT_EQ(result.supported_page_list[1],
-  //           scsi_defs::PageCode::kUnitSerialNumber);
-  // ASSERT_EQ(result.supported_page_list[2],
-  //           scsi_defs::PageCode::kDeviceIdentification);
-  // ASSERT_EQ(result.supported_page_list[3], scsi_defs::PageCode::kExtended);
-  // ASSERT_EQ(result.supported_page_list[4],
-  //           scsi_defs::PageCode::kBlockLimitsVpd);
-  // ASSERT_EQ(result.supported_page_list[5],
-  //           scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd);
-  // ASSERT_EQ(result.supported_page_list[6],
-  //           scsi_defs::PageCode::kLogicalBlockProvisioningVpd);
+  scsi_defs::PageCode supported_page_list[7] = {
+    scsi_defs::PageCode::kSupportedVpd,
+    scsi_defs::PageCode::kUnitSerialNumber,
+    scsi_defs::PageCode::kDeviceIdentification,
+    scsi_defs::PageCode::kExtended,
+    scsi_defs::PageCode::kBlockLimitsVpd,
+    scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
+    scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
+  
+  scsi_defs::PageCode* result_list = reinterpret_cast<scsi_defs::PageCode*>(&buf[sizeof(scsi_defs::SupportedVitalProductData)]);
+  ASSERT_EQ(result_list[0],
+  supported_page_list[0]);
+  ASSERT_EQ(result_list[1],
+            supported_page_list[1]);
+  ASSERT_EQ(result_list[2],
+            supported_page_list[2]);
+  ASSERT_EQ(result_list[3], supported_page_list[3]);
+  ASSERT_EQ(result_list[4],
+            supported_page_list[4]);
+  ASSERT_EQ(result_list[5],
+            supported_page_list[5]);
+  ASSERT_EQ(result_list[6],
+            supported_page_list[6]);
 }
 
 TEST(TranslateUnitSerialNumberVpd, eui64) {
