@@ -258,8 +258,7 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
       case scsi_defs::PageCode::kSupportedVpd: {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
-        // scsi_defs::SupportedVitalProductData result =
-        // TranslateSupportedVpdPages();
+        TranslateSupportedVpdPages(buffer);
 
         break;
       }
@@ -269,8 +268,8 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
 
         // TODO: get nsid from Genric Command
         uint32_t nsid = 0x123;
-        // TranslateUnitSerialNumberVpd(identify_controller_data,
-        // identify_namespace_data, nsid);
+        TranslateUnitSerialNumberVpd(identify_controller_data,
+                                     identify_namespace_data, nsid, buffer);
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
