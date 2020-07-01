@@ -50,7 +50,7 @@ void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data,
     absl::Span<uint8_t> buffer) {
-  scsi_defs::InquiryData result = scsi_defs::InquiryData{
+  scsi_defs::InquiryData result = {
       .version = scsi_defs::Version::kSpc4,
       .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
       .additional_length = 0x1f,
@@ -102,10 +102,9 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
       scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
       scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
 
-  scsi_defs::SupportedVitalProductData result =
-      scsi_defs::SupportedVitalProductData{
-          .page_length = sizeof(supported_page_list),
-      };
+  scsi_defs::SupportedVitalProductData result = {
+      .page_length = sizeof(supported_page_list),
+  };
 
   memcpy(buf.data(), &result, sizeof(result));
   memcpy(&buf[sizeof(result)], &supported_page_list,
@@ -116,7 +115,7 @@ void TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid,
     absl::Span<uint8_t> buffer) {
-  scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber{
+  scsi_defs::UnitSerialNumber result = {
       .page_code = scsi_defs::PageCode::kUnitSerialNumber};
 
   // converts the nguid or eui64 into a formatter hex string
