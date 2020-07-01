@@ -176,15 +176,17 @@ TEST(SupportedVpdPages, Success) {
 }
 
 TEST(TranslateUnitSerialNumberVpd, eui64) {
-  nvme_defs::IdentifyNamespace identify_namespace_data =
-      nvme_defs::IdentifyNamespace();
+  nvme_defs::IdentifyControllerData identify_controller_data;
+  nvme_defs::IdentifyNamespace identify_namespace_data;
 
   identify_namespace_data.eui64 = 0x123456789abcdefa;
   identify_namespace_data.nguid[0] = 0;
   identify_namespace_data.nguid[1] = 0;
 
+        // TODO: get nsid from Genric Command
+        uint32_t nsid = 0x123;
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
+        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -200,15 +202,17 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
 }
 
 TEST(TranslateUnitSerialNumberVpd, nguid) {
-  nvme_defs::IdentifyNamespace identify_namespace_data =
-      nvme_defs::IdentifyNamespace();
+  nvme_defs::IdentifyControllerData identify_controller_data;
+  nvme_defs::IdentifyNamespace identify_namespace_data;
 
   identify_namespace_data.eui64 = 0;
   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
+        // TODO: get nsid from Genric Command
+        uint32_t nsid = 0x123;
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
+        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -222,15 +226,17 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
 }
 
 TEST(TranslateUnitSerialNumberVpd, both) {
-  nvme_defs::IdentifyNamespace identify_namespace_data =
-      nvme_defs::IdentifyNamespace();
+  nvme_defs::IdentifyControllerData identify_controller_data;
+  nvme_defs::IdentifyNamespace identify_namespace_data;
 
   identify_namespace_data.eui64 = 0x123456789abcdefa;
   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
+        // TODO: get nsid from Genric Command
+        uint32_t nsid = 0x123;
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
+        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,

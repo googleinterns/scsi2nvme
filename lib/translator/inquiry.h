@@ -33,7 +33,7 @@ scsi_defs::InquiryData TranslateStandardInquiry(
     const nvme_defs::IdentifyNamespace &identify_namespace_data);
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
-    const nvme_defs::IdentifyNamespace &identify_namespace_data);
+    const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t);
 
 scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages();
 

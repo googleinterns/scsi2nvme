@@ -116,7 +116,7 @@ scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages() {
 }
 
 scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
-    const nvme_defs::IdentifyNamespace &identify_namespace_data) {
+    const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
       scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
@@ -125,9 +125,9 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
   result.page_code = scsi_defs::PageCode::kUnitSerialNumber;
 
   // TODO: write this after scsi response in buffer.
-  char *product_serial_number[100];
+  char product_serial_number[100];
 
-  const size_t kNguidLen = 40, kEui64Len = 20;
+  const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
 
   // check if nonzero
   bool nguid_nz =
@@ -158,7 +158,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
         }
       }
 
-      memcpy(product_serial_number, formatted_hex_string, result.page_length);
+      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
     } else {
       // 6.1.3.1.2
       result.page_length = kEui64Len;
@@ -182,7 +182,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
         }
       }
 
-      memcpy(product_serial_number, formatted_hex_string, result.page_length);
+      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
     }
   } else {
     if (nguid_nz) {
@@ -209,11 +209,27 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
         }
       }
 
-      memcpy(product_serial_number, formatted_hex_string, result.page_length);
+      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
     } else {
       // 6.1.3.1.3
       // valid for NVMe 1.0 devices only
-      // TODO?
+
+      // PAGE LENGTH should be set to 30 indicating the page length in bytes.
+      result.page_length = kV1SerialLen;
+
+      // PRODUCT SERIAL NUMBER should be formed as follows:
+      // Bits 239:80 20 bytes of Serial Number (bytes 23:04 of Identify Controller data structure)
+      static_assert(sizeof(identify_controller_data.sn) == 20);
+      memcpy(&product_serial_number, identify_controller_data.sn, sizeof(identify_controller_data.sn));
+
+      // Bits 79:72 ASCII representation of “_”
+      product_serial_number[sizeof(identify_controller_data.sn)] = '_';
+
+      // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
+      memcpy(&product_serial_number[sizeof(identify_controller_data.sn) + 1], &nsid, sizeof(nsid));
+
+      // Bits 07:00 ASCII representation of “.”
+      product_serial_number[kV1SerialLen - 1] = '.';
     }
   }
 
@@ -242,7 +258,10 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
       case scsi_defs::PageCode::kUnitSerialNumber: {
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        TranslateUnitSerialNumberVpd(identify_namespace_data);
+
+        // TODO: get nsid from Genric Command
+        uint32_t nsid = 0x123;
+        TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
