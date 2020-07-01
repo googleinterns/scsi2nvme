@@ -94,8 +94,6 @@ void TranslateStandardInquiry(
 }
 
 void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
-  // TODO: write this after SupportedVitalProductData in the return buffer when
-  // we agree on how to return SCSI responses
   scsi_defs::PageCode supported_page_list[7] = {
       scsi_defs::PageCode::kSupportedVpd,
       scsi_defs::PageCode::kUnitSerialNumber,
@@ -243,7 +241,6 @@ void TranslateUnitSerialNumberVpd(
   memcpy(&buffer[sizeof(result)], &product_serial_number, result.page_length);
 }
 
-// TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
 void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
   scsi_defs::InquiryCommand cmd;
@@ -259,7 +256,6 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
         TranslateSupportedVpdPages(buffer);
-
         break;
       }
       case scsi_defs::PageCode::kUnitSerialNumber: {
