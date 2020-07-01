@@ -180,7 +180,7 @@ void TranslateUnitSerialNumberVpd(
       product_serial_number[sizeof(identify_controller_data.sn)] = '_';
 
       // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
-        sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1], "%08lx", nsid);
+        sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1], "%08x", nsid);
 
       // Bits 07:00 ASCII representation of “."
       product_serial_number[kV1SerialLen - 1] = '.';

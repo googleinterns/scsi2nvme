@@ -28,6 +28,7 @@ void translate(absl::Span<const uint8_t>);
 StatusCode RawToScsiCommand(absl::Span<const uint8_t>,
                             scsi_defs::InquiryCommand &);
 
+// specific translation functions -- takes in nvme data and writes scsi result to buffer
 void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data,
