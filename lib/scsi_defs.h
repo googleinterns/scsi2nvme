@@ -934,6 +934,62 @@ struct DeviceIdentificationVpd {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
+// SCSI Reference Manual Table 455
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ExtendedInquiryDataVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+
+  PageCode page_code : 8;
+
+  uint16_t page_length : 16;
+
+  uint8_t activate_microcode : 2;
+  uint8_t spt : 3;
+  uint8_t grd_chk : 1;
+  uint8_t app_chk : 1;
+  uint8_t ref_chk : 1;
+
+  uint8_t _reserved0 : 2;
+  bool uask_sup : 1;
+  bool group_sup : 1;
+  bool prior_sup : 1;
+  bool headsup : 1;
+  bool ordsup : 1;
+  bool simsup : 1;
+
+  uint8_t _reserved1 : 4;
+  bool wu_sup : 1;
+  bool crd_sup : 1;
+  bool nv_sup : 1;
+  bool v_sup : 1;
+
+  uint8_t _reserved2 : 2;
+  bool no_pi_chk : 1;
+  bool p_i_i_sup : 1;
+  uint8_t _reserved3 : 3;
+  bool luiclr : 1 = 1;
+
+  uint8_t _reserved4 : 3;
+  bool r_sup : 1;
+  bool _reserved5 : 1;
+  bool rtd_sup : 1;
+  bool hssrelef : 1;
+  bool _obsolete : 1;
+
+  uint8_t _reserved6 : 4;
+  uint8_t multi_i_t_nexus_microcode_download : 4;
+  uint16_t extended_self_test_completion_minutes : 16;
+  bool poa_sup : 1;
+  bool hra_sup : 1;
+  bool vsa_sup : 1;
+  uint8_t _reserved7 : 5;
+  uint8_t maximum_supported_sense_data_length : 8;
+
+  uint8_t reserved_arr[50];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ExtendedInquiryDataVpd) == 64);
+
 }  // namespace scsi_defs
 
 #endif
