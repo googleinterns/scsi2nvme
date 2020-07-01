@@ -50,7 +50,6 @@ void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data,
     absl::Span<uint8_t> buffer) {
-
   scsi_defs::InquiryData result = scsi_defs::InquiryData{
       .version = scsi_defs::Version::kSpc4,
       .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
@@ -64,7 +63,8 @@ void TranslateStandardInquiry(
 
   // Shall be set to “NVMe" followed by 4 spaces: “NVMe    “
   // Vendor Identification is not null terminated.
-  static_assert(sizeof(result.vendor_identification) == kNvmeVendorIdentification.size());
+  static_assert(sizeof(result.vendor_identification) ==
+                kNvmeVendorIdentification.size());
   memcpy(result.vendor_identification, kNvmeVendorIdentification.data(),
          kNvmeVendorIdentification.size());
 
@@ -114,9 +114,8 @@ void TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid,
     absl::Span<uint8_t> buffer) {
-  scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber {
-    .page_code = scsi_defs::PageCode::kUnitSerialNumber
-  };
+  scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber{
+      .page_code = scsi_defs::PageCode::kUnitSerialNumber};
 
   // converts the nguid or eui64 into a formatter hex string
   // 0x0123456789ABCDEF would be converted to “0123_4567_89AB_CDEF."
@@ -129,63 +128,61 @@ void TranslateUnitSerialNumberVpd(
       identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
   bool eui64_nz = identify_namespace_data.eui64;
 
-    char hex_string[33];
+  char hex_string[33];
 
   if (nguid_nz || eui64_nz) {
-    if(nguid_nz) {
-        // 6.1.3.1.1
-        result.page_length = kNguidLen;
+    if (nguid_nz) {
+      // 6.1.3.1.1
+      result.page_length = kNguidLen;
 
-        // convert 128-bit number into hex string, 64-bits at a time
-        sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
-        sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
+      // convert 128-bit number into hex string, 64-bits at a time
+      sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
+      sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
 
-    }
-    else if(eui64_nz) {
-            // 6.1.3.1.2
-        result.page_length = kEui64Len;
+    } else if (eui64_nz) {
+      // 6.1.3.1.2
+      result.page_length = kEui64Len;
 
-        // convert 64-bit number into hex string
-        sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
+      // convert 64-bit number into hex string
+      sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
     }
     // insert _ and . in the correct positions
-  for (int i = 4; i < result.page_length; i += 5) {
-    product_serial_number[i] = '_';
-  }
-  product_serial_number[result.page_length - 1] = '.';
-
-  // insert numbers
-  int pos = 0;
-  for (int i = 0; i < result.page_length - 1; i++) {
-    if (product_serial_number[i] != '_') {
-      product_serial_number[i] = hex_string[pos++];
+    for (int i = 4; i < result.page_length; i += 5) {
+      product_serial_number[i] = '_';
     }
-  }
-  }
-  else {
-      // 6.1.3.1.3
-      // valid for NVMe 1.0 devices only
+    product_serial_number[result.page_length - 1] = '.';
 
-      // PAGE LENGTH should be set to 30 indicating the page length in bytes.
-      result.page_length = kV1SerialLen;
-
-      // PRODUCT SERIAL NUMBER should be formed as follows:
-      // Bits 239:80 20 bytes of Serial Number (bytes 23:04 of Identify
-      // Controller data structure)
-      static_assert(sizeof(identify_controller_data.sn) == 20);
-      memcpy(&product_serial_number, identify_controller_data.sn,
-             sizeof(identify_controller_data.sn));
-
-      // Bits 79:72 ASCII representation of “_"
-      product_serial_number[sizeof(identify_controller_data.sn)] = '_';
-
-      // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
-        sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1], "%08x", nsid);
-
-      // Bits 07:00 ASCII representation of “."
-      product_serial_number[kV1SerialLen - 1] = '.';
+    // insert numbers
+    int pos = 0;
+    for (int i = 0; i < result.page_length - 1; i++) {
+      if (product_serial_number[i] != '_') {
+        product_serial_number[i] = hex_string[pos++];
+      }
     }
+  } else {
+    // 6.1.3.1.3
+    // valid for NVMe 1.0 devices only
 
+    // PAGE LENGTH should be set to 30 indicating the page length in bytes.
+    result.page_length = kV1SerialLen;
+
+    // PRODUCT SERIAL NUMBER should be formed as follows:
+    // Bits 239:80 20 bytes of Serial Number (bytes 23:04 of Identify
+    // Controller data structure)
+    static_assert(sizeof(identify_controller_data.sn) == 20);
+    memcpy(&product_serial_number, identify_controller_data.sn,
+           sizeof(identify_controller_data.sn));
+
+    // Bits 79:72 ASCII representation of “_"
+    product_serial_number[sizeof(identify_controller_data.sn)] = '_';
+
+    // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
+    sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1],
+            "%08x", nsid);
+
+    // Bits 07:00 ASCII representation of “."
+    product_serial_number[kV1SerialLen - 1] = '.';
+  }
 
   memcpy(buffer.data(), &result, sizeof(result));
   memcpy(&buffer[sizeof(result)], &product_serial_number, result.page_length);

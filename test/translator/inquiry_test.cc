@@ -257,9 +257,9 @@ TEST(TranslateUnitSerialNumberVpd, both) {
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
 
-    identify_namespace_data.eui64 = 0x123456789abcdefa;
-    identify_namespace_data.nguid[0] = 0x123456789abcdefa;
-    identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+  identify_namespace_data.eui64 = 0x123456789abcdefa;
+  identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+  identify_namespace_data.nguid[1] = 0x123456789abcdefa;
   // TODO: get nsid from Genric Command
   uint32_t nsid = 0x123;
 
@@ -287,8 +287,9 @@ TEST(TranslateUnitSerialNumberVpd, both) {
 TEST(TranslateUnitSerialNumberVpd, neither) {
   nvme_defs::IdentifyControllerData identify_controller_data = {};
   nvme_defs::IdentifyNamespace identify_namespace_data = {};
-  int8_t arr [20] = {'1','2','3','4','5','a','b','c','d','e','1','2','3','4','5','a','b','c','d','e'};
-memcpy(identify_controller_data.sn , arr, 20);
+  int8_t arr[20] = {'1', '2', '3', '4', '5', 'a', 'b', 'c', 'd', 'e',
+                    '1', '2', '3', '4', '5', 'a', 'b', 'c', 'd', 'e'};
+  memcpy(identify_controller_data.sn, arr, 20);
 
   // TODO: get nsid from Genric Command
   uint32_t nsid = 0xaaaaaaaa;
