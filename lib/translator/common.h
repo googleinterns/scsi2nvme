@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef LIB_COMMON_H
+#define LIB_COMMON_H
+
 #include "absl/strings/string_view.h"
 #include "lib/scsi_defs.h"
 
@@ -31,3 +34,4 @@ void SetDebugCallback(void (*callback)(const char*));
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 }  // namespace translator
+#endif

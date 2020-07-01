@@ -197,6 +197,9 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
 
+  // TODO: get nsid from Genric Command
+  uint32_t nsid = 0x123;
+
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case scsi_defs::PageCode::kSupportedVpd:
@@ -207,9 +210,6 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
       case scsi_defs::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-
-        // TODO: get nsid from Genric Command
-        uint32_t nsid = 0x123;
         TranslateUnitSerialNumberVpd(identify_controller_data,
                                      identify_namespace_data, nsid, buffer);
         break;
