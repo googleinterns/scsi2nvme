@@ -42,5 +42,8 @@ void TranslateUnitSerialNumberVpd(
 
 void TranslateSupportedVpdPages(absl::Span<uint8_t> buffer);
 
+void TranslateExtendedInquiry(const nvme_defs::IdentifyControllerData &identify_controller_data,
+    const nvme_defs::IdentifyNamespace &identify_namespace_data, absl::Span<uint8_t> buffer);
+
 };  // namespace translator
 #endif
