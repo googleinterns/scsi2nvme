@@ -50,9 +50,7 @@ void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data,
     absl::Span<uint8_t> buffer) {
-  // SCSI Inquiry Standard Result
-  // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
-  // Section 6.1.1
+
   scsi_defs::InquiryData result = scsi_defs::InquiryData{
       .version = scsi_defs::Version::kSpc4,
       .response_data_format = scsi_defs::ResponseDataFormat::kCompliant,
@@ -62,7 +60,6 @@ void TranslateStandardInquiry(
                   identify_namespace_data.dps.md_start == 0)
                      ? 0
                      : 1,
-
       .cmdque = 1};
 
   // Shall be set to “NVMe” followed by 4 spaces: “NVMe    “
@@ -105,10 +102,6 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
 
   scsi_defs::SupportedVitalProductData result =
       scsi_defs::SupportedVitalProductData{
-          // Shall be set to 5 indicating number of items supported Vpd pages
-          // list
-          // requires. NOTE: document says to set this to 5 but there are 7
-          // entries....
           .page_length = sizeof(supported_page_list),
       };
   memcpy(buf.data(), &result, sizeof(result));
@@ -120,12 +113,9 @@ void TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid,
     absl::Span<uint8_t> buffer) {
-  scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
-  result.peripheral_qualifier =
-      scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
-  result.peripheral_device_type =
-      scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
-  result.page_code = scsi_defs::PageCode::kUnitSerialNumber;
+  scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber {
+    .page_code = scsi_defs::PageCode::kUnitSerialNumber
+  };
 
   char product_serial_number[100];
 
