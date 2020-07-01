@@ -46,9 +46,9 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
   return StatusCode::kSuccess;
 }
 
-scsi_defs::InquiryData TranslateStandardInquiry(
+void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
-    const nvme_defs::IdentifyNamespace &identify_namespace_data) {
+    const nvme_defs::IdentifyNamespace &identify_namespace_data, absl::Span<uint8_t> buffer) {
   // SCSI Inquiry Standard Result
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
@@ -89,10 +89,7 @@ scsi_defs::InquiryData TranslateStandardInquiry(
     }
   }
 
-  if (idx >= 0) {
-    DebugLog("less than four characters set");
-  }
-  return result;
+  memcpy(buffer.data(), &result, sizeof(result));
 }
 
 scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages() {
@@ -238,20 +235,20 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
 
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
-void translate(absl::Span<const uint8_t> raw_cmd) {
+void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
   scsi_defs::InquiryCommand cmd;
   StatusCode status = RawToScsiCommand(raw_cmd, cmd);
   if (status != StatusCode::kSuccess) return;
 
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
-
+  
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case scsi_defs::PageCode::kSupportedVpd: {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
-        scsi_defs::SupportedVitalProductData result = TranslateSupportedVpdPages();
+        // scsi_defs::SupportedVitalProductData result = TranslateSupportedVpdPages();
 
         break;
       }
@@ -261,7 +258,7 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
 
         // TODO: get nsid from Genric Command
         uint32_t nsid = 0x123;
-        TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
+        // TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
@@ -291,7 +288,7 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
   } else {
     // Return Standard INQUIRY Data to application client
     TranslateStandardInquiry(identify_controller_data,
-                                          identify_namespace_data);
+                                          identify_namespace_data, buffer);
   }
   return;
 }

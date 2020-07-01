@@ -102,8 +102,11 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ctrl_data.fr[6] = ' ';
   ctrl_data.fr[7] = 'd';
 
-  scsi_defs::InquiryData result =
-      translator::TranslateStandardInquiry(ctrl_data, ns_data);
+  uint8_t buf[100];
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
+  translator::TranslateStandardInquiry(ctrl_data, ns_data, span_buf);
+  scsi_defs::InquiryData result = *reinterpret_cast<scsi_defs::InquiryData*>(span_buf.data());
+
   ASSERT_EQ(result.peripheral_qualifier,
             static_cast<scsi_defs::PeripheralQualifier>(0));
   ASSERT_EQ(result.peripheral_device_type,
