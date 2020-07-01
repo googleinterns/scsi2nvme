@@ -187,51 +187,72 @@ void TranslateUnitSerialNumberVpd(
   memcpy(&buffer[sizeof(result)], &product_serial_number, result.page_length);
 }
 
-void TranslateExtendedInquiry(const nvme_defs::IdentifyControllerData &identify_controller_data,
-    const nvme_defs::IdentifyNamespace &identify_namespace_data, absl::Span<uint8_t> buffer) {
-      uint8_t dpc = 0;
- dpc |= identify_namespace_data.dpc.pit1;
- dpc |= identify_namespace_data.dpc.pit2 << 1;
- dpc |= identify_namespace_data.dpc.pit3 << 2;
+void TranslateExtendedInquiry(
+    const nvme_defs::IdentifyControllerData &identify_controller_data,
+    const nvme_defs::IdentifyNamespace &identify_namespace_data,
+    absl::Span<uint8_t> buffer) {
+  uint8_t dpc = 0;
+  dpc |= identify_namespace_data.dpc.pit1;
+  dpc |= identify_namespace_data.dpc.pit2 << 1;
+  dpc |= identify_namespace_data.dpc.pit3 << 2;
   uint8_t spt = 0;
   switch (dpc) {
-case 0b001: spt = 0b000; break;
-case 0b010: spt = 0b010; break;
-case 0b011: spt = 0b001; break;
-case 0b100: spt = 0b100; break;
-case 0b101: spt = 0b011; break;
-case 0b110: spt = 0b101; break;
-case 0b111: spt = 0b111; break;
+    case 0b001:
+      spt = 0b000;
+      break;
+    case 0b010:
+      spt = 0b010;
+      break;
+    case 0b011:
+      spt = 0b001;
+      break;
+    case 0b100:
+      spt = 0b100;
+      break;
+    case 0b101:
+      spt = 0b011;
+      break;
+    case 0b110:
+      spt = 0b101;
+      break;
+    case 0b111:
+      spt = 0b111;
+      break;
   };
   scsi_defs::ExtendedInquiryDataVpd result = {
-    .page_code = scsi_defs::PageCode::kExtended,
-    .page_length = 0x3c,
-    
-    // Shall be set to 10b indicating microcode will be activated after a hard reset.
-    .activate_microcode = 0b10,
-    
-    .spt = spt,
+      .page_code = scsi_defs::PageCode::kExtended,
+      .page_length = 0x3c,
 
-    // if DPS field of Identify Namespace Data Structure is 000b, these fields shall be set to 0b, otherwise set to 1b.
-    .grd_chk = identify_namespace_data.dps.pit || identify_namespace_data.dps.md_start,
-    .app_chk = identify_namespace_data.dps.pit || identify_namespace_data.dps.md_start,
-    .ref_chk = identify_namespace_data.dps.pit || identify_namespace_data.dps.md_start,
+      // Shall be set to 10b indicating microcode will be activated after a hard
+      // reset.
+      .activate_microcode = 0b10,
 
-    // Shall be set to 1b indicating sense key specific data is returned for
-    // UNIT ATTENTION sense key
-.uask_sup = 1,
+      .spt = spt,
 
-// TODO: Whether NVMe Write Uncorrectable is supported or not
-.wu_sup = 0,
+      // if DPS field of Identify Namespace Data Structure is 000b, these fields
+      // shall be set to 0b, otherwise set to 1b.
+      .grd_chk = identify_namespace_data.dps.pit ||
+                 identify_namespace_data.dps.md_start,
+      .app_chk = identify_namespace_data.dps.pit ||
+                 identify_namespace_data.dps.md_start,
+      .ref_chk = identify_namespace_data.dps.pit ||
+                 identify_namespace_data.dps.md_start,
 
-// TODO: Whether NVMe Write Uncorrectable is supported or not
-.crd_sup = 0,
+      // Shall be set to 1b indicating sense key specific data is returned for
+      // UNIT ATTENTION sense key
+      .uask_sup = 1,
 
-.v_sup = identify_controller_data.vwc.present,
+      // TODO: Whether NVMe Write Uncorrectable is supported or not
+      .wu_sup = 0,
 
-// Shall be set to 1b indicating unit attentions are cleared according
-// to SPC-4. 
-.luiclr = 1,
+      // TODO: Whether NVMe Write Uncorrectable is supported or not
+      .crd_sup = 0,
+
+      .v_sup = identify_controller_data.vwc.present,
+
+      // Shall be set to 1b indicating unit attentions are cleared according
+      // to SPC-4.
+      .luiclr = 1,
 
   };
 
@@ -271,7 +292,7 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
         // May optionally be supported by returning Extended INQUIRY data
         // page toapplication client, refer to 6.1.5.
         TranslateExtendedInquiry(identify_controller_data,
-                                     identify_namespace_data, buffer);
+                                 identify_namespace_data, buffer);
         break;
       case scsi_defs::PageCode::kBlockLimitsVpd:
         // TODO: May be supported by returning Block Limits VPD data page to
