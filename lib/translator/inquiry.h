@@ -30,10 +30,13 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t>,
 
 void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
-    const nvme_defs::IdentifyNamespace &identify_namespace_data, absl::Span<uint8_t> buffer);
+    const nvme_defs::IdentifyNamespace &identify_namespace_data,
+    absl::Span<uint8_t> buffer);
 
 void TranslateUnitSerialNumberVpd(
-    const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t, absl::Span<uint8_t> buffer);
+    const nvme_defs::IdentifyControllerData &identify_controller_data,
+    const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t,
+    absl::Span<uint8_t> buffer);
 
 void TranslateSupportedVpdPages(absl::Span<uint8_t> buffer);
 

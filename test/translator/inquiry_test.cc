@@ -105,7 +105,8 @@ TEST(TranslateStandardInquiryResponse, Success) {
   uint8_t buf[100];
   absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
   translator::TranslateStandardInquiry(ctrl_data, ns_data, span_buf);
-  scsi_defs::InquiryData result = *reinterpret_cast<scsi_defs::InquiryData*>(span_buf.data());
+  scsi_defs::InquiryData result =
+      *reinterpret_cast<scsi_defs::InquiryData *>(span_buf.data());
 
   ASSERT_EQ(result.peripheral_qualifier,
             static_cast<scsi_defs::PeripheralQualifier>(0));
@@ -156,7 +157,9 @@ TEST(SupportedVpdPages, Success) {
   absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
 
   translator::TranslateSupportedVpdPages(span_buf);
-  scsi_defs::SupportedVitalProductData result = *reinterpret_cast<scsi_defs::SupportedVitalProductData*>(span_buf.data());
+  scsi_defs::SupportedVitalProductData result =
+      *reinterpret_cast<scsi_defs::SupportedVitalProductData *>(
+          span_buf.data());
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -166,28 +169,23 @@ TEST(SupportedVpdPages, Success) {
   ASSERT_EQ(result.page_length, 7);
 
   scsi_defs::PageCode supported_page_list[7] = {
-    scsi_defs::PageCode::kSupportedVpd,
-    scsi_defs::PageCode::kUnitSerialNumber,
-    scsi_defs::PageCode::kDeviceIdentification,
-    scsi_defs::PageCode::kExtended,
-    scsi_defs::PageCode::kBlockLimitsVpd,
-    scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
-    scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
-  
-  scsi_defs::PageCode* result_list = reinterpret_cast<scsi_defs::PageCode*>(&buf[sizeof(scsi_defs::SupportedVitalProductData)]);
-  ASSERT_EQ(result_list[0],
-  supported_page_list[0]);
-  ASSERT_EQ(result_list[1],
-            supported_page_list[1]);
-  ASSERT_EQ(result_list[2],
-            supported_page_list[2]);
+      scsi_defs::PageCode::kSupportedVpd,
+      scsi_defs::PageCode::kUnitSerialNumber,
+      scsi_defs::PageCode::kDeviceIdentification,
+      scsi_defs::PageCode::kExtended,
+      scsi_defs::PageCode::kBlockLimitsVpd,
+      scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
+      scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
+
+  scsi_defs::PageCode *result_list = reinterpret_cast<scsi_defs::PageCode *>(
+      &buf[sizeof(scsi_defs::SupportedVitalProductData)]);
+  ASSERT_EQ(result_list[0], supported_page_list[0]);
+  ASSERT_EQ(result_list[1], supported_page_list[1]);
+  ASSERT_EQ(result_list[2], supported_page_list[2]);
   ASSERT_EQ(result_list[3], supported_page_list[3]);
-  ASSERT_EQ(result_list[4],
-            supported_page_list[4]);
-  ASSERT_EQ(result_list[5],
-            supported_page_list[5]);
-  ASSERT_EQ(result_list[6],
-            supported_page_list[6]);
+  ASSERT_EQ(result_list[4], supported_page_list[4]);
+  ASSERT_EQ(result_list[5], supported_page_list[5]);
+  ASSERT_EQ(result_list[6], supported_page_list[6]);
 }
 
 TEST(TranslateUnitSerialNumberVpd, eui64) {
@@ -204,9 +202,11 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   uint8_t buf[100];
   absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
 
-  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
-  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
-        
+  translator::TranslateUnitSerialNumberVpd(
+      identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result =
+      *reinterpret_cast<scsi_defs::UnitSerialNumber *>(span_buf.data());
+
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -214,7 +214,8 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 20);
 
-  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
+  uint8_t *product_serial_number =
+      reinterpret_cast<uint8_t *>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
   char formatted_hex_string[21] = "1234_5678_9abc_defa.";
   for (int i = 0; i < 20; i++) {
     ASSERT_EQ(product_serial_number[i], formatted_hex_string[i]);
@@ -234,9 +235,11 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   uint8_t buf[100];
   absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
 
-  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
-  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
-        
+  translator::TranslateUnitSerialNumberVpd(
+      identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result =
+      *reinterpret_cast<scsi_defs::UnitSerialNumber *>(span_buf.data());
+
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -244,38 +247,41 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
-  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
+  uint8_t *product_serial_number =
+      reinterpret_cast<uint8_t *>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
 
-  ASSERT_STREQ((char* )product_serial_number, formatted_hex_string);
+  ASSERT_STREQ((char *)product_serial_number, formatted_hex_string);
 }
 
 TEST(TranslateUnitSerialNumberVpd, both) {
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
 
-
-//   identify_namespace_data.eui64 = 0x123456789abcdefa;
-//   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
-//   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+  //   identify_namespace_data.eui64 = 0x123456789abcdefa;
+  //   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+  //   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
   // TODO: get nsid from Genric Command
   uint32_t nsid = 0x123;
 
   uint8_t buf[100];
   absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
 
-  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
-  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
-        
+  translator::TranslateUnitSerialNumberVpd(
+      identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result =
+      *reinterpret_cast<scsi_defs::UnitSerialNumber *>(span_buf.data());
+
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
-  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
+  uint8_t *product_serial_number =
+      reinterpret_cast<uint8_t *>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
 
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
-  ASSERT_STREQ((char* )product_serial_number, formatted_hex_string);
+  ASSERT_STREQ((char *)product_serial_number, formatted_hex_string);
 }
 
 }  // namespace

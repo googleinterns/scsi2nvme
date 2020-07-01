@@ -48,7 +48,8 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
 
 void TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
-    const nvme_defs::IdentifyNamespace &identify_namespace_data, absl::Span<uint8_t> buffer) {
+    const nvme_defs::IdentifyNamespace &identify_namespace_data,
+    absl::Span<uint8_t> buffer) {
   // SCSI Inquiry Standard Result
   // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
   // Section 6.1.1
@@ -104,25 +105,29 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
       scsi_defs::PageCode::kBlockDeviceCharacteristicsVpd,
       scsi_defs::PageCode::kLogicalBlockProvisioningVpd};
 
-  scsi_defs::SupportedVitalProductData result = scsi_defs::SupportedVitalProductData{
-      // Shall be set to 5 indicating number of items supported Vpd pages list
-      // requires. NOTE: document says to set this to 5 but there are 7
-      // entries....
-      .page_length = sizeof(supported_page_list),
-  };
+  scsi_defs::SupportedVitalProductData result =
+      scsi_defs::SupportedVitalProductData{
+          // Shall be set to 5 indicating number of items supported Vpd pages
+          // list
+          // requires. NOTE: document says to set this to 5 but there are 7
+          // entries....
+          .page_length = sizeof(supported_page_list),
+      };
   memcpy(buf.data(), &result, sizeof(result));
-  memcpy(&buf[sizeof(result)], &supported_page_list, sizeof(supported_page_list));
+  memcpy(&buf[sizeof(result)], &supported_page_list,
+         sizeof(supported_page_list));
 }
 
 void TranslateUnitSerialNumberVpd(
-const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid, absl::Span<uint8_t> buffer) {
+    const nvme_defs::IdentifyControllerData &identify_controller_data,
+    const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid,
+    absl::Span<uint8_t> buffer) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
       scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
   result.peripheral_device_type =
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.page_code = scsi_defs::PageCode::kUnitSerialNumber;
-
 
   char product_serial_number[100];
 
@@ -217,15 +222,18 @@ const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_de
       result.page_length = kV1SerialLen;
 
       // PRODUCT SERIAL NUMBER should be formed as follows:
-      // Bits 239:80 20 bytes of Serial Number (bytes 23:04 of Identify Controller data structure)
+      // Bits 239:80 20 bytes of Serial Number (bytes 23:04 of Identify
+      // Controller data structure)
       static_assert(sizeof(identify_controller_data.sn) == 20);
-      memcpy(&product_serial_number, identify_controller_data.sn, sizeof(identify_controller_data.sn));
+      memcpy(&product_serial_number, identify_controller_data.sn,
+             sizeof(identify_controller_data.sn));
 
       // Bits 79:72 ASCII representation of “_”
       product_serial_number[sizeof(identify_controller_data.sn)] = '_';
 
       // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
-      memcpy(&product_serial_number[sizeof(identify_controller_data.sn) + 1], &nsid, sizeof(nsid));
+      memcpy(&product_serial_number[sizeof(identify_controller_data.sn) + 1],
+             &nsid, sizeof(nsid));
 
       // Bits 07:00 ASCII representation of “.”
       product_serial_number[kV1SerialLen - 1] = '.';
@@ -244,13 +252,14 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
 
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
-  
+
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case scsi_defs::PageCode::kSupportedVpd: {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
-        // scsi_defs::SupportedVitalProductData result = TranslateSupportedVpdPages();
+        // scsi_defs::SupportedVitalProductData result =
+        // TranslateSupportedVpdPages();
 
         break;
       }
@@ -260,7 +269,8 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
 
         // TODO: get nsid from Genric Command
         uint32_t nsid = 0x123;
-        // TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
+        // TranslateUnitSerialNumberVpd(identify_controller_data,
+        // identify_namespace_data, nsid);
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
@@ -289,8 +299,8 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    TranslateStandardInquiry(identify_controller_data,
-                                          identify_namespace_data, buffer);
+    TranslateStandardInquiry(identify_controller_data, identify_namespace_data,
+                             buffer);
   }
   return;
 }
