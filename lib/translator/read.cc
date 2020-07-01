@@ -75,13 +75,8 @@ void LegacyRead(uint32_t lba, uint16_t transfer_length,
 
   // cdw10 Starting lba bits 31:00
   queue_entry.cdw[0] = lba;
-
   // cdw12 nlb bits 15:00
   queue_entry.cdw[2] |= transfer_length;
-
-  // cd12 bit 31 limited retry controller should apply limited retry efforts or apply
-  // all avialbe error recovery means to return the data to the host
-  queue_entry.cdw[2] != 0 << 31;
 }
 
 void Read(uint8_t rd_protect, bool fua, uint32_t lba, uint16_t transfer_length,
@@ -92,10 +87,25 @@ void Read(uint8_t rd_protect, bool fua, uint32_t lba, uint16_t transfer_length,
   queue_entry.cdw[2] |= (GetPrinfo(rd_protect) << 26);
   // cdw12 fua bit 30;
   queue_entry.cdw[2] |= (fua << 30);
+}
 
-  uint8_t dsm;  // indicates attributes for lbas being read, e.g. compressible,
-                // sequential request, access latency, access frequency
-  queue_entry.cdw[3] |= dsm;
+void ReadMultiple(uint8_t rd_protect, bool fua, uint32_t lba,
+                  uint16_t transfer_length, bool set_lba_tags, uint16_t eilbrt,
+                  uint16_t elbat, uint16_t lbatm,
+                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
+                  uint64_t prp_ptr) {
+  uint8_t num_calls = transfer_length / pow(2, 16);
+
+  Read(rd_protect, fua, lba, transfer_length % (uint16_t)pow(2, 16),
+       queue_entries[0], prp_ptr);
+
+  for (int i = 1; i <= num_calls; i++) {
+    Read(rd_protect, fua, lba, pow(2, 16), queue_entries[i],
+         prp_ptr + i * pow(2, 16));
+    if (set_lba_tags) {
+      SetLogicalBlockTags(eilbrt, elbat, lbatm, queue_entries[i]);
+    }
+  }
 }
 
 }  // namespace
@@ -117,47 +127,23 @@ void Read10ToNvme(scsi_defs::Read10Command cmd,
 void Read12ToNvme(scsi_defs::Read12Command cmd,
                   absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
                   uint64_t prp_ptr) {
-  uint32_t transfer_length = cmd.transfer_length;
-  uint8_t num_calls = transfer_length / pow(2, 16);
-
-  Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-       transfer_length % (uint16_t)pow(2, 16), queue_entries[0], prp_ptr);
-
-  for (int i = 1; i <= num_calls; i++) {
-    Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
-         queue_entries[i], prp_ptr + i * pow(2, 16));
-  }
+  ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+               cmd.transfer_length, false, 0, 0, 0, queue_entries, prp_ptr);
 }
 
 void Read16ToNvme(scsi_defs::Read16Command cmd,
                   absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
                   uint64_t prp_ptr) {
-  uint32_t transfer_length = cmd.transfer_length;
-  uint8_t num_calls = transfer_length / pow(2, 16);
-
-  Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-       transfer_length % (uint16_t)pow(2, 16), queue_entries[0], prp_ptr);
-
-  for (int i = 1; i <= num_calls; i++) {
-    Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
-         queue_entries[i], prp_ptr + i * pow(2, 16));
-  }
+  ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+               cmd.transfer_length, false, 0, 0, 0, queue_entries, prp_ptr);
 }
 
 void Read32ToNvme(scsi_defs::Read32Command cmd,
                   absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
                   uint64_t prp_ptr) {
-  uint32_t transfer_length = cmd.transfer_length;
-  uint8_t num_calls = transfer_length / pow(2, 16);
-
-  Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-       transfer_length % (uint16_t)pow(2, 16), queue_entries[0], prp_ptr);
-
-  for (int i = 1; i <= num_calls; i++) {
-    Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, pow(2, 16),
-         queue_entries[i], prp_ptr + i * pow(2, 16));
-    SetLogicalBlockTags(cmd.eilbrt, cmd.elbat, cmd.lbatm, queue_entries[i]);
-  }
+  ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+               cmd.transfer_length, true, cmd.eilbrt, cmd.elbat, cmd.lbatm,
+               queue_entries, prp_ptr);
 }
 
 }  // namespace translator
