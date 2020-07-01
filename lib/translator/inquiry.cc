@@ -114,8 +114,8 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
   memcpy(&buf[sizeof(result)], &supported_page_list, sizeof(supported_page_list));
 }
 
-scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
-    const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid) {
+void TranslateUnitSerialNumberVpd(
+const nvme_defs::IdentifyControllerData &identify_controller_data, const nvme_defs::IdentifyNamespace &identify_namespace_data, uint32_t nsid, absl::Span<uint8_t> buffer) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
       scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected;
@@ -123,7 +123,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
       scsi_defs::PeripheralDeviceType::kDirectAccessBlock;
   result.page_code = scsi_defs::PageCode::kUnitSerialNumber;
 
-  // TODO: write this after scsi response in buffer.
+
   char product_serial_number[100];
 
   const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
@@ -231,8 +231,8 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
       product_serial_number[kV1SerialLen - 1] = '.';
     }
   }
-
-  return result;
+  memcpy(buffer.data(), &result, sizeof(result));
+  memcpy(&buffer[sizeof(result)], &product_serial_number, result.page_length);
 }
 
 // TODO: write return value to a buffer

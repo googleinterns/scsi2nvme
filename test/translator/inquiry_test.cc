@@ -198,10 +198,15 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   identify_namespace_data.nguid[0] = 0;
   identify_namespace_data.nguid[1] = 0;
 
-        // TODO: get nsid from Genric Command
-        uint32_t nsid = 0x123;
-  scsi_defs::UnitSerialNumber result =
-        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
+  // TODO: get nsid from Genric Command
+  uint32_t nsid = 0x123;
+
+  uint8_t buf[100];
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
+
+  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
+        
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -209,11 +214,11 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 20);
 
-  // TODO: will test when response buffer is implemented
-  // char formatted_hex_string[21] = "1234_5678_9abc_defa.";
-  // for (int i = 0; i < 20; i++) {
-  //   ASSERT_EQ(result.product_serial_number[i], formatted_hex_string[i]);
-  // }
+  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
+  char formatted_hex_string[21] = "1234_5678_9abc_defa.";
+  for (int i = 0; i < 20; i++) {
+    ASSERT_EQ(product_serial_number[i], formatted_hex_string[i]);
+  }
 }
 
 TEST(TranslateUnitSerialNumberVpd, nguid) {
@@ -223,11 +228,15 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   identify_namespace_data.eui64 = 0;
   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+  // TODO: get nsid from Genric Command
+  uint32_t nsid = 0x123;
 
-        // TODO: get nsid from Genric Command
-        uint32_t nsid = 0x123;
-  scsi_defs::UnitSerialNumber result =
-        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
+  uint8_t buf[100];
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
+
+  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
+        
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -235,32 +244,38 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
+  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
 
-  // TODO: will test when response buffer is implemented
-  // ASSERT_STREQ((char* )result.product_serial_number, formatted_hex_string);
+  ASSERT_STREQ((char* )product_serial_number, formatted_hex_string);
 }
 
 TEST(TranslateUnitSerialNumberVpd, both) {
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
 
-  identify_namespace_data.eui64 = 0x123456789abcdefa;
-  identify_namespace_data.nguid[0] = 0x123456789abcdefa;
-  identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
-        // TODO: get nsid from Genric Command
-        uint32_t nsid = 0x123;
-  scsi_defs::UnitSerialNumber result =
-        translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid);
+//   identify_namespace_data.eui64 = 0x123456789abcdefa;
+//   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+//   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+  // TODO: get nsid from Genric Command
+  uint32_t nsid = 0x123;
+
+  uint8_t buf[100];
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 100);
+
+  translator::TranslateUnitSerialNumberVpd(identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result = *reinterpret_cast<scsi_defs::UnitSerialNumber*>(span_buf.data());
+        
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
             scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
   ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
   ASSERT_EQ(result.page_length, 40);
+  uint8_t* product_serial_number = reinterpret_cast<uint8_t*>(&buf[sizeof(scsi_defs::UnitSerialNumber)]);
 
-  // TODO: will test when response buffer is implemented
-  // char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
-  // ASSERT_STREQ((char* )result.product_serial_number, formatted_hex_string);
+  char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
+  ASSERT_STREQ((char* )product_serial_number, formatted_hex_string);
 }
+
 }  // namespace
