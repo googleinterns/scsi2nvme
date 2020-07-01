@@ -127,6 +127,8 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
   // TODO: write this after scsi response in buffer.
   char *product_serial_number[100];
 
+  const size_t kNguidLen = 40, kEui64Len = 20;
+
   // check if nonzero
   bool nguid_nz =
       identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
@@ -134,7 +136,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
   if (eui64_nz) {
     if (nguid_nz) {
       // 6.1.3.1.1
-      result.page_length = 40;
+      result.page_length = kNguidLen;
 
       // convert 128-bit number into hex string, 64-bits at a time
       char hex_string[33];
@@ -159,7 +161,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
       memcpy(product_serial_number, formatted_hex_string, result.page_length);
     } else {
       // 6.1.3.1.2
-      result.page_length = 20;
+      result.page_length = kEui64Len;
 
       // convert 64-bit number into hex string
       char hex_string[17];
@@ -185,7 +187,7 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
   } else {
     if (nguid_nz) {
       // 6.1.3.1.1
-      result.page_length = 40;
+      result.page_length = kNguidLen;
 
       // convert 128-bit number into hex string, 64-bits at a time
       char hex_string[33];
