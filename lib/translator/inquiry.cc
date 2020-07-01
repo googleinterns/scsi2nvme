@@ -46,7 +46,7 @@ StatusCode RawToScsiCommand(absl::Span<const uint8_t> raw_cmd,
   return StatusCode::kSuccess;
 }
 
-scsi_defs::InquiryData TranslateStandardInquiryResponse(
+scsi_defs::InquiryData TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data) {
   // SCSI Inquiry Standard Result
@@ -95,16 +95,7 @@ scsi_defs::InquiryData TranslateStandardInquiryResponse(
   return result;
 }
 
-scsi_defs::InquiryData BuildStandardInquiry() {
-  // Identify controller results
-  nvme_defs::IdentifyControllerData identify_controller_data;
-  // Identify namespace results
-  nvme_defs::IdentifyNamespace identify_namespace_data;
-  return TranslateStandardInquiryResponse(identify_controller_data,
-                                          identify_namespace_data);
-}
-
-scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
+scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages() {
   // TODO: write this after SupportedVitalProductData in the return buffer when
   // we agree on how to return SCSI responses
   scsi_defs::PageCode supported_page_list[7] = {
@@ -124,7 +115,7 @@ scsi_defs::SupportedVitalProductData BuildSupportedVpdPages() {
   };
 }
 
-scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyNamespace &identify_namespace_data) {
   scsi_defs::UnitSerialNumber result = scsi_defs::UnitSerialNumber();
   result.peripheral_qualifier =
@@ -227,11 +218,6 @@ scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
   return result;
 }
 
-scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd() {
-  nvme_defs::IdentifyNamespace identify_namespace_data;
-  return TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
-}
-
 // TODO: write return value to a buffer
 // Main logic engine for the Inquiry command
 void translate(absl::Span<const uint8_t> raw_cmd) {
@@ -239,19 +225,22 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
   StatusCode status = RawToScsiCommand(raw_cmd, cmd);
   if (status != StatusCode::kSuccess) return;
 
+  nvme_defs::IdentifyControllerData identify_controller_data;
+  nvme_defs::IdentifyNamespace identify_namespace_data;
+
   if (cmd.evpd) {
     switch (cmd.page_code) {
       case scsi_defs::PageCode::kSupportedVpd: {
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
-        scsi_defs::SupportedVitalProductData result = BuildSupportedVpdPages();
+        scsi_defs::SupportedVitalProductData result = TranslateSupportedVpdPages();
 
         break;
       }
       case scsi_defs::PageCode::kUnitSerialNumber: {
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        scsi_defs::UnitSerialNumber result = BuildUnitSerialNumberVpd();
+        TranslateUnitSerialNumberVpd(identify_namespace_data);
         break;
       }
       case scsi_defs::PageCode::kDeviceIdentification:
@@ -280,7 +269,8 @@ void translate(absl::Span<const uint8_t> raw_cmd) {
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    scsi_defs::InquiryData result = BuildStandardInquiry();
+    TranslateStandardInquiry(identify_controller_data,
+                                          identify_namespace_data);
   }
   return;
 }

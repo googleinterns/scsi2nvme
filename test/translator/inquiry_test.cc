@@ -103,7 +103,7 @@ TEST(TranslateStandardInquiryResponse, Success) {
   ctrl_data.fr[7] = 'd';
 
   scsi_defs::InquiryData result =
-      translator::TranslateStandardInquiryResponse(ctrl_data, ns_data);
+      translator::TranslateStandardInquiry(ctrl_data, ns_data);
   ASSERT_EQ(result.peripheral_qualifier,
             static_cast<scsi_defs::PeripheralQualifier>(0));
   ASSERT_EQ(result.peripheral_device_type,
@@ -150,7 +150,7 @@ TEST(TranslateStandardInquiryResponse, Success) {
 
 TEST(SupportedVpdPages, Success) {
   scsi_defs::SupportedVitalProductData result =
-      translator::BuildSupportedVpdPages();
+      translator::TranslateSupportedVpdPages();
 
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -184,7 +184,7 @@ TEST(TranslateUnitSerialNumberVpd, eui64) {
   identify_namespace_data.nguid[1] = 0;
 
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -208,7 +208,7 @@ TEST(TranslateUnitSerialNumberVpd, nguid) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,
@@ -230,7 +230,7 @@ TEST(TranslateUnitSerialNumberVpd, both) {
   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
 
   scsi_defs::UnitSerialNumber result =
-      translator::TranslateUnitSerialNumberVpdResponse(identify_namespace_data);
+      translator::TranslateUnitSerialNumberVpd(identify_namespace_data);
   ASSERT_EQ(result.peripheral_qualifier,
             scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
   ASSERT_EQ(result.peripheral_device_type,

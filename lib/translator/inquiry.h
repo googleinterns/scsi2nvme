@@ -28,16 +28,14 @@ void translate(absl::Span<const uint8_t>);
 StatusCode RawToScsiCommand(absl::Span<const uint8_t>,
                             scsi_defs::InquiryCommand &);
 
-scsi_defs::InquiryData BuildStandardInquiry();
-scsi_defs::InquiryData TranslateStandardInquiryResponse(
+scsi_defs::InquiryData TranslateStandardInquiry(
     const nvme_defs::IdentifyControllerData &identify_controller_data,
     const nvme_defs::IdentifyNamespace &identify_namespace_data);
 
-scsi_defs::SupportedVitalProductData BuildSupportedVpdPages();
-
-scsi_defs::UnitSerialNumber BuildUnitSerialNumberVpd();
-scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpdResponse(
+scsi_defs::UnitSerialNumber TranslateUnitSerialNumberVpd(
     const nvme_defs::IdentifyNamespace &identify_namespace_data);
+
+scsi_defs::SupportedVitalProductData TranslateSupportedVpdPages();
 
 };  // namespace translator
 #endif
