@@ -1,10 +1,9 @@
 #include "read.h"
 
 #include <cmath>
-#include <initializer_list>
-#include <iterator>
 
 #include "absl/types/span.h"
+#include "common.h"
 
 namespace translator {
 
@@ -60,18 +59,15 @@ void SetLogicalBlockTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 }
 
 void LegacyRead(uint32_t lba, uint16_t transfer_length,
-                nvme_defs::GenericQueueEntryCmd& queue_entry,
-                uint64_t prp_ptr) {
+                nvme_defs::GenericQueueEntryCmd& queue_entry) {
   queue_entry.opc = static_cast<uint8_t>(nvme_defs::NvmOpcode::kRead);
-
-  queue_entry.psdt = 0b00;  // PRPs are used for data transfer
   queue_entry.fuse = 0b00;  // Normal operation, not fused
-  queue_entry.mptr;  // field is valid only if the command has metadata that is
-                     // not interleaved with  the logical block data, as
-                     // specified in the Format NVM command.
+  queue_entry.psdt = 0b00;  // PRPs are used for data transfer
+  queue_entry.mptr =
+      reinterpret_cast<std::uint64_t>(AllocPages(1));  // metadata pointer
   queue_entry.nsid = 0x0;  // not used for this command, cleared to 0
 
-  queue_entry.dptr.prp.prp1 = prp_ptr;
+  queue_entry.dptr.prp.prp1 = reinterpret_cast<std::uint64_t>(AllocPages(1));
 
   // cdw10 Starting lba bits 31:00
   queue_entry.cdw[0] = lba;
@@ -80,8 +76,8 @@ void LegacyRead(uint32_t lba, uint16_t transfer_length,
 }
 
 void Read(uint8_t rd_protect, bool fua, uint32_t lba, uint16_t transfer_length,
-          nvme_defs::GenericQueueEntryCmd queue_entry, uint64_t prp_ptr) {
-  LegacyRead(lba, transfer_length, queue_entry, prp_ptr);
+          nvme_defs::GenericQueueEntryCmd queue_entry) {
+  LegacyRead(lba, transfer_length, queue_entry);
 
   // cdw12 prinfo bits 29:26
   queue_entry.cdw[2] |= (GetPrinfo(rd_protect) << 26);
@@ -92,16 +88,14 @@ void Read(uint8_t rd_protect, bool fua, uint32_t lba, uint16_t transfer_length,
 void ReadMultiple(uint8_t rd_protect, bool fua, uint32_t lba,
                   uint16_t transfer_length, bool set_lba_tags, uint16_t eilbrt,
                   uint16_t elbat, uint16_t lbatm,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
-                  uint64_t prp_ptr) {
+                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
   uint8_t num_calls = transfer_length / pow(2, 16);
 
   Read(rd_protect, fua, lba, transfer_length % (uint16_t)pow(2, 16),
-       queue_entries[0], prp_ptr);
+       queue_entries[0]);
 
   for (int i = 1; i <= num_calls; i++) {
-    Read(rd_protect, fua, lba, pow(2, 16), queue_entries[i],
-         prp_ptr + i * pow(2, 16));
+    Read(rd_protect, fua, lba, pow(2, 16), queue_entries[i]);
     if (set_lba_tags) {
       SetLogicalBlockTags(eilbrt, elbat, lbatm, queue_entries[i]);
     }
@@ -111,39 +105,34 @@ void ReadMultiple(uint8_t rd_protect, bool fua, uint32_t lba,
 }  // namespace
 
 void Read6ToNvme(scsi_defs::Read6Command cmd,
-                 nvme_defs::GenericQueueEntryCmd queue_entry,
-                 uint64_t prp_ptr) {
-  return LegacyRead(cmd.logical_block_address, cmd.transfer_length, queue_entry,
-                    prp_ptr);
+                 nvme_defs::GenericQueueEntryCmd queue_entry) {
+  return LegacyRead(cmd.logical_block_address, cmd.transfer_length,
+                    queue_entry);
 }
 
 void Read10ToNvme(scsi_defs::Read10Command cmd,
-                  nvme_defs::GenericQueueEntryCmd queue_entry,
-                  uint64_t prp_ptr) {
+                  nvme_defs::GenericQueueEntryCmd queue_entry) {
   return Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-              cmd.transfer_length, queue_entry, prp_ptr);
+              cmd.transfer_length, queue_entry);
 }
 
 void Read12ToNvme(scsi_defs::Read12Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
-                  uint64_t prp_ptr) {
+                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
   ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-               cmd.transfer_length, false, 0, 0, 0, queue_entries, prp_ptr);
+               cmd.transfer_length, false, 0, 0, 0, queue_entries);
 }
 
 void Read16ToNvme(scsi_defs::Read16Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
-                  uint64_t prp_ptr) {
+                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
   ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-               cmd.transfer_length, false, 0, 0, 0, queue_entries, prp_ptr);
+               cmd.transfer_length, false, 0, 0, 0, queue_entries);
 }
 
 void Read32ToNvme(scsi_defs::Read32Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries,
-                  uint64_t prp_ptr) {
+                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
   ReadMultiple(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
                cmd.transfer_length, true, cmd.eilbrt, cmd.elbat, cmd.lbatm,
-               queue_entries, prp_ptr);
+               queue_entries);
 }
 
 }  // namespace translator
