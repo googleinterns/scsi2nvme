@@ -62,8 +62,9 @@ void TranslateStandardInquiry(
                      : 1,
       .cmdque = 1};
 
-  // Shall be set to “NVMe” followed by 4 spaces: “NVMe    “
+  // Shall be set to “NVMe" followed by 4 spaces: “NVMe    “
   // Vendor Identification is not null terminated.
+  static_assert(sizeof(result.vendor_identification) == kNvmeVendorIdentification.size());
   memcpy(result.vendor_identification, kNvmeVendorIdentification.data(),
          kNvmeVendorIdentification.size());
 
@@ -117,6 +118,8 @@ void TranslateUnitSerialNumberVpd(
     .page_code = scsi_defs::PageCode::kUnitSerialNumber
   };
 
+  // converts the nguid or eui64 into a formatter hex string
+  // 0x0123456789ABCDEF would be converted to “0123_4567_89AB_CDEF."
   char product_serial_number[100] = {0};
 
   const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
@@ -173,13 +176,13 @@ void TranslateUnitSerialNumberVpd(
       memcpy(&product_serial_number, identify_controller_data.sn,
              sizeof(identify_controller_data.sn));
 
-      // Bits 79:72 ASCII representation of “_”
+      // Bits 79:72 ASCII representation of “_"
       product_serial_number[sizeof(identify_controller_data.sn)] = '_';
 
       // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
         sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1], "%08lx", nsid);
 
-      // Bits 07:00 ASCII representation of “.”
+      // Bits 07:00 ASCII representation of “."
       product_serial_number[kV1SerialLen - 1] = '.';
     }
 
