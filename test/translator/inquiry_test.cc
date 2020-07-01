@@ -257,9 +257,9 @@ TEST(TranslateUnitSerialNumberVpd, both) {
   nvme_defs::IdentifyControllerData identify_controller_data;
   nvme_defs::IdentifyNamespace identify_namespace_data;
 
-  //   identify_namespace_data.eui64 = 0x123456789abcdefa;
-  //   identify_namespace_data.nguid[0] = 0x123456789abcdefa;
-  //   identify_namespace_data.nguid[1] = 0x123456789abcdefa;
+    identify_namespace_data.eui64 = 0x123456789abcdefa;
+    identify_namespace_data.nguid[0] = 0x123456789abcdefa;
+    identify_namespace_data.nguid[1] = 0x123456789abcdefa;
   // TODO: get nsid from Genric Command
   uint32_t nsid = 0x123;
 
@@ -282,6 +282,36 @@ TEST(TranslateUnitSerialNumberVpd, both) {
 
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
   ASSERT_STREQ((char *)product_serial_number, formatted_hex_string);
+}
+
+TEST(TranslateUnitSerialNumberVpd, neither) {
+  nvme_defs::IdentifyControllerData identify_controller_data = {};
+  nvme_defs::IdentifyNamespace identify_namespace_data = {};
+  int8_t arr [20] = {'1','2','3','4','5','a','b','c','d','e','1','2','3','4','5','a','b','c','d','e'};
+memcpy(identify_controller_data.sn , arr, 20);
+
+  // TODO: get nsid from Genric Command
+  uint32_t nsid = 0xaaaaaaaa;
+
+  uint8_t buf[200] = {0};
+  absl::Span<uint8_t> span_buf = absl::MakeSpan(buf, 200);
+
+  translator::TranslateUnitSerialNumberVpd(
+      identify_controller_data, identify_namespace_data, nsid, span_buf);
+  scsi_defs::UnitSerialNumber result =
+      *reinterpret_cast<scsi_defs::UnitSerialNumber *>(span_buf.data());
+
+  ASSERT_EQ(result.peripheral_qualifier,
+            scsi_defs::PeripheralQualifier::kPeripheralDeviceConnected);
+  ASSERT_EQ(result.peripheral_device_type,
+            scsi_defs::PeripheralDeviceType::kDirectAccessBlock);
+  ASSERT_EQ(result.page_code, scsi_defs::PageCode::kUnitSerialNumber);
+  ASSERT_EQ(result.page_length, 30);
+  char *product_serial_number =
+      reinterpret_cast<char *>(&span_buf[sizeof(scsi_defs::UnitSerialNumber)]);
+
+  char formatted_hex_string[31] = "12345abcde12345abcde_aaaaaaaa.";
+  ASSERT_STREQ(product_serial_number, formatted_hex_string);
 }
 
 }  // namespace

@@ -117,7 +117,7 @@ void TranslateUnitSerialNumberVpd(
     .page_code = scsi_defs::PageCode::kUnitSerialNumber
   };
 
-  char product_serial_number[100];
+  char product_serial_number[100] = {0};
 
   const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
 
@@ -177,13 +177,11 @@ void TranslateUnitSerialNumberVpd(
       product_serial_number[sizeof(identify_controller_data.sn)] = '_';
 
       // Bits 71:08 ASCII representation of 32 bit Namespace Identifier (NSID)
-      memcpy(&product_serial_number[sizeof(identify_controller_data.sn) + 1],
-             &nsid, sizeof(nsid));
+        sprintf(&product_serial_number[sizeof(identify_controller_data.sn) + 1], "%08lx", nsid);
 
       // Bits 07:00 ASCII representation of “.”
       product_serial_number[kV1SerialLen - 1] = '.';
     }
-
 
 
   memcpy(buffer.data(), &result, sizeof(result));
