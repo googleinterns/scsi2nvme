@@ -59,8 +59,7 @@ ApiStatus Translation::Complete(
     return ApiStatus::kSuccess;
   }
 
-  pipeline_status_ =
-      StatusCode::kUninitialized;  // Reset for next interaction
+  pipeline_status_ = StatusCode::kUninitialized;  // Reset for next interaction
 
   scsi_defs::OpCode opc = static_cast<scsi_defs::OpCode>(scsi_cmd_[0]);
   switch (opc) {
