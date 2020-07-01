@@ -65,6 +65,7 @@ void TranslateStandardInquiry(
   // Vendor Identification is not null terminated.
   static_assert(sizeof(result.vendor_identification) ==
                 kNvmeVendorIdentification.size());
+
   memcpy(result.vendor_identification, kNvmeVendorIdentification.data(),
          kNvmeVendorIdentification.size());
 
@@ -105,6 +106,7 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buf) {
       scsi_defs::SupportedVitalProductData{
           .page_length = sizeof(supported_page_list),
       };
+
   memcpy(buf.data(), &result, sizeof(result));
   memcpy(&buf[sizeof(result)], &supported_page_list,
          sizeof(supported_page_list));
@@ -119,16 +121,13 @@ void TranslateUnitSerialNumberVpd(
 
   // converts the nguid or eui64 into a formatter hex string
   // 0x0123456789ABCDEF would be converted to “0123_4567_89AB_CDEF."
-  char product_serial_number[100] = {0};
-
+  char product_serial_number[100] = {0}, hex_string[33];
   const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
 
   // check if nonzero
   bool nguid_nz =
       identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
   bool eui64_nz = identify_namespace_data.eui64;
-
-  char hex_string[33];
 
   if (nguid_nz || eui64_nz) {
     if (nguid_nz) {
@@ -146,6 +145,7 @@ void TranslateUnitSerialNumberVpd(
       // convert 64-bit number into hex string
       sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
     }
+
     // insert _ and . in the correct positions
     for (int i = 4; i < result.page_length; i += 5) {
       product_serial_number[i] = '_';
@@ -199,13 +199,12 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
 
   if (cmd.evpd) {
     switch (cmd.page_code) {
-      case scsi_defs::PageCode::kSupportedVpd: {
+      case scsi_defs::PageCode::kSupportedVpd:
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
         TranslateSupportedVpdPages(buffer);
         break;
-      }
-      case scsi_defs::PageCode::kUnitSerialNumber: {
+      case scsi_defs::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
 
@@ -214,7 +213,6 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
         TranslateUnitSerialNumberVpd(identify_controller_data,
                                      identify_namespace_data, nsid, buffer);
         break;
-      }
       case scsi_defs::PageCode::kDeviceIdentification:
         // TODO: Return Device Identification data page toapplication client,
         // refer to 6.1.4
