@@ -125,84 +125,41 @@ void TranslateUnitSerialNumberVpd(
   bool nguid_nz =
       identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
   bool eui64_nz = identify_namespace_data.eui64;
-  if (eui64_nz) {
-    if (nguid_nz) {
-      // 6.1.3.1.1
-      result.page_length = kNguidLen;
 
-      // convert 128-bit number into hex string, 64-bits at a time
-      char hex_string[33];
-      sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
-      sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
+    char hex_string[33];
 
-      // insert _ and . in the correct positions
-      char formatted_hex_string[41];
-      for (int i = 4; i < result.page_length; i += 5) {
-        formatted_hex_string[i] = '_';
-      }
-      formatted_hex_string[result.page_length - 1] = '.';
+  if (nguid_nz || eui64_nz) {
+    if(nguid_nz) {
+        // 6.1.3.1.1
+        result.page_length = kNguidLen;
 
-      // insert numbers
-      int pos = 0;
-      for (int i = 0; i < result.page_length - 1; i++) {
-        if (formatted_hex_string[i] != '_') {
-          formatted_hex_string[i] = hex_string[pos++];
-        }
-      }
+        // convert 128-bit number into hex string, 64-bits at a time
+        sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
+        sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
 
-      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
-    } else {
-      // 6.1.3.1.2
-      result.page_length = kEui64Len;
-
-      // convert 64-bit number into hex string
-      char hex_string[17];
-      sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
-
-      // insert _ and . in the correct positions
-      char formatted_hex_string[21];
-      for (int i = 4; i < result.page_length; i += 5) {
-        formatted_hex_string[i] = '_';
-      }
-      formatted_hex_string[result.page_length - 1] = '.';
-
-      // insert numbers
-      int pos = 0;
-      for (int i = 0; i < result.page_length - 1; i++) {
-        if (formatted_hex_string[i] != '_') {
-          formatted_hex_string[i] = hex_string[pos++];
-        }
-      }
-
-      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
     }
-  } else {
-    if (nguid_nz) {
-      // 6.1.3.1.1
-      result.page_length = kNguidLen;
+    else if(eui64_nz) {
+            // 6.1.3.1.2
+        result.page_length = kEui64Len;
 
-      // convert 128-bit number into hex string, 64-bits at a time
-      char hex_string[33];
-      sprintf(hex_string, "%08lx", identify_namespace_data.nguid[0]);
-      sprintf(&hex_string[16], "%08lx", identify_namespace_data.nguid[1]);
+        // convert 64-bit number into hex string
+        sprintf(hex_string, "%08lx", identify_namespace_data.eui64);
+    }
+    // insert _ and . in the correct positions
+  for (int i = 4; i < result.page_length; i += 5) {
+    product_serial_number[i] = '_';
+  }
+  product_serial_number[result.page_length - 1] = '.';
 
-      // insert _ and . in the correct positions
-      char formatted_hex_string[41];
-      for (int i = 4; i < result.page_length; i += 5) {
-        formatted_hex_string[i] = '_';
-      }
-      formatted_hex_string[result.page_length - 1] = '.';
-
-      // insert numbers
-      int pos = 0;
-      for (int i = 0; i < result.page_length - 1; i++) {
-        if (formatted_hex_string[i] != '_') {
-          formatted_hex_string[i] = hex_string[pos++];
-        }
-      }
-
-      memcpy(&product_serial_number, formatted_hex_string, result.page_length);
-    } else {
+  // insert numbers
+  int pos = 0;
+  for (int i = 0; i < result.page_length - 1; i++) {
+    if (product_serial_number[i] != '_') {
+      product_serial_number[i] = hex_string[pos++];
+    }
+  }
+  }
+  else {
       // 6.1.3.1.3
       // valid for NVMe 1.0 devices only
 
@@ -226,7 +183,9 @@ void TranslateUnitSerialNumberVpd(
       // Bits 07:00 ASCII representation of “.”
       product_serial_number[kV1SerialLen - 1] = '.';
     }
-  }
+
+
+
   memcpy(buffer.data(), &result, sizeof(result));
   memcpy(&buffer[sizeof(result)], &product_serial_number, result.page_length);
 }
