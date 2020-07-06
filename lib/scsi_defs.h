@@ -898,6 +898,15 @@ struct LogSenseCommand {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(LogSenseCommand) == 10);
 
+struct SupoprtedLogPages {
+  bool ds :1;
+  bool spf_1b :1;
+  PageCode page_code : 6;
+  uint8_t _subpage_code : 8;
+  uint16_t page_len : 16;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(SupoprtedLogPages) == 4);
+
 }  // namespace scsi_defs
 
 #endif
