@@ -25,6 +25,13 @@ namespace scsi_defs {
 
 using LunAddress = uint64_t;
 
+enum class PageCode : uint8_t {
+  kSupportedLogPages = 0x00,
+  Temperature = 0x0d,
+  SolidStateMedia = 0x11,
+  InformationalExceptions = 0x2f
+};
+
 // SAM-4 Table 33
 enum class Status : uint8_t {
   kGood = 0x0,
@@ -873,6 +880,23 @@ struct UnmapBlockDescriptor {
   uint32_t reserved_1 : 32;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
+
+// SCSI Reference Manual Table 69
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct LogSenseCommand {
+  uint8_t op_code : 8 = 0x4d;
+  uint8_t _reserved : 6;
+  bool obsolete : 1;
+  bool sp : 1;
+  uint8_t pc : 2;
+  PageCode page_code : 6;
+  uint8_t _subpage_code : 8; // unspecified
+  uint8_t _reserved2 : 8;
+  uint16_t _param_ptr : 16; // unspecified
+  uint16_t alloc_len : 16;
+  ControlByte control_byte;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(LogSenseCommand) == 10);
 
 }  // namespace scsi_defs
 
