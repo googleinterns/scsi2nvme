@@ -44,7 +44,7 @@ void* AllocPages(uint16_t count) {
 
 void DeallocPages(void* pages, uint16_t count) {
   if (dealloc_pages_callback == nullptr) return;
-  return dealloc_pages_callback(pages, count);
+  dealloc_pages_callback(pages, count);
 }
 
 void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),

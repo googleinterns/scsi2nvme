@@ -41,8 +41,8 @@ void* AllocPages(uint16_t count);
 
 void DeallocPages(void* pages_ptr, uint16_t count);
 
-void SetPageCallbacks(void* (*alloc_callback)(uint16_t),
-                      void (*dealloc_callback)(void*, uint16_t));
+void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(void*, uint16_t));
 
 struct BeginResponse {
   ApiStatus status;
