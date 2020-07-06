@@ -16,14 +16,13 @@
 
 namespace translator {
 
-// Main logic engine for the Inquiry command
-void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
-  scsi_defs::LogSenseCommand cmd;
-//   StatusCode status = RawToScsiCommand(raw_cmd, cmd);
-//   if (status != StatusCode::kSuccess) return;
+void TranslateSupportedLogPages(absl::Span<uint8_t> buffer) {
 
-//   nvme_defs::IdentifyControllerData identify_controller_data;
-//   nvme_defs::IdentifyNamespace identify_namespace_data;
+}
+
+// Main logic engine for the Inquiry command
+void translate(const scsi_defs::LogSenseCommand &cmd, absl::Span<uint8_t> buffer) {
+
     if (cmd.sp == 1 || cmd.pc == 1 || cmd.control_byte.naca == 1) {
         /*
         Command may be terminated with CHECK CONDITION
@@ -31,14 +30,19 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
         CDB additional sense code.
         */
     }
+
     switch (cmd.page_code) {
         case scsi_defs::PageCode::kSupportedLogPages:
+            TranslateSupportedLogPages(buffer);
             break;
         case scsi_defs::PageCode::kTemperature:
+        // TranslateTemperature(buffer);
             break;
         case scsi_defs::PageCode::kSolidStateMedia:
+        // TranslateSolidStateMedia(buffer);
             break;
         case scsi_defs::PageCode::kInformationalExceptions:
+        // TranslateInformationalExceptions(buffer);
             break;
     }
 }
