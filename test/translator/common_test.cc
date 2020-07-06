@@ -50,7 +50,7 @@ TEST(Common, ShouldNotMemcpy) {
 }
 
 TEST(Common, ShouldCorrectlyMemcpy) {
-  scsi_defs::ControlByte cb;
+  scsi_defs::ControlByte cb = {};
   uint8_t buffer[1] = {0b11000100};
 
   auto span = absl::MakeSpan(buffer, sizeof(scsi_defs::ControlByte));
