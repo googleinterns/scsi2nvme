@@ -24,6 +24,23 @@ void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
 
 //   nvme_defs::IdentifyControllerData identify_controller_data;
 //   nvme_defs::IdentifyNamespace identify_namespace_data;
+    if (cmd.sp == 1 || cmd.pc == 1 || cmd.control_byte.naca == 1) {
+        /*
+        Command may be terminated with CHECK CONDITION
+        status, ILLEGAL REQUEST sense key, and ILLEGAL FIELD IN
+        CDB additional sense code.
+        */
+    }
+    switch (cmd.page_code) {
+        case scsi_defs::PageCode::kSupportedLogPages:
+            break;
+        case scsi_defs::PageCode::kTemperature:
+            break;
+        case scsi_defs::PageCode::kSolidStateMedia:
+            break;
+        case scsi_defs::PageCode::kInformationalExceptions:
+            break;
+    }
 }
 
 }  // namespace translator
