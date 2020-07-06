@@ -890,17 +890,17 @@ struct LogSenseCommand {
   bool sp : 1;
   uint8_t pc : 2;
   PageCode page_code : 6;
-  uint8_t _subpage_code : 8; // unspecified
+  uint8_t _subpage_code : 8;  // unspecified
   uint8_t _reserved2 : 8;
-  uint16_t _param_ptr : 16; // unspecified
+  uint16_t _param_ptr : 16;  // unspecified
   uint16_t alloc_len : 16;
   ControlByte control_byte;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(LogSenseCommand) == 10);
 
 struct SupportedLogPages {
-  bool ds :1;
-  bool spf_1b :1;
+  bool ds : 1;
+  bool spf_1b : 1;
   PageCode page_code : 6;
   uint8_t _subpage_code : 8;
   uint16_t page_len : 16;
