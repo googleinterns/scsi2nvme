@@ -28,7 +28,6 @@ void TranslateSupportedLogPages(absl::Span<uint8_t> buffer) {
     };
     memcpy(buffer.data(), &result, sizeof(scsi_defs::SupportedLogPages));
     memcpy(&buffer[sizeof(scsi_defs::SupportedLogPages)], supported_pages_list, sizeof(supported_pages_list));
-
 }
 
 // Main logic engine for the Inquiry command
