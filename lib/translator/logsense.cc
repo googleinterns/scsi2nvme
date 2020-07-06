@@ -17,44 +17,41 @@
 namespace translator {
 
 void TranslateSupportedLogPages(absl::Span<uint8_t> buffer) {
-    scsi_defs::SupportedLogPages result = {
-        .page_len = 0x4
-    };
-    scsi_defs::PageCode supported_pages_list[4] = {
-        scsi_defs::PageCode::kSupportedLogPages,
-        scsi_defs::PageCode::kTemperature,
-        scsi_defs::PageCode::kSolidStateMedia,
-        scsi_defs::PageCode::kInformationalExceptions
-    };
-    memcpy(buffer.data(), &result, sizeof(scsi_defs::SupportedLogPages));
-    memcpy(&buffer[sizeof(scsi_defs::SupportedLogPages)], supported_pages_list, sizeof(supported_pages_list));
+  scsi_defs::SupportedLogPages result = {.page_len = 0x4};
+  scsi_defs::PageCode supported_pages_list[4] = {
+      scsi_defs::PageCode::kSupportedLogPages,
+      scsi_defs::PageCode::kTemperature, scsi_defs::PageCode::kSolidStateMedia,
+      scsi_defs::PageCode::kInformationalExceptions};
+  memcpy(buffer.data(), &result, sizeof(scsi_defs::SupportedLogPages));
+  memcpy(&buffer[sizeof(scsi_defs::SupportedLogPages)], supported_pages_list,
+         sizeof(supported_pages_list));
 }
 
 // Main logic engine for the Inquiry command
-void translate(const scsi_defs::LogSenseCommand &cmd, absl::Span<uint8_t> buffer) {
+void translate(const scsi_defs::LogSenseCommand &cmd,
+               absl::Span<uint8_t> buffer) {
+  if (cmd.sp == 1 || cmd.pc == 1 || cmd.control_byte.naca == 1) {
+    /*
+    Command may be terminated with CHECK CONDITION
+    status, ILLEGAL REQUEST sense key, and ILLEGAL FIELD IN
+    CDB additional sense code.
+    */
+  }
 
-    if (cmd.sp == 1 || cmd.pc == 1 || cmd.control_byte.naca == 1) {
-        /*
-        Command may be terminated with CHECK CONDITION
-        status, ILLEGAL REQUEST sense key, and ILLEGAL FIELD IN
-        CDB additional sense code.
-        */
-    }
-
-    switch (cmd.page_code) {
-        case scsi_defs::PageCode::kSupportedLogPages:
-            TranslateSupportedLogPages(buffer);
-            break;
-        case scsi_defs::PageCode::kTemperature:
-        // TranslateTemperature(buffer);
-            break;
-        case scsi_defs::PageCode::kSolidStateMedia:
-        // TranslateSolidStateMedia(buffer);
-            break;
-        case scsi_defs::PageCode::kInformationalExceptions:
-        // TranslateInformationalExceptions(buffer);
-            break;
-    }
+  switch (cmd.page_code) {
+    case scsi_defs::PageCode::kSupportedLogPages:
+      TranslateSupportedLogPages(buffer);
+      break;
+    case scsi_defs::PageCode::kTemperature:
+      // TranslateTemperature(buffer);
+      break;
+    case scsi_defs::PageCode::kSolidStateMedia:
+      // TranslateSolidStateMedia(buffer);
+      break;
+    case scsi_defs::PageCode::kInformationalExceptions:
+      // TranslateInformationalExceptions(buffer);
+      break;
+  }
 }
 
 }  // namespace translator

@@ -15,18 +15,18 @@
 #ifndef LIB_TRANSLATOR_LOGSENSE_H
 #define LIB_TRANSLATOR_LOGSENSE_H
 
-#include "common.h"
-#include "absl/types/span.h"
 #include "absl/strings/string_view.h"
+#include "absl/types/span.h"
+#include "common.h"
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
 void translate(const scsi_defs::LogSenseCommand &cmd, absl::Span<uint8_t>);
-    void    TranslateSupportedLogPages(absl::Span<uint8_t>);
-     void   TranslateTemperature(absl::Span<uint8_t>);
-     void   TranslateSolidStateMedia(absl::Span<uint8_t>);
-    void    TranslateInformationalExceptions(absl::Span<uint8_t>);
+void TranslateSupportedLogPages(absl::Span<uint8_t>);
+void TranslateTemperature(absl::Span<uint8_t>);
+void TranslateSolidStateMedia(absl::Span<uint8_t>);
+void TranslateInformationalExceptions(absl::Span<uint8_t>);
 
 }  // namespace translator
 
