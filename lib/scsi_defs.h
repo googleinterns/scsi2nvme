@@ -27,9 +27,9 @@ using LunAddress = uint64_t;
 
 enum class PageCode : uint8_t {
   kSupportedLogPages = 0x00,
-  Temperature = 0x0d,
-  SolidStateMedia = 0x11,
-  InformationalExceptions = 0x2f
+  kTemperature = 0x0d,
+  kSolidStateMedia = 0x11,
+  kInformationalExceptions = 0x2f
 };
 
 // SAM-4 Table 33

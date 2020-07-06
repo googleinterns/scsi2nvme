@@ -14,14 +14,15 @@
 
 #ifndef LIB_TRANSLATOR_LOGSENSE_H
 #define LIB_TRANSLATOR_LOGSENSE_H
+
 #include "common.h"
 #include "absl/types/span.h"
+#include "absl/strings/string_view.h"
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
 void translate(absl::Span<const uint8_t>);
-
 }  // namespace translator
 
 #endif

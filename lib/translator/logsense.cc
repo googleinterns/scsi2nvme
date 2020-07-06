@@ -16,5 +16,14 @@
 
 namespace translator {
 
+// Main logic engine for the Inquiry command
+void translate(absl::Span<const uint8_t> raw_cmd, absl::Span<uint8_t> buffer) {
+  scsi_defs::LogSenseCommand cmd;
+//   StatusCode status = RawToScsiCommand(raw_cmd, cmd);
+//   if (status != StatusCode::kSuccess) return;
+
+//   nvme_defs::IdentifyControllerData identify_controller_data;
+//   nvme_defs::IdentifyNamespace identify_namespace_data;
+}
 
 }  // namespace translator
