@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "absl/base/casts.h"
 #include "absl/types/span.h"
 #include "common.h"
 
@@ -105,35 +106,76 @@ void ReadMultiple(uint32_t nsid, uint8_t rd_protect, bool fua, uint32_t lba,
 
 }  // namespace
 
-void Read6ToNvme(uint32_t nsid, scsi_defs::Read6Command cmd,
-                 nvme_defs::GenericQueueEntryCmd queue_entry) {
-  return LegacyRead(nsid, cmd.logical_block_address, cmd.transfer_length,
-                    queue_entry);
+StatusCode Read6ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+                       nvme_defs::GenericQueueEntryCmd queue_entry) {
+  if (raw_cmd.size() != sizeof(scsi_defs::Read6Command)) {
+    DebugLog("Malformed Read6 command");
+    return StatusCode::kInvalidInput;
+  }
+  scsi_defs::Read6Command cmd;
+  memcpy(&cmd, &raw_cmd, sizeof(scsi_defs::Read6Command));
+  LegacyRead(nsid, cmd.logical_block_address, cmd.transfer_length, queue_entry);
+  return StatusCode::kSuccess;
 }
 
-void Read10ToNvme(uint32_t nsid, scsi_defs::Read10Command cmd,
-                  nvme_defs::GenericQueueEntryCmd queue_entry) {
-  return Read(nsid, cmd.rd_protect, cmd.fua, cmd.logical_block_address,
-              cmd.transfer_length, queue_entry);
+StatusCode Read10ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+                        nvme_defs::GenericQueueEntryCmd queue_entry) {
+  // scsi_defs::Read10Command cmd =
+  // absl::bit_cast<scsi_defs::Read10Command>(raw_cmd);
+  if (raw_cmd.size() != sizeof(scsi_defs::Read10Command)) {
+    DebugLog("Malformed Read10 command");
+    return StatusCode::kInvalidInput;
+  }
+  scsi_defs::Read10Command cmd;
+  memcpy(&cmd, &raw_cmd, sizeof(scsi_defs::Read10Command));
+  Read(nsid, cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+       cmd.transfer_length, queue_entry);
+  return StatusCode::kSuccess;
 }
 
-void Read12ToNvme(uint32_t nsid, scsi_defs::Read12Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+StatusCode Read12ToNvme(
+    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+  if (raw_cmd.size() != sizeof(scsi_defs::Read12Command)) {
+    DebugLog("Malformed Read12 command");
+    return StatusCode::kInvalidInput;
+  }
+  scsi_defs::Read12Command cmd;
+  memcpy(&cmd, &raw_cmd, sizeof(scsi_defs::Read12Command));
   ReadMultiple(nsid, cmd.rd_protect, cmd.fua, cmd.logical_block_address,
                cmd.transfer_length, false, 0, 0, 0, queue_entries);
+  return StatusCode::kSuccess;
 }
 
-void Read16ToNvme(uint32_t nsid, scsi_defs::Read16Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+StatusCode Read16ToNvme(
+    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+  if (raw_cmd.size() != sizeof(scsi_defs::Read16Command)) {
+    DebugLog("Malformed Read16 command");
+    return StatusCode::kInvalidInput;
+  }
+  scsi_defs::Read16Command cmd;
+  memcpy(&cmd, &raw_cmd, sizeof(scsi_defs::Read16Command));
   ReadMultiple(nsid, cmd.rd_protect, cmd.fua, cmd.logical_block_address,
                cmd.transfer_length, false, 0, 0, 0, queue_entries);
+  return StatusCode::kSuccess;
 }
 
-void Read32ToNvme(uint32_t nsid, scsi_defs::Read32Command cmd,
-                  absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+StatusCode Read32ToNvme(
+    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries) {
+  // scsi_defs::Read32Command cmd =
+  // absl::bit_cast<scsi_defs::Read32Command>(raw_cmd);
+  if (raw_cmd.size() != sizeof(scsi_defs::Read32Command)) {
+    DebugLog("Malformed Read32 command");
+    return StatusCode::kInvalidInput;
+  }
+  scsi_defs::Read32Command cmd;
+  memcpy(&cmd, &raw_cmd, sizeof(scsi_defs::Read32Command));
   ReadMultiple(nsid, cmd.rd_protect, cmd.fua, cmd.logical_block_address,
                cmd.transfer_length, true, cmd.eilbrt, cmd.elbat, cmd.lbatm,
                queue_entries);
+  return StatusCode::kSuccess;
 }
 
 }  // namespace translator

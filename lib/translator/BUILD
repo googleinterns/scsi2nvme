@@ -1,11 +1,11 @@
 cc_library(
   name = "common",
-  hdrs = ["common.h"],
+  hdrs = ["common.h", "read.h"],
   srcs = ["common.cc", "translation.cc"],
   deps = [
     "//third_party/spdk_defs:nvme_defs_lib",
     "//lib:scsi_defs_lib",
-    "@com_google_absl//absl/types:span"
+    "@com_google_absl//absl/types:span",
   ],
   visibility = ["//visibility:public"],
 )
@@ -20,6 +20,7 @@ cc_library(
       "//third_party/spdk_defs:nvme_defs_lib",
       "@googletest//:gtest_main",
       "@com_google_absl//absl/types:span",
+      "@com_google_absl//absl/base",
           ],
   visibility = ["//visibility:public"],
 )
