@@ -17,6 +17,17 @@
 namespace translator {
 
 void TranslateSupportedLogPages(absl::Span<uint8_t> buffer) {
+    scsi_defs::SupportedLogPages result = {
+        .page_len = 0x4
+    };
+    scsi_defs::PageCode supported_pages_list[4] = {
+        scsi_defs::PageCode::kSupportedLogPages,
+        scsi_defs::PageCode::kTemperature,
+        scsi_defs::PageCode::kSolidStateMedia,
+        scsi_defs::PageCode::kInformationalExceptions
+    };
+    memcpy(buffer.data(), &result, sizeof(scsi_defs::SupportedLogPages));
+    memcpy(&buffer[sizeof(scsi_defs::SupportedLogPages)], supported_pages_list, sizeof(supported_pages_list));
 
 }
 
