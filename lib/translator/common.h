@@ -22,7 +22,15 @@
 
 namespace translator {
 
-enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
+enum class ApiStatus { kSuccess, kFailure };
+
+enum class StatusCode {
+  kSuccess,
+  kUninitialized,
+  kInvalidInput,
+  kNoTranslation,
+  kFailure
+};
 
 void DebugLog(const char* format, ...);
 
@@ -31,29 +39,35 @@ void SetDebugCallback(void (*callback)(const char*));
 // Max consecutive pages required by NVMe PRP list is 512
 void* AllocPages(uint16_t count);
 
-void* DeallocPages(uint16_t count);
+void DeallocPages(void* pages_ptr, uint16_t count);
 
-void SetPageCallback(void* (*alloc_callback)(uint16_t),
-                     void* (*dealloc_callback)(uint16_t));
+void SetPageCallbacks(void* (*alloc_callback)(uint16_t),
+                      void (*dealloc_callback)(void*, uint16_t));
+
+struct BeginResponse {
+  ApiStatus status;
+  uint32_t alloc_len;
+};
 
 class Translation {
  public:
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
-  StatusCode Begin(absl::Span<const uint8_t> scsi_cmd,
-                   scsi_defs::LunAddress lun);
+  BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
+                      scsi_defs::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  StatusCode Complete(
-      absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
-      absl::Span<uint8_t> buffer);
+  ApiStatus Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+                     absl::Span<uint8_t> buffer);
   // Returns a span containing translated NVMe commands.
   absl::Span<const nvme_defs::GenericQueueEntryCmd> GetNvmeCmds();
+  // Aborts a given pipeline sequence and cleans up memory
+  void AbortPipeline();
 
  private:
-  StatusCode pipeline_status;
-  absl::Span<const uint8_t> scsi_cmd;
-  uint32_t nvme_cmd_count;
-  nvme_defs::GenericQueueEntryCmd nvme_cmds[3];
+  StatusCode pipeline_status_ = StatusCode::kUninitialized;
+  absl::Span<const uint8_t> scsi_cmd_;
+  uint32_t nvme_cmd_count_;
+  nvme_defs::GenericQueueEntryCmd nvme_cmds_[3];
 };
 
 }  // namespace translator
