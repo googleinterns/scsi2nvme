@@ -14,7 +14,9 @@
 
 #include "lib/translator/common.h"
 
+#include "absl/types/span.h"
 #include "gtest/gtest.h"
+#include "lib/scsi_defs.h"
 
 namespace {
 
@@ -32,6 +34,32 @@ TEST(Common, ShouldCorrectlyCallback) {
   };
   translator::SetDebugCallback(callback);
   translator::DebugLog(buf, 123);
+}
+
+TEST(Common, ShouldNotMemcpy) {
+  scsi_defs::Read6Command cmd;
+  uint8_t buffer[1];
+
+  auto span = absl::MakeSpan(buffer, sizeof(scsi_defs::Read6Command) + 1);
+  bool result = translator::ReadValue(span, cmd);
+  EXPECT_FALSE(result);
+
+  span = absl::MakeSpan(buffer, sizeof(scsi_defs::Read6Command) - 1);
+  result = translator::ReadValue(span, cmd);
+  EXPECT_FALSE(result);
+}
+
+TEST(Common, ShouldCorrectlyMemcpy) {
+  scsi_defs::ControlByte cb;
+  uint8_t buffer[1] = {0b11000100};
+
+  auto span = absl::MakeSpan(buffer, sizeof(scsi_defs::ControlByte));
+  bool result = translator::ReadValue(span, cb);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(0b00, cb.obsolete);
+  EXPECT_EQ(0b1, cb.naca);
+  EXPECT_EQ(0b000, cb.reserved);
+  EXPECT_EQ(0b11, cb.vendor_specific);
 }
 
 }  // namespace
