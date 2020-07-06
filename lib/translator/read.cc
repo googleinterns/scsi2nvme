@@ -12,7 +12,7 @@ namespace {  // anonymous namespace for helper functions
 uint8_t GetPrinfo(uint8_t rd_protect) {
   bool pract;      // Protection Information Action 1 bit
   uint8_t prchk;   // Protection Information Check 3 bits
-  uint8_t prinfo;  // 4 bits
+  uint8_t prinfo = 0;  // 4 bits
 
   switch (rd_protect) {
     case 0b0:
@@ -48,8 +48,8 @@ uint8_t GetPrinfo(uint8_t rd_protect) {
   return prinfo;
 }
 
-void SetLogicalBlockTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
-                         nvme_defs::GenericQueueEntryCmd& queue_entry) {
+void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
+                nvme_defs::GenericQueueEntryCmd& queue_entry) {
   // expected initial logical block reference
   queue_entry.cdw[4] = eilbrt;
   // expected logical block application tag
@@ -96,9 +96,9 @@ void ReadMultiple(uint32_t nsid, uint8_t rd_protect, bool fua, uint32_t lba,
        queue_entries[0]);
 
   for (int i = 1; i <= num_calls; i++) {
-    Read(nsid, rd_protect, fua, lba, pow(2, 16), queue_entries[i]);
+    Read(nsid, rd_protect, fua, lba, (uint16_t)pow(2, 16), queue_entries[i]);
     if (set_lba_tags) {
-      SetLogicalBlockTags(eilbrt, elbat, lbatm, queue_entries[i]);
+      SetLbaTags(eilbrt, elbat, lbatm, queue_entries[i]);
     }
   }
 }

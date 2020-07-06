@@ -11,7 +11,7 @@ cc_library(
 )
 
 cc_library(
-  name = "read",
+  name = "read_lib",
   hdrs = ["read.h"],
   srcs = ["read.cc"],
   deps = [
