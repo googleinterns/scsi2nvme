@@ -35,6 +35,7 @@ bool ReadValue(absl::Span<const uint8_t> data, T& out) {
   memcpy(&out, data.data(), sizeof(T));
   return true;
 }
+
 template <typename T>
 bool WriteValue(const T& data, absl::Span<uint8_t> out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
@@ -42,6 +43,7 @@ bool WriteValue(const T& data, absl::Span<uint8_t> out) {
   memcpy(out.data(), &data, out.size());
   return true;
 }
+
 }  // namespace translator
 
 #endif

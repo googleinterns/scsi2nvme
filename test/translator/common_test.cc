@@ -77,4 +77,5 @@ TEST(Common, ShouldCorrectlyWriteValueToSpan) {
   EXPECT_TRUE(result);
   EXPECT_EQ(0b11000100, buffer[0]);
 }
+
 }  // namespace
