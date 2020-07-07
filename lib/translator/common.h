@@ -19,6 +19,9 @@
 
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
+#include <cstring>
+#include <type_traits>
+
 
 namespace translator {
 
@@ -35,6 +38,22 @@ enum class StatusCode {
 void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
+
+template <typename T>
+bool ReadValue(absl::Span<const uint8_t> data, T& out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > data.size()) return false;
+  memcpy(&out, data.data(), sizeof(T));
+  return true;
+}
+
+template <typename T>
+bool WriteValue(const T& data, absl::Span<uint8_t> out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (out.size() > sizeof(T)) return false;
+  memcpy(out.data(), &data, out.size());
+  return true;
+}
 
 // Max consecutive pages required by NVMe PRP list is 512
 void* AllocPages(uint16_t count);
