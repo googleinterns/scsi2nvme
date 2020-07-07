@@ -39,12 +39,17 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   scsi_defs::OpCode opc = static_cast<scsi_defs::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi_defs::OpCode::kInquiry:
-      return response;
+      break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
-      return response;
+      break;
   }
+
+  if (pipeline_status_ != StatusCode::kSuccess) {
+    nvme_cmd_count_ = 0;
+  }
+  return response;
 }
 
 ApiStatus Translation::Complete(
