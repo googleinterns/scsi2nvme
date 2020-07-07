@@ -15,6 +15,11 @@
 #ifndef LIB_TRANSLATOR_COMMON_H
 #define LIB_TRANSLATOR_COMMON_H
 
+#include <cstring>
+#include <type_traits>
+
+#include "absl/types/span.h"
+
 namespace translator {
 
 enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
@@ -22,6 +27,22 @@ enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
+
+template <typename T>
+bool ReadValue(absl::Span<const uint8_t> data, T& out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > data.size()) return false;
+  memcpy(&out, data.data(), sizeof(T));
+  return true;
+}
+
+template <typename T>
+bool WriteValue(const T& data, absl::Span<uint8_t> out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > out.size()) return false;
+  memcpy(out.data(), &data, sizeof(T));
+  return true;
+}
 
 }  // namespace translator
 
