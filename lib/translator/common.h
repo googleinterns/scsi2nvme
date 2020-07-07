@@ -15,6 +15,10 @@
 #ifndef LIB_TRANSLATOR_COMMON_H
 #define LIB_TRANSLATOR_COMMON_H
 
+#include <cstring>
+#include <type_traits>
+
+#include "absl/types/span.h"
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
@@ -39,6 +43,22 @@ void SetDebugCallback(void (*callback)(const char*));
 
 void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(void*, uint16_t));
+
+template <typename T>
+bool ReadValue(absl::Span<const uint8_t> data, T& out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > data.size()) return false;
+  memcpy(&out, data.data(), sizeof(T));
+  return true;
+}
+
+template <typename T>
+bool WriteValue(const T& data, absl::Span<uint8_t> out) {
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > out.size()) return false;
+  memcpy(out.data(), &data, sizeof(T));
+  return true;
+}
 
 }  // namespace translator
 
