@@ -36,7 +36,7 @@ TEST(Common, ShouldCorrectlyCallback) {
   translator::DebugLog(buf, 123);
 }
 
-TEST(Common, ShouldNotMemcpy) {
+TEST(Common, ShouldNotReadValueFromSpan) {
   scsi_defs::Read6Command cmd;
   uint8_t buffer[sizeof(scsi_defs::Read6Command) - 1];
 
@@ -44,7 +44,7 @@ TEST(Common, ShouldNotMemcpy) {
   EXPECT_FALSE(result);
 }
 
-TEST(Common, ShouldCorrectlyMemcpy) {
+TEST(Common, ShouldCorrectlyReadValueFromSpan) {
   scsi_defs::ControlByte cb = {};
   uint8_t buffer[sizeof(scsi_defs::ControlByte)] = {0b11000100};
 
@@ -56,4 +56,25 @@ TEST(Common, ShouldCorrectlyMemcpy) {
   EXPECT_EQ(0b11, cb.vendor_specific);
 }
 
+TEST(Common, ShouldNotWriteValueToSpan) {
+  scsi_defs::Read6Command cmd;
+  uint8_t buffer[sizeof(scsi_defs::Read6Command) + 1];
+
+  bool result = translator::WriteValue(cmd, buffer);
+  EXPECT_FALSE(result);
+}
+
+TEST(Common, ShouldCorrectlyWriteValueToSpan) {
+  scsi_defs::ControlByte cb = {
+      .obsolete = 0b00,
+      .naca = 0b1,
+      .reserved = 0b000,
+      .vendor_specific = 0b11,
+  };
+  uint8_t buffer[sizeof(scsi_defs::ControlByte)];
+
+  bool result = translator::WriteValue(cb, buffer);
+  EXPECT_TRUE(result);
+  EXPECT_EQ(0b11000100, buffer[0]);
+}
 }  // namespace
