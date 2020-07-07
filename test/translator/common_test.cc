@@ -38,23 +38,17 @@ TEST(Common, ShouldCorrectlyCallback) {
 
 TEST(Common, ShouldNotMemcpy) {
   scsi_defs::Read6Command cmd;
-  uint8_t buffer[1];
+  uint8_t buffer[sizeof(scsi_defs::Read6Command) - 1];
 
-  auto span = absl::MakeSpan(buffer, sizeof(scsi_defs::Read6Command) + 1);
-  bool result = translator::ReadValue(span, cmd);
-  EXPECT_FALSE(result);
-
-  span = absl::MakeSpan(buffer, sizeof(scsi_defs::Read6Command) - 1);
-  result = translator::ReadValue(span, cmd);
+  bool result = translator::ReadValue(buffer, cmd);
   EXPECT_FALSE(result);
 }
 
 TEST(Common, ShouldCorrectlyMemcpy) {
   scsi_defs::ControlByte cb = {};
-  uint8_t buffer[1] = {0b11000100};
+  uint8_t buffer[sizeof(scsi_defs::ControlByte)] = {0b11000100};
 
-  auto span = absl::MakeSpan(buffer, sizeof(scsi_defs::ControlByte));
-  bool result = translator::ReadValue(span, cb);
+  bool result = translator::ReadValue(buffer, cb);
   EXPECT_TRUE(result);
   EXPECT_EQ(0b00, cb.obsolete);
   EXPECT_EQ(0b1, cb.naca);

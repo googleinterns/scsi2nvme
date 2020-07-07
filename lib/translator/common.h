@@ -16,6 +16,7 @@
 #define LIB_TRANSLATOR_COMMON_H
 
 #include <cstring>
+#include <type_traits>
 
 #include "absl/types/span.h"
 
@@ -29,8 +30,8 @@ void SetDebugCallback(void (*callback)(const char*));
 
 template <typename T>
 bool ReadValue(absl::Span<const uint8_t> data, T& out) {
-  static_assert(std::is_pod_v<T>, "only supports POD types");
-  if (sizeof(T) != data.size()) return false;
+  static_assert(std::is_pod_v<T>, "Only supports POD types");
+  if (sizeof(T) > data.size()) return false;
   memcpy(&out, data.data(), sizeof(T));
   return true;
 }
