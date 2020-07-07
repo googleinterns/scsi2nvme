@@ -11,7 +11,7 @@ cc_test(
   name = "translation_tests",
   srcs = [ "translation_test.cc" ],
   deps = [
-    "//lib/translator:common",
+    "//lib/translator:translation",
     "@googletest//:gtest_main"
   ]
 )

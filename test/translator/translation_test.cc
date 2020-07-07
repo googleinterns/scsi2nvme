@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/translator/common.h"
+#include "lib/translator/translation.h"
 
 #include "gtest/gtest.h"
 
