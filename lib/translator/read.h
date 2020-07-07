@@ -21,20 +21,20 @@
 
 namespace translator {
 StatusCode Read6ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-                       nvme_defs::GenericQueueEntryCmd queue_entry);
+                       nvme_defs::GenericQueueEntryCmd &nvme_cmd);
 
 StatusCode Read10ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-                        nvme_defs::GenericQueueEntryCmd queue_entry);
-StatusCode Read12ToNvme(
-    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries);
+                        nvme_defs::GenericQueueEntryCmd &nvme_cmd);
+StatusCode Read12ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+                        uint32_t &nvme_cmd_count,
+                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
 
-StatusCode Read16ToNvme(
-    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries);
+StatusCode Read16ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+                        uint32_t &nvme_cmd_count,
+                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
 
-StatusCode Read32ToNvme(
-    uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-    absl::Span<nvme_defs::GenericQueueEntryCmd> queue_entries);
+StatusCode Read32ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+                        uint32_t &nvme_cmd_count,
+                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
 }  // namespace translator
 #endif
