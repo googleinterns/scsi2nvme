@@ -27,7 +27,7 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   }
 
   // Verify buffer is large enough to contain opcode (one byte)
-  if (scsi_cmd.size() < 1) {
+  if (scsi_cmd.empty()) {
     DebugLog("Empty SCSI Buffer");
     pipeline_status_ = StatusCode::kFailure;
     return response;
