@@ -20,21 +20,18 @@
 #include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
-StatusCode Read6ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+StatusCode Read6ToNvme(absl::Span<const uint8_t> raw_cmd,
                        nvme_defs::GenericQueueEntryCmd &nvme_cmd);
 
-StatusCode Read10ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
+StatusCode Read10ToNvme(absl::Span<const uint8_t> raw_cmd,
                         nvme_defs::GenericQueueEntryCmd &nvme_cmd);
-StatusCode Read12ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-                        uint32_t &nvme_cmd_count,
-                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
+StatusCode Read12ToNvme(absl::Span<const uint8_t> raw_cmd,
+                        nvme_defs::GenericQueueEntryCmd &nvme_cmd);
 
-StatusCode Read16ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-                        uint32_t &nvme_cmd_count,
-                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
+StatusCode Read16ToNvme(absl::Span<const uint8_t> raw_cmd,
+                        nvme_defs::GenericQueueEntryCmd &nvme_cmd);
 
-StatusCode Read32ToNvme(uint32_t nsid, absl::Span<const uint8_t> raw_cmd,
-                        uint32_t &nvme_cmd_count,
-                        nvme_defs::GenericQueueEntryCmd nvme_cmds[]);
+StatusCode Read32ToNvme(absl::Span<const uint8_t> raw_cmd,
+                        nvme_defs::GenericQueueEntryCmd &nvme_cmd);
 }  // namespace translator
 #endif

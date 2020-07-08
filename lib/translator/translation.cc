@@ -42,19 +42,19 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
     case scsi_defs::OpCode::kInquiry:
       return response;
     case scsi_defs::OpCode::kRead6:
-      //      Read6ToNvme((uint32_t)lun, scsi_cmd, nvme_cmds_[0]);
+      //      Read6ToNvme( scsi_cmd, nvme_cmds_[0]);
       return response;
     case scsi_defs::OpCode::kRead10:
-      //     Read10ToNvme(lun, scsi_cmd, nvme_cmds_[0]);
+      //     Read10ToNvme( scsi_cmd, nvme_cmds_[0]);
       return response;
     case scsi_defs::OpCode::kRead12:
-      //     Read12ToNvme(lun, scsi_cmd, nvme_cmd_count_, nvme_cmds_);
+      //     Read12ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
       return response;
     case scsi_defs::OpCode::kRead16:
-      //    Read16ToNvme(lun, scsi_cmd, nvme_cmd_count_, nvme_cmds_);
+      //    Read16ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
       return response;
     case scsi_defs::OpCode::kRead32:
-      // Read32ToNvme(lun, scsi_cmd, nvme_cmd_count_, nvme_cmds_);
+      // Read32ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
       return response;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
