@@ -60,28 +60,24 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 
 void LegacyRead(uint32_t lba, uint16_t transfer_length,
                 nvme_defs::GenericQueueEntryCmd &nvme_cmd) {
-  nvme_cmd = {};
-  nvme_cmd.opc = static_cast<uint8_t>(nvme_defs::NvmOpcode::kRead);
-  nvme_cmd.fuse = 0b00;  // Normal operation, not fused
-  nvme_cmd.psdt = 0b00;  // PRPs are used for data transfer
-  nvme_cmd.mptr = reinterpret_cast<std::uint64_t>(AllocPages(1));
+  nvme_cmd = nvme_defs::GenericQueueEntryCmd{
+      .opc = static_cast<uint8_t>(nvme_defs::NvmOpcode::kRead),
+      .fuse = 0b00,  // Normal operation, not fused
+      .psdt = 0b00,  // PRPs are used for data transfer
+      .mptr = reinterpret_cast<std::uint64_t>(AllocPages(1)),
+  };
 
   nvme_cmd.dptr.prp.prp1 = reinterpret_cast<std::uint64_t>(AllocPages(1));
-
-  // cdw10 Starting lba bits 31:00
-  nvme_cmd.cdw[0] = lba;
-  // cdw12 nlb bits 15:00
-  nvme_cmd.cdw[2] = transfer_length;
+  nvme_cmd.cdw[0] = lba;              // cdw10 Starting lba bits 31:00
+  nvme_cmd.cdw[2] = transfer_length;  // cdw12 nlb bits 15:00
 }
 
 void Read(uint8_t rd_protect, bool fua, uint32_t lba, uint16_t transfer_length,
           nvme_defs::GenericQueueEntryCmd &nvme_cmd) {
   LegacyRead(lba, transfer_length, nvme_cmd);
 
-  // cdw12 prinfo bits 29:26
-  nvme_cmd.cdw[2] |= (GetPrinfo(rd_protect) << 26);
-  // cdw12 fua bit 30;
-  nvme_cmd.cdw[2] |= (fua << 30);
+  nvme_cmd.cdw[2] |= (GetPrinfo(rd_protect) << 26);  // cdw12 prinfo bits 29:26
+  nvme_cmd.cdw[2] |= (fua << 30);  // cdw12 fua bit 30;
 }
 
 
