@@ -18,7 +18,9 @@
 #include <cstring>
 #include <type_traits>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+#include "lib/scsi_defs.h"
 
 namespace translator {
 
@@ -27,6 +29,8 @@ enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
 void DebugLog(const char* format, ...);
 
 void SetDebugCallback(void (*callback)(const char*));
+
+absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 template <typename T>
 bool ReadValue(absl::Span<const uint8_t> data, T& out) {
