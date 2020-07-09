@@ -48,8 +48,7 @@ TEST(Translation, ShouldFailInvalidPipeline) {
 
 TEST(Translation, ShouldReturnEmptyCmdSpan) {
   translator::Translation translation = {};
-  absl::Span<const nvme::GenericQueueEntryCmd> cmds =
-      translation.GetNvmeCmds();
+  absl::Span<const nvme::GenericQueueEntryCmd> cmds = translation.GetNvmeCmds();
   EXPECT_EQ(0, cmds.size());
 }
 

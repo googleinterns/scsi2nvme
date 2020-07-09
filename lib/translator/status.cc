@@ -41,8 +41,7 @@ ScsiStatus StatusToScsi(nvme::GenericCommandStatusCode status_code) {
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kIllegalRequest;
       result.asc = scsi::AdditionalSenseCode::kInvalidCommandOpCode;
-      result.ascq =
-          scsi::AdditionalSenseCodeQualifier::kInvalidCommandOpCode;
+      result.ascq = scsi::AdditionalSenseCodeQualifier::kInvalidCommandOpCode;
       break;
     case nvme::GenericCommandStatusCode::kInvalidField:
       result.status = scsi::Status::kCheckCondition;
@@ -65,8 +64,7 @@ ScsiStatus StatusToScsi(nvme::GenericCommandStatusCode status_code) {
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kHardwareError;
       result.asc = scsi::AdditionalSenseCode::kInternalTargetFailure;
-      result.ascq =
-          scsi::AdditionalSenseCodeQualifier::kInternalTargetFailure;
+      result.ascq = scsi::AdditionalSenseCodeQualifier::kInternalTargetFailure;
       break;
     case nvme::GenericCommandStatusCode::kAbortedByRequest:
       result.status = scsi::Status::kTaskAborted;
@@ -87,10 +85,9 @@ ScsiStatus StatusToScsi(nvme::GenericCommandStatusCode status_code) {
     case nvme::GenericCommandStatusCode::kInvalidNamespaceOrFormat:
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kIllegalRequest;
-      result.asc =
-          scsi::AdditionalSenseCode::kAccessDeniedInvalidLuIdentifier;
-      result.ascq = scsi::AdditionalSenseCodeQualifier::
-          kAccessDeniedInvalidLuIdentifier;
+      result.asc = scsi::AdditionalSenseCode::kAccessDeniedInvalidLuIdentifier;
+      result.ascq =
+          scsi::AdditionalSenseCodeQualifier::kAccessDeniedInvalidLuIdentifier;
       break;
     case nvme::GenericCommandStatusCode::kLbaOutOfRange:
       result.status = scsi::Status::kCheckCondition;
@@ -101,8 +98,8 @@ ScsiStatus StatusToScsi(nvme::GenericCommandStatusCode status_code) {
     case nvme::GenericCommandStatusCode::kNamespaceNotReady:
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kNotReady;
-      result.asc = scsi::AdditionalSenseCode::
-          kLogicalUnitNotReadyCauseNotReportable;
+      result.asc =
+          scsi::AdditionalSenseCode::kLogicalUnitNotReadyCauseNotReportable;
       result.ascq = scsi::AdditionalSenseCodeQualifier::
           kLogicalUnitNotReadyCauseNotReportable;
       break;
@@ -127,8 +124,7 @@ ScsiStatus StatusToScsi(nvme::CommandSpecificStatusCode status_code) {
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kIllegalRequest;
       result.asc = scsi::AdditionalSenseCode::kFormatCommandFailed;
-      result.ascq =
-          scsi::AdditionalSenseCodeQualifier::kFormatCommandFailed;
+      result.ascq = scsi::AdditionalSenseCodeQualifier::kFormatCommandFailed;
       break;
     case nvme::CommandSpecificStatusCode::kConflictingAttributes:
       result.status = scsi::Status::kCheckCondition;
@@ -160,22 +156,20 @@ ScsiStatus StatusToScsi(nvme::MediaErrorStatusCode status_code) {
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kMediumError;
       result.asc = scsi::AdditionalSenseCode::kUnrecoveredReadError;
-      result.ascq =
-          scsi::AdditionalSenseCodeQualifier::kUnrecoveredReadError;
+      result.ascq = scsi::AdditionalSenseCodeQualifier::kUnrecoveredReadError;
       break;
     case nvme::MediaErrorStatusCode::kGuardCheckError:
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kMediumError;
-      result.asc =
-          scsi::AdditionalSenseCode::kLogicalBlockGuardCheckFailed;
-      result.ascq = scsi::AdditionalSenseCodeQualifier::
-          kLogicalBlockGuardCheckFailed;
+      result.asc = scsi::AdditionalSenseCode::kLogicalBlockGuardCheckFailed;
+      result.ascq =
+          scsi::AdditionalSenseCodeQualifier::kLogicalBlockGuardCheckFailed;
       break;
     case nvme::MediaErrorStatusCode::kApplicationTagCheckError:
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kMediumError;
-      result.asc = scsi::AdditionalSenseCode::
-          kLogicalBlockApplicationTagCheckFailed;
+      result.asc =
+          scsi::AdditionalSenseCode::kLogicalBlockApplicationTagCheckFailed;
       result.ascq = scsi::AdditionalSenseCodeQualifier::
           kLogicalBlockApplicationTagCheckFailed;
       break;
@@ -197,10 +191,9 @@ ScsiStatus StatusToScsi(nvme::MediaErrorStatusCode status_code) {
     case nvme::MediaErrorStatusCode::kAccessDenied:
       result.status = scsi::Status::kCheckCondition;
       result.sense_key = scsi::SenseKey::kIllegalRequest;
-      result.asc =
-          scsi::AdditionalSenseCode::kAccessDeniedInvalidLuIdentifier;
-      result.ascq = scsi::AdditionalSenseCodeQualifier::
-          kAccessDeniedInvalidLuIdentifier;
+      result.asc = scsi::AdditionalSenseCode::kAccessDeniedInvalidLuIdentifier;
+      result.ascq =
+          scsi::AdditionalSenseCodeQualifier::kAccessDeniedInvalidLuIdentifier;
       break;
     default:
       DebugLog("No SCSI translation for NVMe status with code %#x",
@@ -223,8 +216,7 @@ ScsiStatus StatusToScsi(uint8_t status_code_type, uint8_t status_code) {
       return StatusToScsi(
           static_cast<nvme::CommandSpecificStatusCode>(status_code));
     case nvme::StatusCodeType::kMediaError:
-      return StatusToScsi(
-          static_cast<nvme::MediaErrorStatusCode>(status_code));
+      return StatusToScsi(static_cast<nvme::MediaErrorStatusCode>(status_code));
     case nvme::StatusCodeType::kPath:
     case nvme::StatusCodeType::kVendorSpecific:
     default:

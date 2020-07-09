@@ -19,10 +19,9 @@ namespace translator {
 
 // command specific helpers
 namespace {
-void TranslateStandardInquiry(
-    const nvme::IdentifyControllerData& identify_ctrl,
-    const nvme::IdentifyNamespace& identify_ns,
-    absl::Span<uint8_t> buffer) {
+void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
+                              const nvme::IdentifyNamespace& identify_ns,
+                              absl::Span<uint8_t> buffer) {
   scsi::InquiryData result = {
       .version = scsi::Version::kSpc4,
       .response_data_format = scsi::ResponseDataFormat::kCompliant,
@@ -81,14 +80,15 @@ void TranslateUnitSerialNumberVpd(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, uint32_t nsid,
     absl::Span<uint8_t> buffer) {
-  scsi::UnitSerialNumber result = {
-      .page_code = scsi::PageCode::kUnitSerialNumber};
+  scsi::UnitSerialNumber result = {.page_code =
+                                       scsi::PageCode::kUnitSerialNumber};
 
   // converts the nguid or eui64 into a formatter hex string
   // 0x0123456789ABCDEF would be converted to “0123_4567_89AB_CDEF."
   char product_serial_number[40] = {0}, hex_string[33];
 
-  // TOOD: Create shared constants to be used in tests as well when merging all Inquiry paths
+  // TOOD: Create shared constants to be used in tests as well when merging all
+  // Inquiry paths
   const size_t kNguidLen = 40, kEui64Len = 20, kV1SerialLen = 30;
 
   // check if nonzero
@@ -167,8 +167,7 @@ StatusCode InquiryToNvme(absl::Span<const uint8_t> raw_scsi,
   if (!ns_prp) return StatusCode::kFailure;
 
   identify_ns = nvme::GenericQueueEntryCmd{
-      .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
-      .nsid = lun};
+      .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = lun};
   identify_ns.dptr.prp.prp1 = ns_prp;
   identify_ns.cdw[0] = 0x0;  // cns val
 

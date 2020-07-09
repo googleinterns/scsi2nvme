@@ -37,8 +37,7 @@ class Translation {
         allocations_() {}
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
-  BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
-                      scsi::LunAddress lun);
+  BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd, scsi::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
   ApiStatus Complete(absl::Span<const nvme::GenericQueueEntryCpl> cpl_data,
                      absl::Span<uint8_t> buffer);
