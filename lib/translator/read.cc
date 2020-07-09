@@ -91,7 +91,10 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::Read6Command cmd;
-  ReadValue(raw_cmd, cmd);
+  if (!ReadValue(raw_cmd, cmd)) {
+    DebugLog("Unable to cast raw bytes to Read6 command");
+    return StatusCode::kInvalidInput;
+  }
 
   LegacyRead(cmd.logical_block_address, cmd.transfer_length, nvme_cmd);
   return StatusCode::kSuccess;
@@ -105,7 +108,10 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::Read10Command cmd;
-  ReadValue(raw_cmd, cmd);
+  if (!ReadValue(raw_cmd, cmd)) {
+    DebugLog("Unable to cast raw bytes to Read10 command");
+    return StatusCode::kInvalidInput;
+  }
 
   Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, cmd.transfer_length,
        nvme_cmd);
@@ -120,7 +126,10 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::Read12Command cmd;
-  ReadValue(raw_cmd, cmd);
+  if (!ReadValue(raw_cmd, cmd)) {
+    DebugLog("Unable to cast raw bytes to Read12 command");
+    return StatusCode::kInvalidInput;
+  }
 
   Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, cmd.transfer_length,
        nvme_cmd);
@@ -135,7 +144,10 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::Read16Command cmd;
-  ReadValue(raw_cmd, cmd);
+  if (!ReadValue(raw_cmd, cmd)) {
+    DebugLog("Unable to cast raw bytes to Read16 command");
+    return StatusCode::kInvalidInput;
+  }
 
   Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, cmd.transfer_length,
        nvme_cmd);
@@ -150,7 +162,10 @@ StatusCode Read32ToNvme(absl::Span<const uint8_t> raw_cmd,
   }
 
   scsi_defs::Read32Command cmd;
-  ReadValue(raw_cmd, cmd);
+  if (!ReadValue(raw_cmd, cmd)) {
+    DebugLog("Unable to cast raw bytes to Read32 command");
+    return StatusCode::kInvalidInput;
+  }
 
   Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address, cmd.transfer_length,
        nvme_cmd);
