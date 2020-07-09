@@ -14,6 +14,8 @@
 
 #include "translation.h"
 
+#include "read.h"
+
 namespace translator {
 
 BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
@@ -41,20 +43,25 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
     case scsi_defs::OpCode::kInquiry:
       return response;
     case scsi_defs::OpCode::kRead6:
-      //      Read6ToNvme( scsi_cmd, nvme_cmds_[0]);
-      return response;
+      pipeline_status_ = Read6ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     case scsi_defs::OpCode::kRead10:
-      //     Read10ToNvme( scsi_cmd, nvme_cmds_[0]);
-      return response;
+      pipeline_status_ = Read10ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     case scsi_defs::OpCode::kRead12:
-      //     Read12ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
-      return response;
+      pipeline_status_ = Read12ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     case scsi_defs::OpCode::kRead16:
-      //    Read16ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
-      return response;
+      pipeline_status_ = Read16ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     case scsi_defs::OpCode::kRead32:
-      // Read32ToNvme( scsi_cmd, nvme_cmd_count_, nvme_cmds_);
-      return response;
+      pipeline_status_ = Read32ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;

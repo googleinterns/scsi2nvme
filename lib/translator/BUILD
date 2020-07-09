@@ -16,7 +16,8 @@ cc_library(
   srcs = ["translation.cc"],
   deps = [
     "@com_google_absl//absl/types:span",
-    "//lib/translator:common"
+    "//lib/translator:common",
+    "//lib/translator:read_lib",
   ],
   visibility = ["//visibility:public"]
 )
