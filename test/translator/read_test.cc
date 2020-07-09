@@ -31,6 +31,20 @@ constexpr uint32_t kEilbrt = 1234;
 constexpr uint16_t kElbat = 5678;
 constexpr uint16_t kLbatm = 9999;
 
+class ReadTest : public ::testing::Test {
+ protected:
+  // Per-test-suite set-up.
+  // Called before the first test in this test suite.
+  static void SetUpTestSuite() {
+    auto alloc_callback = [](uint16_t count) -> void* {
+      EXPECT_EQ(1, count);
+      return reinterpret_cast<void*>(1337);
+    };
+    void (*dealloc_callback)(void*, uint16_t) = nullptr;
+    translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+  }
+};
+
 uint32_t BuildCdw13(uint16_t tl, uint8_t prinfo, bool fua) {
   uint32_t cdw13 = 0;
   cdw13 = tl;
@@ -39,7 +53,7 @@ uint32_t BuildCdw13(uint16_t tl, uint8_t prinfo, bool fua) {
   return cdw13;
 }
 
-TEST(Read6, ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read6Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
@@ -47,7 +61,7 @@ TEST(Read6, ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
-TEST(Read6, ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
   scsi_defs::Read6Command cmd = {
       .logical_block_address = kLba,
       .transfer_length = kTl,
@@ -64,7 +78,7 @@ TEST(Read6, ShouldReturnCorrectTranslation) {
   EXPECT_EQ(kTl, nvme_cmd.cdw[2]);
 }
 
-TEST(Read10, ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read10Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
@@ -72,7 +86,7 @@ TEST(Read10, ShouldReturnInvalidInputStatus) {
 nvme_cmd); EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
-TEST(Read10, ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   scsi_defs::Read10Command cmd = {
       .rd_protect = kRdProtect,
       .fua = kFua,
@@ -93,7 +107,7 @@ TEST(Read10, ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw13(kTl, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST(Read12, ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read12Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
@@ -101,7 +115,7 @@ TEST(Read12, ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
-TEST(Read12, ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   scsi_defs::Read12Command cmd = {
       .rd_protect = kRdProtect,
       .fua = kFua,
@@ -121,7 +135,7 @@ TEST(Read12, ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw13(kTl, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST(Read16, ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read16Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
@@ -129,7 +143,7 @@ TEST(Read16, ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
-TEST(Read16, ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   scsi_defs::Read16Command cmd = {
       .rd_protect = kRdProtect,
       .fua = kFua,
@@ -149,7 +163,7 @@ TEST(Read16, ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw13(kTl, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST(Read32, ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read32ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read32Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
@@ -157,7 +171,7 @@ TEST(Read32, ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
-TEST(Read32, ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
   scsi_defs::Read32Command cmd = {
       .rd_protect = kRdProtect,
       .fua = kFua,

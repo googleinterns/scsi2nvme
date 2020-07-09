@@ -15,9 +15,10 @@
 #ifndef LIB_TRANSLATOR_READ_H
 #define LIB_TRANSLATOR_READ_H
 
+#include "third_party/spdk_defs/nvme_defs.h"
+
 #include "common.h"
 #include "lib/scsi_defs.h"
-#include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
 

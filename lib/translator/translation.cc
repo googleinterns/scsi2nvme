@@ -44,23 +44,23 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
     case scsi_defs::OpCode::kInquiry:
       return response;
     case scsi_defs::OpCode::kRead6:
-      pipeline_status_ = Read6ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      pipeline_status_ = Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi_defs::OpCode::kRead10:
-      pipeline_status_ = Read10ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      pipeline_status_ = Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi_defs::OpCode::kRead12:
-      pipeline_status_ = Read12ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      pipeline_status_ = Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi_defs::OpCode::kRead16:
-      pipeline_status_ = Read16ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      pipeline_status_ = Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi_defs::OpCode::kRead32:
-      pipeline_status_ = Read32ToNvme(scsi_cmd_.subspan(1), nvme_cmds_[0]);
+      pipeline_status_ = Read32ToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
       nvme_cmd_count_ = 1;
       break;
     default:
