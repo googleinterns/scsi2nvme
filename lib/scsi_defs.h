@@ -389,7 +389,7 @@ static_assert(sizeof(Read6Command) == 5);
 // SCSI Reference Manual Table 97
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct Read10Command {
-  uint8_t rd_protect : 3;  // read protect bit
+  uint8_t rdprotect : 3;   // read protect bit
   bool dpo : 1;            // disable page output bit
   bool fua : 1;            // Forced Unit access bit
   bool rarc : 1;           // Rebuild Assist Recovery bit
@@ -406,7 +406,7 @@ static_assert(sizeof(Read10Command) == 9);
 // SCSI Reference Manual Table 99
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct Read12Command {
-  uint8_t rd_protect : 3;
+  uint8_t rdprotect : 3;
   bool dpo : 1;     // disable page output bit
   bool fua : 1;     // Forced Unit access bit
   bool rarc : 1;    // Rebuild Assist Recovery bit
@@ -424,7 +424,7 @@ static_assert(sizeof(Read12Command) == 11);
 // SCSI Reference Manual Table 100
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct Read16Command {
-  uint8_t rd_protect : 3;
+  uint8_t rdprotect : 3;
   bool dpo : 1;     // disable page output bit
   bool fua : 1;     // Forced Unit access bit
   bool rarc : 1;    // Rebuild Assist Recovery bit
@@ -448,7 +448,7 @@ struct Read32Command {
   uint8_t group_number : 5;
   uint8_t additional_cdb_length : 8;  // 0x18
   uint16_t service_action : 16;       // 0x0009
-  uint8_t rd_protect : 3;
+  uint8_t rdprotect : 3;
   bool dpo : 1;     // disable page output bit
   bool fua : 1;     // Forced Unit access bit
   bool rarc : 1;    // Rebuild Assist Recovery bit

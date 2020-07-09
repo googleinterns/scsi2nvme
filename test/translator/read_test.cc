@@ -26,6 +26,7 @@ constexpr uint32_t kLba = 100;
 constexpr uint16_t kTl = 255;
 constexpr uint8_t kRdProtect = 0b101;
 constexpr uint8_t kPrinfo = 0b0111;  // expected transformation of kRdProtect
+constexpr uint8_t kUnsupportedRdProtect = 0b111;
 constexpr uint8_t kFua = 0b1;
 constexpr uint32_t kEilbrt = 1234;
 constexpr uint16_t kElbat = 5678;
@@ -88,7 +89,7 @@ nvme_cmd); EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 
 TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   scsi_defs::Read10Command cmd = {
-      .rd_protect = kRdProtect,
+      .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = kLba,
       .transfer_length = kTl,
@@ -117,7 +118,7 @@ TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   scsi_defs::Read12Command cmd = {
-      .rd_protect = kRdProtect,
+      .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = kLba,
       .transfer_length = kTl,
@@ -145,7 +146,7 @@ TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   scsi_defs::Read16Command cmd = {
-      .rd_protect = kRdProtect,
+      .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = kLba,
       .transfer_length = kTl,
@@ -173,7 +174,7 @@ TEST_F(ReadTest, Read32ShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
   scsi_defs::Read32Command cmd = {
-      .rd_protect = kRdProtect,
+      .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = kLba,
       .eilbrt = kEilbrt,
@@ -194,5 +195,21 @@ TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw13(kTl, kPrinfo, kFua), nvme_cmd.cdw[2]);
   EXPECT_EQ(kEilbrt, nvme_cmd.cdw[4]);
   EXPECT_EQ(kElbat | (kLbatm << 16), nvme_cmd.cdw[5]);
+}
+
+TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
+  scsi_defs::Read10Command cmd = {
+      .rdprotect = kUnsupportedRdProtect,
+      .fua = kFua,
+      .logical_block_address = kLba,
+      .transfer_length = kTl,
+  };
+  uint8_t raw_cmd[sizeof(scsi_defs::Read10Command)];
+  translator::WriteValue(cmd, raw_cmd);
+  nvme_defs::GenericQueueEntryCmd nvme_cmd;
+
+  translator::StatusCode sc = translator::Read10ToNvme(raw_cmd, nvme_cmd);
+
+  EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 }  // namespace

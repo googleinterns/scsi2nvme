@@ -1,22 +1,22 @@
 #include "read.h"
 
-#include <cmath>
-#include <cstdio>
-
 #include "absl/base/casts.h"
 #include "absl/types/span.h"
+
 #include "common.h"
 
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions
 
-uint8_t GetPrinfo(uint8_t rd_protect) {
+// Section 5.3
+// https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
+StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
   bool pract;      // Protection Information Action 1 bit
   uint8_t prchk;   // Protection Information Check 3 bits
-  uint8_t prinfo = 0;  // 4 bits
+  prinfo = 0;      // Protection Information field 4 bits
 
-  switch (rd_protect) {  // 3 bits
+  switch (rdprotect) {  // 3 bits
     case 0b0:
       pract = 0b1;
       prchk = 0b111;
@@ -38,14 +38,18 @@ uint8_t GetPrinfo(uint8_t rd_protect) {
       pract = 0b0;
       prchk = 0b100;
       break;
-    default:  // Should never reach here because we covered all possible values
+    default:
+      // Should result in SCSI command termination with status: CHECK CONDITION,
+      //  sense key: ILLEGAL REQUEST, additional sense code: LLEGAL FIELD IN CDB
+      DebugLog("RDPROTECT with value %d has no translation to PRINFO");
+      return StatusCode::kInvalidInput;
       break;
   }
 
   prinfo |= prchk;
   prinfo |= (pract << 3);
 
-  return prinfo;
+  return StatusCode::kSuccess;
 }
 
 void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
@@ -81,7 +85,7 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
   return StatusCode::kSuccess;
 }
 
-StatusCode Read(uint8_t rd_protect, bool fua, uint32_t lba,
+StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
                 uint16_t transfer_length,
                 nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
   StatusCode status = LegacyRead(lba, transfer_length, nvme_cmd);
@@ -90,7 +94,12 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t lba,
     return StatusCode::kFailure;
   }
 
-  nvme_cmd.cdw[2] |= (GetPrinfo(rd_protect) << 26);  // cdw12 prinfo bits 29:26
+  uint8_t prinfo;  // Protection Information field 4 bits;
+  if (BuildPrinfo(rdprotect, prinfo) == StatusCode::kInvalidInput) {
+    return StatusCode::kInvalidInput;
+  }
+
+  nvme_cmd.cdw[2] |= (prinfo << 26);  // cdw12 prinfo bits 29:26
   nvme_cmd.cdw[2] |= (fua << 30);  // cdw12 fua bit 30;
 
   return StatusCode::kSuccess;
@@ -127,7 +136,7 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> raw_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
               cmd.transfer_length, nvme_cmd);
 }
 
@@ -144,7 +153,7 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> raw_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
               cmd.transfer_length, nvme_cmd);
 }
 
@@ -161,7 +170,7 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> raw_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
               cmd.transfer_length, nvme_cmd);
 }
 
@@ -178,7 +187,7 @@ StatusCode Read32ToNvme(absl::Span<const uint8_t> raw_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status = Read(cmd.rd_protect, cmd.fua, cmd.logical_block_address,
+  StatusCode status = Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
                            cmd.transfer_length, nvme_cmd);
 
   if (status == StatusCode::kFailure) {
