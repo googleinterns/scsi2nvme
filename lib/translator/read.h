@@ -38,18 +38,18 @@ namespace translator {
  * Read(32) calls Read() and also translates additional logical block
  * application tags
  */
-StatusCode Read6ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
 
-StatusCode Read10ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd);
-StatusCode Read12ToNvme(absl::Span<const uint8_t> raw_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
-
-StatusCode Read16ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd);
 
-StatusCode Read32ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
+                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+
+StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd);
 }  // namespace translator
 #endif

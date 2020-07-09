@@ -107,94 +107,96 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
 
 }  // namespace
 
-StatusCode Read6ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (raw_cmd.size() != sizeof(scsi_defs::Read6Command)) {
+  if (scsi_cmd.size() != sizeof(scsi_defs::Read6Command)) {
     DebugLog("Malformed Read6 command");
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::Read6Command cmd;
-  if (!ReadValue(raw_cmd, cmd)) {
+  scsi_defs::Read6Command read_cmd;
+  if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Unable to cast raw bytes to Read6 command");
     return StatusCode::kInvalidInput;
   }
 
-  return LegacyRead(cmd.logical_block_address, cmd.transfer_length, nvme_cmd);
+  return LegacyRead(read_cmd.logical_block_address, read_cmd.transfer_length,
+                    nvme_cmd);
 }
 
-StatusCode Read10ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (raw_cmd.size() != sizeof(scsi_defs::Read10Command)) {
+  if (scsi_cmd.size() != sizeof(scsi_defs::Read10Command)) {
     DebugLog("Malformed Read10 command");
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::Read10Command cmd;
-  if (!ReadValue(raw_cmd, cmd)) {
+  scsi_defs::Read10Command read_cmd;
+  if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Unable to cast raw bytes to Read10 command");
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
-              cmd.transfer_length, nvme_cmd);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd);
 }
 
-StatusCode Read12ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (raw_cmd.size() != sizeof(scsi_defs::Read12Command)) {
+  if (scsi_cmd.size() != sizeof(scsi_defs::Read12Command)) {
     DebugLog("Malformed Read12 command");
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::Read12Command cmd;
-  if (!ReadValue(raw_cmd, cmd)) {
+  scsi_defs::Read12Command read_cmd;
+  if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Unable to cast raw bytes to Read12 command");
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
-              cmd.transfer_length, nvme_cmd);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd);
 }
 
-StatusCode Read16ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (raw_cmd.size() != sizeof(scsi_defs::Read16Command)) {
+  if (scsi_cmd.size() != sizeof(scsi_defs::Read16Command)) {
     DebugLog("Malformed Read16 command");
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::Read16Command cmd;
-  if (!ReadValue(raw_cmd, cmd)) {
+  scsi_defs::Read16Command read_cmd;
+  if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Unable to cast raw bytes to Read16 command");
     return StatusCode::kInvalidInput;
   }
 
-  return Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
-              cmd.transfer_length, nvme_cmd);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd);
 }
 
-StatusCode Read32ToNvme(absl::Span<const uint8_t> raw_cmd,
+StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (raw_cmd.size() != sizeof(scsi_defs::Read32Command)) {
+  if (scsi_cmd.size() != sizeof(scsi_defs::Read32Command)) {
     DebugLog("Malformed Read32 command");
     return StatusCode::kInvalidInput;
   }
 
-  scsi_defs::Read32Command cmd;
-  if (!ReadValue(raw_cmd, cmd)) {
+  scsi_defs::Read32Command read_cmd;
+  if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Unable to cast raw bytes to Read32 command");
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status = Read(cmd.rdprotect, cmd.fua, cmd.logical_block_address,
-                           cmd.transfer_length, nvme_cmd);
+  StatusCode status =
+      Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+           read_cmd.transfer_length, nvme_cmd);
 
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
-  SetLbaTags(cmd.eilbrt, cmd.elbat, cmd.lbatm, nvme_cmd);
+  SetLbaTags(read_cmd.eilbrt, read_cmd.elbat, read_cmd.lbatm, nvme_cmd);
   return StatusCode::kSuccess;
 }
 

@@ -33,6 +33,6 @@ cc_library(
       "//lib:scsi_defs_lib",
       "//third_party/spdk_defs:nvme_defs_lib",
       "@com_google_absl//absl/types:span",
-          ],
+  ],
   visibility = ["//visibility:public"],
 )
