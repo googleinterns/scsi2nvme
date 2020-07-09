@@ -26,6 +26,7 @@
 
 namespace translator {
 
+// Reports the status of a translation for internal use
 enum class StatusCode {
   kSuccess,
   kUninitialized,
@@ -37,15 +38,15 @@ enum class StatusCode {
 void DebugLog(const char* format, ...);
 
 // Max consecutive pages required by NVMe PRP list is 512
-void* AllocPages(uint16_t count);
+uint64_t AllocPages(uint16_t count);
 
-void DeallocPages(void* pages_ptr, uint16_t count);
+void DeallocPages(uint64_t pages_ptr, uint16_t count);
 
 void SetDebugCallback(void (*callback)(const char*));
 
 void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(void*, uint16_t));
-  
+
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 template <typename T>

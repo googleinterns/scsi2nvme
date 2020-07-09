@@ -37,14 +37,17 @@ void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
 
-void* AllocPages(uint16_t count) {
-  if (alloc_pages_callback == nullptr) return nullptr;
-  return alloc_pages_callback(count);
+// Returns void* casted to uint64_t.
+// A return value of 0 is equivalent to nullptr.
+uint64_t AllocPages(uint16_t count) {
+  if (alloc_pages_callback == nullptr) return 0;
+  return reinterpret_cast<uint64_t>(alloc_pages_callback(count));
 }
 
-void DeallocPages(void* pages, uint16_t count) {
+void DeallocPages(uint64_t pages, uint16_t count) {
   if (dealloc_pages_callback == nullptr) return;
-  dealloc_pages_callback(pages, count);
+  void* pages_ptr = reinterpret_cast<void*>(pages);
+  dealloc_pages_callback(pages_ptr, count);
 }
 
 void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
