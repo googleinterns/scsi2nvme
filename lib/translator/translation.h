@@ -31,6 +31,10 @@ struct BeginResponse {
 
 class Translation {
  public:
+  Translation()
+      : pipeline_status_(StatusCode::kUninitialized),
+        nvme_cmd_count_(0),
+        allocations_() {}
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
   BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
@@ -44,10 +48,15 @@ class Translation {
   void AbortPipeline();
 
  private:
-  StatusCode pipeline_status_ = StatusCode::kUninitialized;
+  // Releases memory vended to the translation object
+  void FlushMemory();
+
+ private:
+  StatusCode pipeline_status_;
   absl::Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
-  nvme_defs::GenericQueueEntryCmd nvme_cmds_[3];
+  nvme_defs::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
+  Allocation allocations_[kMaxCommandRatio];
 };
 
 }  // namespace translator

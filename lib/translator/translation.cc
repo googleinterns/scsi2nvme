@@ -62,17 +62,20 @@ ApiStatus Translation::Complete(
   }
   if (pipeline_status_ == StatusCode::kFailure) {
     // TODO fill buffer with SCSI CHECK CONDITION response
+    AbortPipeline();
     return ApiStatus::kSuccess;
   }
 
-  pipeline_status_ = StatusCode::kUninitialized;  // Reset for next interaction
-
+  // Switch cases should not return
+  ApiStatus ret;
   scsi_defs::OpCode opc = static_cast<scsi_defs::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi_defs::OpCode::kInquiry:
+      ret = ApiStatus::kSuccess;
       break;
   }
-  return ApiStatus::kSuccess;
+  AbortPipeline();
+  return ret;
 }
 
 absl::Span<const nvme_defs::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
@@ -82,7 +85,21 @@ absl::Span<const nvme_defs::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
 void Translation::AbortPipeline() {
   pipeline_status_ = StatusCode::kUninitialized;
   nvme_cmd_count_ = 0;
-  // TODO free allocated PRPs
+  FlushMemory();
+}
+
+void Translation::FlushMemory() {
+  for (uint32_t i = 0; i < nvme_cmd_count_; ++i) {
+    if (allocations_[i].data_addr != 0) {
+      DeallocPages(allocations_[i].data_addr, allocations_[i].data_page_count);
+      allocations_[i].data_addr = 0;
+    }
+    if (allocations_[i].mdata_addr != 0) {
+      DeallocPages(allocations_[i].mdata_addr,
+                   allocations_[i].mdata_page_count);
+      allocations_[i].mdata_addr = 0;
+    }
+  }
 }
 
 };  // namespace translator
