@@ -34,6 +34,7 @@ jobs:
   
   build-and-test:
     env:
+      CC: gcc-8
       BAZEL_CXXOPTS: -std=c++17
     runs-on: ubuntu-latest
     

@@ -389,11 +389,11 @@ static_assert(sizeof(Read6Command) == 5);
 // SCSI Reference Manual Table 97
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct Read10Command {
-  uint8_t rdprotect : 3;   // read protect bit
-  bool dpo : 1;            // disable page output bit
-  bool fua : 1;            // Forced Unit access bit
-  bool rarc : 1;           // Rebuild Assist Recovery bit
-  bool fua_nv : 1;         // Forced Access Unit Non-Volatile
+  uint8_t rdprotect : 3;  // read protect bit
+  bool dpo : 1;           // disable page output bit
+  bool fua : 1;           // Forced Unit access bit
+  bool rarc : 1;          // Rebuild Assist Recovery bit
+  bool fua_nv : 1;        // Forced Access Unit Non-Volatile
   bool obsolete : 1;
   uint32_t logical_block_address : 32;
   uint8_t reserved : 3;
@@ -455,9 +455,9 @@ struct Read32Command {
   bool fua_nv : 1;  // Forced Access Unit Non-Volatile
   uint16_t reserved_3 : 9;
   uint64_t logical_block_address : 64;
-  uint32_t eilbrt : 32;  // expected_initial_logical_block_reference_tag
-  uint16_t elbat : 16;   // expected_logical_block_application_tag
-  uint16_t lbatm : 16;   // logical_block_application_tag_mask
+  uint32_t eilbrt : 32;  // Expected Initial Logical Block Reference Tag
+  uint16_t elbat : 16;   // Expected Logical Block Application Tag
+  uint16_t lbatm : 16;   // Logical Block Application Tag Mask
   uint32_t transfer_length : 32;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(Read32Command) == 31);

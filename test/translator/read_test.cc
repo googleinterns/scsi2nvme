@@ -58,7 +58,7 @@ TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read6Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
-  translator::StatusCode sc = translator::Read6ToNvme( raw_cmd, nvme_cmd);
+  translator::StatusCode sc = translator::Read6ToNvme(raw_cmd, nvme_cmd);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
@@ -71,7 +71,7 @@ TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
   translator::WriteValue(cmd, raw_cmd);
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
-  translator::StatusCode sc = translator::Read6ToNvme( raw_cmd, nvme_cmd);
+  translator::StatusCode sc = translator::Read6ToNvme(raw_cmd, nvme_cmd);
   EXPECT_EQ(translator::StatusCode::kSuccess, sc);
   EXPECT_EQ((uint8_t)nvme_defs::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
@@ -83,8 +83,8 @@ TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
   uint8_t raw_cmd[sizeof(scsi_defs::Read10Command) - 1];
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
-  translator::StatusCode sc = translator::Read10ToNvme( raw_cmd,
-nvme_cmd); EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
+  translator::StatusCode sc = translator::Read10ToNvme(raw_cmd, nvme_cmd);
+  EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
 
 TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
@@ -98,8 +98,7 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   translator::WriteValue(cmd, raw_cmd);
   nvme_defs::GenericQueueEntryCmd nvme_cmd;
 
-  translator::StatusCode sc =
-      translator::Read10ToNvme( raw_cmd, nvme_cmd);
+  translator::StatusCode sc = translator::Read10ToNvme(raw_cmd, nvme_cmd);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, sc);
   EXPECT_EQ((uint8_t)nvme_defs::NvmOpcode::kRead, nvme_cmd.opc);
@@ -212,4 +211,5 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
 
   EXPECT_EQ(translator::StatusCode::kInvalidInput, sc);
 }
+
 }  // namespace
