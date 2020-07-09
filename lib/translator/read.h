@@ -51,5 +51,7 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+
 }  // namespace translator
+
 #endif
