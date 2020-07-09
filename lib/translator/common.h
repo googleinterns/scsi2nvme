@@ -23,9 +23,6 @@
 
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
-#include <cstring>
-#include <type_traits>
-
 
 namespace translator {
 
