@@ -32,7 +32,7 @@ TEST(Translation, ShouldHandleUnknownOpcode) {
 
 TEST(Translation, ShouldReturnInquirySuccess) {
   translator::Translation translation = {};
-  uint8_t opc = static_cast<uint8_t>(scsi_defs::OpCode::kInquiry);
+  uint8_t opc = static_cast<uint8_t>(scsi::OpCode::kInquiry);
   absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(&opc, 1);
   translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
   EXPECT_EQ(translator::ApiStatus::kSuccess, resp.status);
@@ -40,7 +40,7 @@ TEST(Translation, ShouldReturnInquirySuccess) {
 
 TEST(Translation, ShouldFailInvalidPipeline) {
   translator::Translation translation = {};
-  absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data;
+  absl::Span<const nvme::GenericQueueEntryCpl> cpl_data;
   absl::Span<uint8_t> buffer;
   translator::ApiStatus status = translation.Complete(cpl_data, buffer);
   EXPECT_EQ(translator::ApiStatus::kFailure, status);
@@ -48,7 +48,7 @@ TEST(Translation, ShouldFailInvalidPipeline) {
 
 TEST(Translation, ShouldReturnEmptyCmdSpan) {
   translator::Translation translation = {};
-  absl::Span<const nvme_defs::GenericQueueEntryCmd> cmds =
+  absl::Span<const nvme::GenericQueueEntryCmd> cmds =
       translation.GetNvmeCmds();
   EXPECT_EQ(0, cmds.size());
 }

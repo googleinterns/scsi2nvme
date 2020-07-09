@@ -38,12 +38,12 @@ class Translation {
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
   BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
-                      scsi_defs::LunAddress lun);
+                      scsi::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  ApiStatus Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
+  ApiStatus Complete(absl::Span<const nvme::GenericQueueEntryCpl> cpl_data,
                      absl::Span<uint8_t> buffer);
   // Returns a span containing translated NVMe commands.
-  absl::Span<const nvme_defs::GenericQueueEntryCmd> GetNvmeCmds();
+  absl::Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
@@ -55,7 +55,7 @@ class Translation {
   StatusCode pipeline_status_;
   absl::Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
-  nvme_defs::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
+  nvme::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
   Allocation allocations_[kMaxCommandRatio];
 };
 

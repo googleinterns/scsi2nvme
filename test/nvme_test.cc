@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "third_party/spdk_defs/nvme_defs.h"
+#include "third_party/spdk/nvme.h"
 
 #include "absl/base/casts.h"
 #include "gtest/gtest.h"

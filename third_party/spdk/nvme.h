@@ -1,12 +1,12 @@
-#ifndef LIB_NVME_DEFS_H
-#define LIB_NVME_DEFS_H
+#ifndef LIB_NVME_H
+#define LIB_NVME_H
 
 #include <cstdint>
 
 #include "absl/base/attributes.h"
 
 // https://github.com/spdk/spdk/blob/master/include/spdk/nvme_spec.h
-namespace nvme_defs {
+namespace nvme {
 
 // NVMe Base Specification Figure 125
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
@@ -734,6 +734,6 @@ struct IdentifyNamespace {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(IdentifyNamespace) == 4096);
 
-}  // namespace nvme_defs
+}  // namespace nvme
 
 #endif
