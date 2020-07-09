@@ -58,7 +58,7 @@ TEST(Common, ShouldCorrectlyReadValueFromSpan) {
 
 TEST(Common, ShouldNotWriteValueToSpan) {
   scsi_defs::Read6Command cmd;
-  uint8_t buffer[sizeof(scsi_defs::Read6Command) + 1];
+  uint8_t buffer[sizeof(scsi_defs::Read6Command) - 1];
 
   bool result = translator::WriteValue(cmd, buffer);
   EXPECT_FALSE(result);

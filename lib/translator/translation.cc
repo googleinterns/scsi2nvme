@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common.h"
-#include "read.h"
+#include "translation.h"
 
 namespace translator {
 
@@ -28,7 +27,7 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   }
 
   // Verify buffer is large enough to contain opcode (one byte)
-  if (scsi_cmd.size() < 1) {
+  if (scsi_cmd.empty()) {
     DebugLog("Empty SCSI Buffer");
     pipeline_status_ = StatusCode::kFailure;
     return response;
@@ -59,8 +58,13 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
-      return response;
+      break;
   }
+
+  if (pipeline_status_ != StatusCode::kSuccess) {
+    nvme_cmd_count_ = 0;
+  }
+  return response;
 }
 
 ApiStatus Translation::Complete(

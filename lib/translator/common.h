@@ -15,8 +15,10 @@
 #ifndef LIB_TRANSLATOR_COMMON_H
 #define LIB_TRANSLATOR_COMMON_H
 
-#include "absl/types/span.h"
+#include <cstring>
+#include <type_traits>
 
+#include "absl/types/span.h"
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 #include <cstring>
@@ -24,8 +26,6 @@
 
 
 namespace translator {
-
-enum class ApiStatus { kSuccess, kFailure };
 
 enum class StatusCode {
   kSuccess,
@@ -37,7 +37,15 @@ enum class StatusCode {
 
 void DebugLog(const char* format, ...);
 
+// Max consecutive pages required by NVMe PRP list is 512
+void* AllocPages(uint16_t count);
+
+void DeallocPages(void* pages_ptr, uint16_t count);
+
 void SetDebugCallback(void (*callback)(const char*));
+
+void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(void*, uint16_t));
 
 template <typename T>
 bool ReadValue(absl::Span<const uint8_t> data, T& out) {
@@ -50,44 +58,10 @@ bool ReadValue(absl::Span<const uint8_t> data, T& out) {
 template <typename T>
 bool WriteValue(const T& data, absl::Span<uint8_t> out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
-  if (out.size() > sizeof(T)) return false;
-  memcpy(out.data(), &data, out.size());
+  if (sizeof(T) > out.size()) return false;
+  memcpy(out.data(), &data, sizeof(T));
   return true;
 }
-
-// Max consecutive pages required by NVMe PRP list is 512
-void* AllocPages(uint16_t count);
-
-void DeallocPages(void* pages_ptr, uint16_t count);
-
-void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
-                           void (*dealloc_callback)(void*, uint16_t));
-
-struct BeginResponse {
-  ApiStatus status;
-  uint32_t alloc_len;
-};
-
-class Translation {
- public:
-  // Translates from SCSI to NVMe. Translated commands available through
-  // GetNvmeCmds()
-  BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
-                      scsi_defs::LunAddress lun);
-  // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  ApiStatus Complete(absl::Span<const nvme_defs::GenericQueueEntryCpl> cpl_data,
-                     absl::Span<uint8_t> buffer);
-  // Returns a span containing translated NVMe commands.
-  absl::Span<const nvme_defs::GenericQueueEntryCmd> GetNvmeCmds();
-  // Aborts a given pipeline sequence and cleans up memory
-  void AbortPipeline();
-
- private:
-  StatusCode pipeline_status_ = StatusCode::kUninitialized;
-  absl::Span<const uint8_t> scsi_cmd_;
-  uint32_t nvme_cmd_count_;
-  nvme_defs::GenericQueueEntryCmd nvme_cmds_[3];
-};
 
 }  // namespace translator
 
