@@ -38,6 +38,7 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
 
+  absl::Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi_defs::OpCode opc = static_cast<scsi_defs::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi_defs::OpCode::kInquiry:

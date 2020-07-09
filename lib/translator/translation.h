@@ -20,6 +20,7 @@
 
 namespace translator {
 
+// Reports if the user is using the API correctly.
 enum class ApiStatus { kSuccess, kFailure };
 
 struct BeginResponse {
