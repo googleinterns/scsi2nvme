@@ -20,6 +20,8 @@
 namespace translator {
 
 static void (*debug_callback)(const char*);
+static uint64_t (*alloc_pages_callback)(uint16_t);
+static void (*dealloc_pages_callback)(uint64_t, uint16_t);
 
 void DebugLog(const char* format, ...) {
   if (debug_callback == nullptr) return;
@@ -33,6 +35,23 @@ void DebugLog(const char* format, ...) {
 
 void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
+}
+
+// A return value of 0 is equivalent to nullptr.
+uint64_t AllocPages(uint16_t count) {
+  if (alloc_pages_callback == nullptr) return 0;
+  return alloc_pages_callback(count);
+}
+
+void DeallocPages(uint64_t pages_ptr, uint16_t count) {
+  if (dealloc_pages_callback == nullptr) return;
+  dealloc_pages_callback(pages_ptr, count);
+}
+
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(uint64_t, uint16_t)) {
+  alloc_pages_callback = alloc_callback;
+  dealloc_pages_callback = dealloc_callback;
 }
 
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode) {

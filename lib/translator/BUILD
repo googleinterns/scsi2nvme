@@ -13,6 +13,17 @@ cc_library(
 )
 
 cc_library(
+  name = "translation",
+  hdrs = ["translation.h"],
+  srcs = ["translation.cc"],
+  deps = [
+    "@com_google_absl//absl/types:span",
+    "//lib/translator:common"
+  ],
+  visibility = ["//visibility:public"]
+)
+
+cc_library(
   name = "status_lib",
   hdrs = ["status.h"],
   srcs = ["status.cc"],

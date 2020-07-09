@@ -20,15 +20,32 @@
 
 #include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+
 #include "lib/scsi_defs.h"
+#include "third_party/spdk_defs/nvme_defs.h"
 
 namespace translator {
 
-enum class StatusCode { kSuccess, kInvalidInput, kNoTranslation, kFailure };
+// Reports the status of a translation for internal use
+enum class StatusCode {
+  kSuccess,
+  kUninitialized,
+  kInvalidInput,
+  kNoTranslation,
+  kFailure
+};
 
 void DebugLog(const char* format, ...);
 
+// Max consecutive pages required by NVMe PRP list is 512
+uint64_t AllocPages(uint16_t count);
+
+void DeallocPages(uint64_t pages_ptr, uint16_t count);
+
 void SetDebugCallback(void (*callback)(const char*));
+
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(uint64_t, uint16_t));
 
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
