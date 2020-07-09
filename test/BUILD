@@ -1,13 +1,4 @@
 cc_test(
-    name = "hello_world_test",
-    srcs = ["hello_world_test.cc"],
-    deps = [
-        "//lib:hello_world_lib",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_test(
     name = "scsi_defs_test",
     srcs = ["scsi_defs_test.cc"],
     deps = [

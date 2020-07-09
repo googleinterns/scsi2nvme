@@ -18,7 +18,9 @@
 #include <cstring>
 #include <type_traits>
 
+#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
+
 #include "lib/scsi_defs.h"
 #include "third_party/spdk_defs/nvme_defs.h"
 
@@ -43,6 +45,8 @@ void SetDebugCallback(void (*callback)(const char*));
 
 void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(void*, uint16_t));
+  
+absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 
 template <typename T>
 bool ReadValue(absl::Span<const uint8_t> data, T& out) {
