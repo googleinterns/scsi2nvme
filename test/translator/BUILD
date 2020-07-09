@@ -7,3 +7,12 @@ cc_test(
     "@googletest//:gtest_main"
   ]
 )
+
+cc_test(
+  name = "status_test",
+  srcs = [ "status_test.cc" ],
+  deps = [
+    "//lib/translator:status_lib",
+    "@googletest//:gtest_main"
+  ]
+)
