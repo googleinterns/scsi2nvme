@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_SCSI_DEFS_H
-#define LIB_SCSI_DEFS_H
+#ifndef LIB_SCSI_H
+#define LIB_SCSI_H
 
 #include <cstdint>
 
@@ -21,7 +21,7 @@
 
 // The fields of structures in this namespace are arranged according to Big
 // Endian format.
-namespace scsi_defs {
+namespace scsi {
 
 using LunAddress = uint64_t;
 
@@ -874,6 +874,6 @@ struct UnmapBlockDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
-}  // namespace scsi_defs
+}  // namespace scsi
 
 #endif

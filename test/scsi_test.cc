@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/scsi_defs.h"
+#include "lib/scsi.h"
 
 #include "absl/base/casts.h"
 #include "gtest/gtest.h"
@@ -25,7 +25,7 @@ namespace {
 
 TEST(ControlByteClass, ShouldReturnCorrectControlByte) {
   uint8_t cbValue = 0b11000100;
-  scsi_defs::ControlByte cb = absl::bit_cast<scsi_defs::ControlByte>(cbValue);
+  scsi::ControlByte cb = absl::bit_cast<scsi::ControlByte>(cbValue);
 
   EXPECT_EQ(0b00, cb.obsolete);
   EXPECT_EQ(0b1, cb.naca);

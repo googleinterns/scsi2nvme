@@ -26,11 +26,11 @@ TEST(TranslateGenericCommandStatus, ShouldReturnCorrectStatus) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kGood);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kNoSense);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kNoAdditionalSenseInfo);
+  EXPECT_EQ(result.status, scsi::Status::kGood);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
+            scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
 }
 
 TEST(TranslateUnsupportedGenericCommandStatus, ShouldReturnNullptr) {
@@ -39,11 +39,11 @@ TEST(TranslateUnsupportedGenericCommandStatus, ShouldReturnNullptr) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kNoSense);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kNoAdditionalSenseInfo);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
+            scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
 }
 
 TEST(TranslateCommandSpecificStatus, ShouldReturnCorrectStatus) {
@@ -52,11 +52,11 @@ TEST(TranslateCommandSpecificStatus, ShouldReturnCorrectStatus) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kIllegalRequest);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kFormatCommandFailed);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kIllegalRequest);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kFormatCommandFailed);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kFormatCommandFailed);
+            scsi::AdditionalSenseCodeQualifier::kFormatCommandFailed);
 }
 
 TEST(TranslateUnsupportedCommandSpecificStatus, ShouldReturnNullptr) {
@@ -65,11 +65,11 @@ TEST(TranslateUnsupportedCommandSpecificStatus, ShouldReturnNullptr) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kNoSense);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kNoAdditionalSenseInfo);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
+            scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
 }
 
 TEST(TranslateMediaErrorStatus, ShouldReturnCorrectStatus) {
@@ -78,11 +78,11 @@ TEST(TranslateMediaErrorStatus, ShouldReturnCorrectStatus) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kMediumError);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kUnrecoveredReadError);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kMediumError);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kUnrecoveredReadError);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kUnrecoveredReadError);
+            scsi::AdditionalSenseCodeQualifier::kUnrecoveredReadError);
 }
 
 TEST(TranslateUnsupportedMediaErrorStatus, ShouldReturnNullptr) {
@@ -91,21 +91,21 @@ TEST(TranslateUnsupportedMediaErrorStatus, ShouldReturnNullptr) {
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kNoSense);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kNoAdditionalSenseInfo);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
+            scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
 }
 
 TEST(TranslateUnsupportedStatusCodeType, ShouldReturnNullptr) {
   translator::ScsiStatus result = translator::StatusToScsi(6, 0);
 
-  EXPECT_EQ(result.status, scsi_defs::Status::kCheckCondition);
-  EXPECT_EQ(result.sense_key, scsi_defs::SenseKey::kNoSense);
-  EXPECT_EQ(result.asc, scsi_defs::AdditionalSenseCode::kNoAdditionalSenseInfo);
+  EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
+  EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);
+  EXPECT_EQ(result.asc, scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
   EXPECT_EQ(result.ascq,
-            scsi_defs::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
+            scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo);
 }
 
 }  // namespace

@@ -3,8 +3,8 @@ cc_library(
   hdrs = ["common.h"],
   srcs = ["common.cc"],
   deps = [
-    "//third_party/spdk_defs:nvme_defs_lib",
-    "//lib:scsi_defs_lib",
+    "//third_party/spdk:nvme_lib",
+    "//lib:scsi_lib",
     "@com_google_absl//absl/types:span",
     "@com_google_absl//absl/base",
     "@com_google_absl//absl/strings",
@@ -42,8 +42,8 @@ cc_library(
   hdrs = ["status.h"],
   srcs = ["status.cc"],
   deps = [
-      "//third_party/spdk_defs:nvme_defs_lib",
-      "//lib:scsi_defs_lib",
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
       "//lib/translator:common",
       "@com_google_absl//absl/base",
   ],
