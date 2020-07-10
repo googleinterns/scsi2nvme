@@ -21,7 +21,9 @@
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
+
 StatusCode TestUnitReadyToNvme(absl::Span<const uint8_t> scsi_cmd);
+
 StatusCode TestUnitReadyToScsi(bool& result);
 
 }  // namespace translator

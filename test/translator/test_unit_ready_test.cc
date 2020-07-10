@@ -19,28 +19,32 @@
 // Tests
 
 namespace {
-    TEST(TestUnitReady, Success) {
-        const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
-            .control_byte = {.naca = 0}
-        };
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
-        absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(scsi::TestUnitReadyCommand));
-        EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd), translator::StatusCode::kSuccess);
-    }
-    TEST(TestUnitReady, BadBuffer) {
-        const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
-            .control_byte = {.naca = 0}
-        };
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
-        absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(1));
-        EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd), translator::StatusCode::kInvalidInput);
-    }
-    TEST(TestUnitReady, BadControlByteNaca) {
-        const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
-            .control_byte = {.naca = 1}
-        };
-        const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
-        absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(scsi::TestUnitReadyCommand));
-        EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd), translator::StatusCode::kInvalidInput);
-    }
+TEST(TestUnitReady, Success) {
+  const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
+      .control_byte = {.naca = 0}};
+  const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
+  absl::Span<const uint8_t> scsi_cmd =
+      absl::MakeSpan(ptr, sizeof(scsi::TestUnitReadyCommand));
+  EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd),
+            translator::StatusCode::kSuccess);
 }
+
+TEST(TestUnitReady, BadBuffer) {
+  const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
+      .control_byte = {.naca = 0}};
+  const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
+  absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(1));
+  EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd),
+            translator::StatusCode::kInvalidInput);
+}
+
+TEST(TestUnitReady, BadControlByteNaca) {
+  const scsi::TestUnitReadyCommand test_unit_ready_cmd = {
+      .control_byte = {.naca = 1}};
+  const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&test_unit_ready_cmd);
+  absl::Span<const uint8_t> scsi_cmd =
+      absl::MakeSpan(ptr, sizeof(scsi::TestUnitReadyCommand));
+  EXPECT_EQ(translator::TestUnitReadyToNvme(scsi_cmd),
+            translator::StatusCode::kInvalidInput);
+}
+}  // namespace

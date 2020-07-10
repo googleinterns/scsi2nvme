@@ -20,6 +20,7 @@ StatusCode NvmeReady(bool& result) {
   result = true;
   return StatusCode::kSuccess;
 }
+
 }  // namespace
 
 StatusCode TestUnitReadyToNvme(absl::Span<const uint8_t> scsi_cmd) {
@@ -28,9 +29,11 @@ StatusCode TestUnitReadyToNvme(absl::Span<const uint8_t> scsi_cmd) {
     DebugLog("Malformed TestUnitReady Command");
     return StatusCode::kInvalidInput;
   }
+
   if (test_unit_ready_cmd.control_byte.naca == 1) {
     return StatusCode::kInvalidInput;
   }
+
   return StatusCode::kSuccess;
 }
 
