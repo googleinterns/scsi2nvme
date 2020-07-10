@@ -24,6 +24,19 @@ cc_library(
 )
 
 cc_library(
+  name = "request_sense_lib",
+  hdrs = ["request_sense.h"],
+  srcs = ["request_sense.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
+      "//lib/translator:common",
+      "@com_google_absl//absl/base",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "status_lib",
   hdrs = ["status.h"],
   srcs = ["status.cc"],
