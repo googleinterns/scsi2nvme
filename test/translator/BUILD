@@ -3,7 +3,7 @@ cc_test(
   srcs = [ "common_test.cc" ],
   deps = [
     "//lib/translator:common",
-    "//lib:scsi_defs_lib",
+    "//lib:scsi_lib",
     "@googletest//:gtest_main"
   ]
 )
