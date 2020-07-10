@@ -104,11 +104,13 @@ TEST(Common, ShouldBuildAllocationWithFailureStatus) {
   };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  // necessary to "undo" the expected behaviour of the test
+  // Common::ShouldCorrectlyCallback
   void (*debug_callback)(const char*) = nullptr;
   translator::SetDebugCallback(debug_callback);
 
   translator::StatusCode status_code = allocation.SetPages(1, 1);
-
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 

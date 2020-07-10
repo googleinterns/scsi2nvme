@@ -62,7 +62,7 @@ StatusCode Allocation::SetPages(uint16_t data_page_count,
   this->mdata_addr = AllocPages(mdata_page_count);
 
   if (this->data_addr == 0 || this->mdata_addr == 0) {
-    DebugLog("Error when requesting a page of memory");
+    DebugLog("Error when requesting memory");
     return StatusCode::kFailure;
   }
 
