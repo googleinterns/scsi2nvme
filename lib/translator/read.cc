@@ -61,6 +61,9 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
   nvme_cmd.cdw[5] |= (elbatm << 16);
 }
 
+// Translates fields common to all Read commands
+// Named Legacy because it is called directly by Read6, an obsolete command
+// lacking fields common to other Read commands
 StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
                       nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation) {
@@ -83,6 +86,7 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
   return StatusCode::kSuccess;
 }
 
+// Translates fields common to Read10, Read12, Read16, Read32
 StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
                 uint16_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
                 Allocation& allocation) {
