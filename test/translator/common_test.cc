@@ -16,7 +16,7 @@
 
 #include "absl/types/span.h"
 #include "gtest/gtest.h"
-#include "lib/scsi_defs.h"
+#include "lib/scsi.h"
 
 namespace {
 
@@ -37,16 +37,16 @@ TEST(Common, ShouldCorrectlyCallback) {
 }
 
 TEST(Common, ShouldNotReadValueFromSpan) {
-  scsi_defs::Read6Command cmd;
-  uint8_t buffer[sizeof(scsi_defs::Read6Command) - 1];
+  scsi::Read6Command cmd;
+  uint8_t buffer[sizeof(scsi::Read6Command) - 1];
 
   bool result = translator::ReadValue(buffer, cmd);
   EXPECT_FALSE(result);
 }
 
 TEST(Common, ShouldCorrectlyReadValueFromSpan) {
-  scsi_defs::ControlByte cb = {};
-  uint8_t buffer[sizeof(scsi_defs::ControlByte)] = {0b11000100};
+  scsi::ControlByte cb = {};
+  uint8_t buffer[sizeof(scsi::ControlByte)] = {0b11000100};
 
   bool result = translator::ReadValue(buffer, cb);
   EXPECT_TRUE(result);
@@ -57,21 +57,21 @@ TEST(Common, ShouldCorrectlyReadValueFromSpan) {
 }
 
 TEST(Common, ShouldNotWriteValueToSpan) {
-  scsi_defs::Read6Command cmd;
-  uint8_t buffer[sizeof(scsi_defs::Read6Command) - 1];
+  scsi::Read6Command cmd;
+  uint8_t buffer[sizeof(scsi::Read6Command) - 1];
 
   bool result = translator::WriteValue(cmd, buffer);
   EXPECT_FALSE(result);
 }
 
 TEST(Common, ShouldCorrectlyWriteValueToSpan) {
-  scsi_defs::ControlByte cb = {
+  scsi::ControlByte cb = {
       .obsolete = 0b00,
       .naca = 0b1,
       .reserved = 0b000,
       .vendor_specific = 0b11,
   };
-  uint8_t buffer[sizeof(scsi_defs::ControlByte)];
+  uint8_t buffer[sizeof(scsi::ControlByte)];
 
   bool result = translator::WriteValue(cb, buffer);
   EXPECT_TRUE(result);
