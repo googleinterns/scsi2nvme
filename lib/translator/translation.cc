@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "translation.h"
+#include "write.h"
 
 namespace translator {
 
@@ -41,6 +42,18 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   switch (opc) {
     case scsi::OpCode::kInquiry:
       break;
+    case scsi::OpCode::kWrite6:
+      pipeline_status_ = translator::Write6ToNvme(scsi_cmd, nvme_cmds_[0], allocations_[0]);
+      nvme_cmd_count_ = 1;
+    case scsi::OpCode::kWrite10:
+      pipeline_status_ = translator::Write10ToNvme(scsi_cmd, nvme_cmds_[0], allocations_[0]);
+      nvme_cmd_count_ = 1;
+    case scsi::OpCode::kWrite12:
+      pipeline_status_ = translator::Write12ToNvme(scsi_cmd, nvme_cmds_[0], allocations_[0]);
+      nvme_cmd_count_ = 1;
+    case scsi::OpCode::kWrite16:
+      pipeline_status_ = translator::Write16ToNvme(scsi_cmd, nvme_cmds_[0], allocations_[0]);
+      nvme_cmd_count_ = 1; 
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
