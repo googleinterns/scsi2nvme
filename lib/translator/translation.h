@@ -35,7 +35,6 @@ class Translation {
       : pipeline_status_(StatusCode::kUninitialized),
         nvme_cmd_count_(0),
         allocations_() {}
-
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
   BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
@@ -48,6 +47,7 @@ class Translation {
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
+ private:
   // Releases memory vended to the translation object
   void FlushMemory();
 
