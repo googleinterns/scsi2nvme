@@ -31,8 +31,8 @@ cc_test(
   srcs = [ "read_test.cc" ],
   deps = [
     "//lib/translator:read_lib",
-    "//lib:scsi_defs_lib",
-    "//third_party/spdk_defs:nvme_defs_lib",
+    "//lib:scsi_lib",
+    "//third_party/spdk:nvme_lib",
     "//lib/translator:common",
     "@googletest//:gtest_main"
   ]

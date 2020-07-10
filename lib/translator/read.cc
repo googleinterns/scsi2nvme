@@ -52,7 +52,7 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
 }
 
 void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
-                nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
+                nvme::GenericQueueEntryCmd& nvme_cmd) {
   // cdw14 expected initial logical block reference
   nvme_cmd.cdw[4] = eilbrt;
   // cdw15 bits 15:0 expected logical block application tag
@@ -62,9 +62,9 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 }
 
 StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
-                      nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  nvme_cmd = nvme_defs::GenericQueueEntryCmd{
-      .opc = static_cast<uint8_t>(nvme_defs::NvmOpcode::kRead),
+                      nvme::GenericQueueEntryCmd& nvme_cmd) {
+  nvme_cmd = nvme::GenericQueueEntryCmd{
+      .opc = static_cast<uint8_t>(nvme::NvmOpcode::kRead),
       .psdt = 0b00  // PRPs are used for data transfer
   };
 
@@ -85,7 +85,7 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
 
 StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
                 uint16_t transfer_length,
-                nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
+                nvme::GenericQueueEntryCmd& nvme_cmd) {
   StatusCode status = LegacyRead(lba, transfer_length, nvme_cmd);
 
   if (status != StatusCode::kSuccess) {
@@ -108,8 +108,8 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
 }  // namespace
 
 StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                       nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  scsi_defs::Read6Command read_cmd;
+                       nvme::GenericQueueEntryCmd& nvme_cmd) {
+  scsi::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read6 command");
     return StatusCode::kInvalidInput;
@@ -120,8 +120,8 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
 }
 
 StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  scsi_defs::Read10Command read_cmd;
+                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+  scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
     return StatusCode::kInvalidInput;
@@ -132,8 +132,8 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
 }
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  scsi_defs::Read12Command read_cmd;
+                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+  scsi::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read12 command");
     return StatusCode::kInvalidInput;
@@ -144,8 +144,8 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
 }
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  scsi_defs::Read16Command read_cmd;
+                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+  scsi::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read16 command");
     return StatusCode::kInvalidInput;
@@ -156,8 +156,8 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
 }
 
 StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  scsi_defs::Read32Command read_cmd;
+                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+  scsi::Read32Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read32 command");
     return StatusCode::kInvalidInput;

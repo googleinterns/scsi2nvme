@@ -15,17 +15,17 @@
 #ifndef LIB_TRANSLATOR_READ_H
 #define LIB_TRANSLATOR_READ_H
 
-#include "third_party/spdk_defs/nvme_defs.h"
+#include "third_party/spdk/nvme.h"
 
 #include "common.h"
-#include "lib/scsi_defs.h"
+#include "lib/scsi.h"
 
 namespace translator {
 
 /**
  * SCSI has 5 Read commands: Read(6), Read(10), Read(12), Read(16), Read(32)
  * Each translation function takes in a raw SCSI command in bytes,
- * casts it to scsi_defs::Read[6,10,12,16,32]Command,
+ * casts it to scsi::Read[6,10,12,16,32]Command,
  * and builds an NVMe Read command
  *
  * Read(6) is obsolete, but may still be implemented on some devices.
@@ -39,18 +39,18 @@ namespace translator {
  * application tags
  */
 StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                       nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+                       nvme::GenericQueueEntryCmd& nvme_cmd);
 
 StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+                        nvme::GenericQueueEntryCmd& nvme_cmd);
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+                        nvme::GenericQueueEntryCmd& nvme_cmd);
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+                        nvme::GenericQueueEntryCmd& nvme_cmd);
 
 StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme_defs::GenericQueueEntryCmd& nvme_cmd);
+                        nvme::GenericQueueEntryCmd& nvme_cmd);
 
 }  // namespace translator
 

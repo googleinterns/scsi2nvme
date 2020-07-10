@@ -25,19 +25,6 @@ cc_library(
 )
 
 cc_library(
-  name = "read_lib",
-  hdrs = ["read.h"],
-  srcs = ["read.cc"],
-  deps = [
-      "//lib/translator:common",
-      "//lib:scsi_defs_lib",
-      "//third_party/spdk_defs:nvme_defs_lib",
-      "@com_google_absl//absl/types:span",
-  ],
-  visibility = ["//visibility:public"],
-)
-
-cc_library(
   name = "status_lib",
   hdrs = ["status.h"],
   srcs = ["status.cc"],
@@ -46,6 +33,19 @@ cc_library(
       "//lib:scsi_lib",
       "//lib/translator:common",
       "@com_google_absl//absl/base",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "read_lib",
+  hdrs = ["read.h"],
+  srcs = ["read.cc"],
+  deps = [
+      "//lib/translator:common",
+      "//lib:scsi_lib",
+      "//third_party/spdk:nvme_lib",
+      "@com_google_absl//absl/types:span",
   ],
   visibility = ["//visibility:public"],
 )
