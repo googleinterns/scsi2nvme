@@ -54,6 +54,21 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
   dealloc_pages_callback = dealloc_callback;
 }
 
+StatusCode Allocation::SetPages(uint16_t data_page_count,
+                                uint16_t mdata_page_count) {
+  this->data_page_count = data_page_count;
+  this->data_addr = AllocPages(data_page_count);
+  this->mdata_page_count = mdata_page_count;
+  this->mdata_addr = AllocPages(mdata_page_count);
+
+  if (this->data_addr == 0 || this->mdata_addr == 0) {
+    DebugLog("Error when requesting a page of memory");
+    return StatusCode::kFailure;
+  }
+
+  return StatusCode::kSuccess;
+}
+
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode) {
   switch (opcode) {
     case scsi_defs::OpCode::kTestUnitReady:
