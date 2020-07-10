@@ -61,25 +61,10 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
   nvme_cmd.cdw[5] |= (elbatm << 16);
 }
 
-StatusCode BuildAllocation(uint16_t data_page_count, uint16_t mdata_page_count,
-                           Allocation& allocation) {
-  allocation.data_page_count = data_page_count;
-  allocation.data_addr = AllocPages(data_page_count);
-  allocation.mdata_page_count = mdata_page_count;
-  allocation.mdata_addr = AllocPages(mdata_page_count);
-
-  if (allocation.data_addr == 0 || allocation.mdata_addr == 0) {
-    DebugLog("Error when requesting a page of memory");
-    return StatusCode::kFailure;
-  }
-
-  return StatusCode::kSuccess;
-}
-
 StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
                       nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation) {
-  StatusCode status_code = BuildAllocation(1, 1, allocation);
+  StatusCode status_code = allocation.SetPages(1, 1);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;

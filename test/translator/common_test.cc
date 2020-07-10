@@ -78,4 +78,40 @@ TEST(Common, ShouldCorrectlyWriteValueToSpan) {
   EXPECT_EQ(0b11000100, buffer[0]);
 }
 
+TEST(Common, ShouldBuildAllocationWithSuccessStatus) {
+  translator::Allocation allocation;
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
+    EXPECT_EQ(1, count);
+    return 1337;
+  };
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
+  translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  translator::StatusCode status_code = allocation.SetPages(1, 1);
+
+  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ(1, allocation.data_page_count);
+  EXPECT_EQ(1, allocation.mdata_page_count);
+  EXPECT_EQ(1337, allocation.data_addr);
+  EXPECT_EQ(1337, allocation.mdata_addr);
+}
+
+TEST(Common, ShouldBuildAllocationWithFailureStatus) {
+  translator::Allocation allocation;
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
+    EXPECT_EQ(1, count);
+    return 0;
+  };
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
+  translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  // necessary to "undo" the expected behaviour of the test
+  // Common::ShouldCorrectlyCallback
+  void (*debug_callback)(const char*) = nullptr;
+  translator::SetDebugCallback(debug_callback);
+
+  translator::StatusCode status_code = allocation.SetPages(1, 1);
+  EXPECT_EQ(translator::StatusCode::kFailure, status_code);
+}
+
 }  // namespace
