@@ -12,18 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_TRANSLATOR_REQUEST_SENSE_H
-#define LIB_TRANSLATOR_REQUEST_SENSE_H
+#include "test_unit_ready.h"
 
-#include <cstring>
-#include <type_traits>
-
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
-
-#include "lib/scsi.h"
-#include "third_party/spdk/nvme.h"
+#include "common.h"
 
 namespace translator {
+
+namespace {  // anonymous namespace for helper functions
 }
-#endif
+}

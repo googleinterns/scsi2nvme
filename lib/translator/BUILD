@@ -24,9 +24,9 @@ cc_library(
 )
 
 cc_library(
-  name = "request_sense_lib",
-  hdrs = ["request_sense.h"],
-  srcs = ["request_sense.cc"],
+  name = "test_unit_ready_lib",
+  hdrs = ["test_unit_ready.h"],
+  srcs = ["test_unit_ready.cc"],
   deps = [
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",

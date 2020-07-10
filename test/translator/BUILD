@@ -27,10 +27,10 @@ cc_test(
 )
 
 cc_test(
-  name = "request_sense_tests",
-  srcs = [ "request_sense_test.cc" ],
+  name = "test_unit_ready_tests",
+  srcs = [ "test_unit_ready_test.cc" ],
   deps = [
-    "//lib/translator:request_sense_lib",
+    "//lib/translator:test_unit_ready_lib",
     "@googletest//:gtest_main"
   ]
 )
