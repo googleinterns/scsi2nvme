@@ -109,14 +109,9 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
 
 StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
                        nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (scsi_cmd.size() != sizeof(scsi_defs::Read6Command)) {
-    DebugLog("Malformed Read6 command");
-    return StatusCode::kInvalidInput;
-  }
-
   scsi_defs::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Unable to cast raw bytes to Read6 command");
+    DebugLog("Malformed Read6 command");
     return StatusCode::kInvalidInput;
   }
 
@@ -126,14 +121,9 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (scsi_cmd.size() != sizeof(scsi_defs::Read10Command)) {
-    DebugLog("Malformed Read10 command");
-    return StatusCode::kInvalidInput;
-  }
-
   scsi_defs::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Unable to cast raw bytes to Read10 command");
+    DebugLog("Malformed Read10 command");
     return StatusCode::kInvalidInput;
   }
 
@@ -143,14 +133,9 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (scsi_cmd.size() != sizeof(scsi_defs::Read12Command)) {
-    DebugLog("Malformed Read12 command");
-    return StatusCode::kInvalidInput;
-  }
-
   scsi_defs::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Unable to cast raw bytes to Read12 command");
+    DebugLog("Malformed Read12 command");
     return StatusCode::kInvalidInput;
   }
 
@@ -160,14 +145,9 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (scsi_cmd.size() != sizeof(scsi_defs::Read16Command)) {
-    DebugLog("Malformed Read16 command");
-    return StatusCode::kInvalidInput;
-  }
-
   scsi_defs::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Unable to cast raw bytes to Read16 command");
+    DebugLog("Malformed Read16 command");
     return StatusCode::kInvalidInput;
   }
 
@@ -177,14 +157,9 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme_defs::GenericQueueEntryCmd& nvme_cmd) {
-  if (scsi_cmd.size() != sizeof(scsi_defs::Read32Command)) {
-    DebugLog("Malformed Read32 command");
-    return StatusCode::kInvalidInput;
-  }
-
   scsi_defs::Read32Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Unable to cast raw bytes to Read32 command");
+    DebugLog("Malformed Read32 command");
     return StatusCode::kInvalidInput;
   }
 
