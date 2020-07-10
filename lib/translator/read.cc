@@ -61,22 +61,37 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
   nvme_cmd.cdw[5] |= (elbatm << 16);
 }
 
+StatusCode BuildAllocation(uint16_t data_page_count, uint16_t mdata_page_count,
+                           Allocation& allocation) {
+  allocation.data_page_count = data_page_count;
+  allocation.data_addr = AllocPages(data_page_count);
+  allocation.mdata_page_count = mdata_page_count;
+  allocation.mdata_addr = AllocPages(mdata_page_count);
+
+  if (allocation.data_addr == 0 || allocation.mdata_addr == 0) {
+    DebugLog("Error when requesting a page of memory");
+    return StatusCode::kFailure;
+  }
+
+  return StatusCode::kSuccess;
+}
+
 StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
-                      nvme::GenericQueueEntryCmd& nvme_cmd) {
+                      nvme::GenericQueueEntryCmd& nvme_cmd,
+                      Allocation& allocation) {
+  StatusCode status_code = BuildAllocation(1, 1, allocation);
+
+  if (status_code != StatusCode::kSuccess) {
+    return status_code;
+  }
+
   nvme_cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::NvmOpcode::kRead),
       .psdt = 0b00  // PRPs are used for data transfer
   };
 
-  uint64_t mptr = AllocPages(1);
-  uint64_t prp = AllocPages(1);
-  if (mptr == 0 || prp == 0) {
-    DebugLog("Error when requesting a page of memory");
-    return StatusCode::kFailure;
-  }
-
-  nvme_cmd.mptr = mptr;
-  nvme_cmd.dptr.prp.prp1 = prp;
+  nvme_cmd.mptr = allocation.mdata_addr;
+  nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
   nvme_cmd.cdw[0] = lba;              // cdw10 Starting lba bits 31:00
   nvme_cmd.cdw[2] = transfer_length;  // cdw12 nlb bits 15:00
 
@@ -84,9 +99,9 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
 }
 
 StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
-                uint16_t transfer_length,
-                nvme::GenericQueueEntryCmd& nvme_cmd) {
-  StatusCode status = LegacyRead(lba, transfer_length, nvme_cmd);
+                uint16_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
+                Allocation& allocation) {
+  StatusCode status = LegacyRead(lba, transfer_length, nvme_cmd, allocation);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -108,7 +123,8 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
 }  // namespace
 
 StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                       nvme::GenericQueueEntryCmd& nvme_cmd) {
+                       nvme::GenericQueueEntryCmd& nvme_cmd,
+                       Allocation& allocation) {
   scsi::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read6 command");
@@ -116,11 +132,12 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   return LegacyRead(read_cmd.logical_block_address, read_cmd.transfer_length,
-                    nvme_cmd);
+                    nvme_cmd, allocation);
 }
 
 StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+                        nvme::GenericQueueEntryCmd& nvme_cmd,
+                        Allocation& allocation) {
   scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
@@ -128,11 +145,12 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd);
+              read_cmd.transfer_length, nvme_cmd, allocation);
 }
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+                        nvme::GenericQueueEntryCmd& nvme_cmd,
+                        Allocation& allocation) {
   scsi::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read12 command");
@@ -140,11 +158,12 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd);
+              read_cmd.transfer_length, nvme_cmd, allocation);
 }
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+                        nvme::GenericQueueEntryCmd& nvme_cmd,
+                        Allocation& allocation) {
   scsi::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read16 command");
@@ -152,11 +171,12 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd);
+              read_cmd.transfer_length, nvme_cmd, allocation);
 }
 
 StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+                        nvme::GenericQueueEntryCmd& nvme_cmd,
+                        Allocation& allocation) {
   scsi::Read32Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read32 command");
@@ -165,7 +185,7 @@ StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
 
   StatusCode status =
       Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-           read_cmd.transfer_length, nvme_cmd);
+           read_cmd.transfer_length, nvme_cmd, allocation);
 
   if (status != StatusCode::kSuccess) {
     return status;
