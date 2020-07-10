@@ -32,6 +32,7 @@ cc_library(
       "//lib:scsi_lib",
       "//lib/translator:common",
       "@com_google_absl//absl/base",
+      "@com_google_absl//absl/types:span",
   ],
   visibility = ["//visibility:public"],
 )

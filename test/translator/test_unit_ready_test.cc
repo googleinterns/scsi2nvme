@@ -18,5 +18,4 @@
 
 // Tests
 
-namespace {
-}
+namespace {}

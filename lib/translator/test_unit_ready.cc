@@ -13,11 +13,26 @@
 // limitations under the License.
 
 #include "test_unit_ready.h"
-
-#include "common.h"
-
 namespace translator {
+namespace {
+// TODO: mocked. this fn should be on the NVMe side.
+StatusCode NvmeReady(bool& result) {
+  result = true;
+  return StatusCode::kSuccess;
+}
+}  // namespace
 
-namespace {  // anonymous namespace for helper functions
+StatusCode TestUnitReadyToNvme(absl::Span<const uint8_t> scsi_cmd) {
+  scsi::TestUnitReadyCommand test_unit_ready_cmd{};
+  if (!ReadValue(scsi_cmd, test_unit_ready_cmd)) {
+    DebugLog("Malformed TestUnitReady Command");
+    return StatusCode::kInvalidInput;
+  }
+  if (test_unit_ready_cmd.control_byte.naca == 1) {
+    return StatusCode::kInvalidInput;
+  }
+  return StatusCode::kSuccess;
 }
-}
+
+StatusCode TestUnitReadyToScsi(bool& result) { return NvmeReady(result); }
+}  // namespace translator

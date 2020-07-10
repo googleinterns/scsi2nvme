@@ -15,15 +15,14 @@
 #ifndef LIB_TRANSLATOR_test_unit_ready_H
 #define LIB_TRANSLATOR_test_unit_ready_H
 
-#include <cstring>
-#include <type_traits>
-
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
-
+#include "common.h"
 #include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
-}
+StatusCode TestUnitReadyToNvme(absl::Span<const uint8_t> scsi_cmd);
+StatusCode TestUnitReadyToScsi(bool& result);
+
+}  // namespace translator
 #endif
