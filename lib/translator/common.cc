@@ -54,7 +54,7 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
   dealloc_pages_callback = dealloc_callback;
 }
 
-absl::string_view ScsiOpcodeToString(scsi::OpCode opcode) {
+const char* ScsiOpcodeToString(scsi::OpCode opcode) {
   switch (opcode) {
     case scsi::OpCode::kTestUnitReady:
       return "kTestUnitReady";
