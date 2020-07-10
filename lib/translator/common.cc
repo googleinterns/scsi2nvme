@@ -20,8 +20,8 @@
 namespace translator {
 
 static void (*debug_callback)(const char*);
-static void* (*alloc_pages_callback)(uint16_t);
-static void (*dealloc_pages_callback)(void*, uint16_t);
+static uint64_t (*alloc_pages_callback)(uint16_t);
+static void (*dealloc_pages_callback)(uint64_t, uint16_t);
 
 void DebugLog(const char* format, ...) {
   if (debug_callback == nullptr) return;
@@ -37,21 +37,19 @@ void SetDebugCallback(void (*callback)(const char*)) {
   debug_callback = callback;
 }
 
-// Returns void* casted to uint64_t.
 // A return value of 0 is equivalent to nullptr.
 uint64_t AllocPages(uint16_t count) {
   if (alloc_pages_callback == nullptr) return 0;
-  return reinterpret_cast<uint64_t>(alloc_pages_callback(count));
+  return alloc_pages_callback(count);
 }
 
-void DeallocPages(uint64_t pages, uint16_t count) {
+void DeallocPages(uint64_t pages_ptr, uint16_t count) {
   if (dealloc_pages_callback == nullptr) return;
-  void* pages_ptr = reinterpret_cast<void*>(pages);
   dealloc_pages_callback(pages_ptr, count);
 }
 
-void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
-                           void (*dealloc_callback)(void*, uint16_t)) {
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(uint64_t, uint16_t)) {
   alloc_pages_callback = alloc_callback;
   dealloc_pages_callback = dealloc_callback;
 }

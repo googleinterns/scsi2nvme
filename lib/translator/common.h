@@ -26,6 +26,9 @@
 
 namespace translator {
 
+// The maximum amplification ratio of any supported SCSI:NVMe translation
+constexpr int kMaxCommandRatio = 3;
+
 // Reports the status of a translation for internal use
 enum class StatusCode {
   kSuccess,
@@ -33,6 +36,13 @@ enum class StatusCode {
   kInvalidInput,
   kNoTranslation,
   kFailure
+};
+
+struct Allocation {
+  uint64_t data_addr;         // Start of data buffer
+  uint16_t data_page_count;   // Number of data pages
+  uint64_t mdata_addr;        // Start of metadata buffer
+  uint16_t mdata_page_count;  // Number of metadata pages
 };
 
 void DebugLog(const char* format, ...);
@@ -44,8 +54,8 @@ void DeallocPages(uint64_t pages_ptr, uint16_t count);
 
 void SetDebugCallback(void (*callback)(const char*));
 
-void SetAllocPageCallbacks(void* (*alloc_callback)(uint16_t),
-                           void (*dealloc_callback)(void*, uint16_t));
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+                           void (*dealloc_callback)(uint64_t, uint16_t));
 
 absl::string_view ScsiOpcodeToString(scsi_defs::OpCode opcode);
 

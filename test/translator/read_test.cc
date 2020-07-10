@@ -43,11 +43,11 @@ class ReadTest : public ::testing::Test {
   // Called before the first test in this test suite.
   static void SetUpTestSuite() {
     // Mocks AllocPages to not return a null (0) value
-    auto alloc_callback = [](uint16_t count) -> void* {
+    auto alloc_callback = [](uint16_t count) -> uint64_t {
       EXPECT_EQ(1, count);
-      return reinterpret_cast<void*>(1337);
+      return 1337;
     };
-    void (*dealloc_callback)(void*, uint16_t) = nullptr;
+    void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
     translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
   }
 };
@@ -230,11 +230,11 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
 }
 
 TEST_F(ReadTest, ShouldReturnFailureStatusForNullAllocPages) {
-  auto alloc_callback = [](uint16_t count) -> void* {
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
     EXPECT_EQ(1, count);
-    return nullptr;
+    return 0;
   };
-  void (*dealloc_callback)(void*, uint16_t) = nullptr;
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
   scsi_defs::Read6Command cmd = {

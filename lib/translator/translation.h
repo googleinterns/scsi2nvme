@@ -16,6 +16,7 @@
 #define LIB_TRANSLATOR_TRANSLATION_H
 
 #include "absl/types/span.h"
+
 #include "common.h"
 
 namespace translator {
@@ -25,11 +26,16 @@ enum class ApiStatus { kSuccess, kFailure };
 
 struct BeginResponse {
   ApiStatus status;
-  uint32_t alloc_len;
+  uint32_t alloc_len;  // Defines size of buffer passed to Translation::Complete
 };
 
 class Translation {
  public:
+  Translation()
+      : pipeline_status_(StatusCode::kUninitialized),
+        nvme_cmd_count_(0),
+        allocations_() {}
+
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
   BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd,
@@ -42,11 +48,15 @@ class Translation {
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
+  // Releases memory vended to the translation object
+  void FlushMemory();
+
  private:
-  StatusCode pipeline_status_ = StatusCode::kUninitialized;
+  StatusCode pipeline_status_;
   absl::Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
-  nvme_defs::GenericQueueEntryCmd nvme_cmds_[3];
+  nvme_defs::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
+  Allocation allocations_[kMaxCommandRatio];
 };
 
 }  // namespace translator
