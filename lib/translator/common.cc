@@ -69,7 +69,7 @@ StatusCode Allocation::SetPages(uint16_t data_page_count,
   return StatusCode::kSuccess;
 }
 
-absl::string_view ScsiOpcodeToString(scsi::OpCode opcode) {
+const char* ScsiOpcodeToString(scsi::OpCode opcode) {
   switch (opcode) {
     case scsi::OpCode::kTestUnitReady:
       return "kTestUnitReady";
