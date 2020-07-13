@@ -14,8 +14,8 @@ cc_library(
 
 cc_library(
   name = "translation",
-  hdrs = ["translation.h"],
-  srcs = ["translation.cc"],
+  hdrs = ["translation.h", "test_unit_ready.h"],
+  srcs = ["translation.cc", "test_unit_ready.cc"],
   deps = [
     "@com_google_absl//absl/types:span",
     "//lib/translator:common"

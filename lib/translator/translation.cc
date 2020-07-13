@@ -41,6 +41,9 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   switch (opc) {
     case scsi::OpCode::kInquiry:
       break;
+    case scsi::OpCode::kTestUnitReady:
+      pipeline_status_ = TestUnitReadyToNvme(scsi_cmd_no_op);
+      break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
@@ -71,6 +74,9 @@ ApiStatus Translation::Complete(
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
+      // TODO: send this back to user. internal variable?
+      bool ready;
+      TestUnitReadyToScsi(ready);
       ret = ApiStatus::kSuccess;
       break;
   }

@@ -18,6 +18,7 @@
 #include "absl/types/span.h"
 
 #include "common.h"
+#include "test_unit_ready.h"
 
 namespace translator {
 
