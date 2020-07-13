@@ -14,6 +14,8 @@
 
 #include "lib/translator/read.h"
 
+#include <cmath>
+
 #include "gtest/gtest.h"
 
 namespace {
@@ -21,10 +23,6 @@ namespace {
 /*
    Tests the translator::Read6, Read10, Read12, Read16, Read32 functions
 */
-
-// Used by Read6, Read10, Read12, Read16, Read32
-constexpr uint32_t kLba = 100;
-constexpr uint16_t kTransferLen = 255;
 
 // Used by Read10, Read12, Read16, Read32
 constexpr uint8_t kRdProtect = 0b101;
@@ -71,9 +69,12 @@ TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
+  uint32_t lba = (uint32_t)pow(2, 21) - 1;
+  uint8_t transfer_len = 255;
+  uint8_t nlb = transfer_len - 1;
   scsi::Read6Command cmd = {
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = lba,
+      .transfer_length = transfer_len,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -86,8 +87,29 @@ TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kLba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(kTransferLen, nvme_cmd.cdw[2]);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
+  EXPECT_EQ(nlb, nvme_cmd.cdw[2]);
+}
+
+TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
+  uint32_t lba = (uint32_t)pow(2, 21) - 1;
+  scsi::Read6Command cmd = {
+      .logical_block_address = lba,
+      .transfer_length = 0,
+  };
+  uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation;
+
+  translator::StatusCode status_code =
+      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
+
+  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
+  EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
+  EXPECT_EQ(255, nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
@@ -101,11 +123,14 @@ TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
+  uint32_t lba = (uint32_t)pow(2, 32) - 1;
+  uint16_t transfer_len = (uint32_t)pow(2, 16) - 1;
+  uint16_t nlb = transfer_len - 1;
   scsi::Read10Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = lba,
+      .transfer_length = transfer_len,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -118,8 +143,8 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kLba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(BuildCdw13(kTransferLen, kPrinfo, kFua), nvme_cmd.cdw[2]);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
+  EXPECT_EQ(BuildCdw13(nlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
@@ -133,11 +158,14 @@ TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
+  uint32_t lba = (uint32_t)pow(2, 32) - 1;
+  uint16_t transfer_len = (uint32_t)pow(2, 16) - 1;
+  uint16_t nlb = transfer_len - 1;
   scsi::Read12Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = lba,
+      .transfer_length = transfer_len,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -150,8 +178,8 @@ TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kLba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(BuildCdw13(kTransferLen, kPrinfo, kFua), nvme_cmd.cdw[2]);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
+  EXPECT_EQ(BuildCdw13(nlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
@@ -165,11 +193,14 @@ TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
+  uint32_t lba = (uint32_t)pow(2, 64) - 1;
+  uint16_t transfer_len = (uint32_t)pow(2, 32) - 1;
+  uint16_t nlb = transfer_len - 1;
   scsi::Read16Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = lba,
+      .transfer_length = transfer_len,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -182,8 +213,8 @@ TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kLba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(BuildCdw13(kTransferLen, kPrinfo, kFua), nvme_cmd.cdw[2]);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
+  EXPECT_EQ(BuildCdw13(nlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read32ShouldReturnInvalidInputStatus) {
@@ -197,14 +228,17 @@ TEST_F(ReadTest, Read32ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
+  uint64_t lba = (uint64_t)(pow(2, 34) + 8);
+  uint32_t transfer_len = (uint32_t)pow(2, 32) - 1;
+  uint16_t nlb = transfer_len - 1;
   scsi::Read32Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = kLba,
+      .logical_block_address = lba,
       .eilbrt = kEilbrt,
       .elbat = kElbat,
       .lbatm = kLbatm,
-      .transfer_length = kTransferLen,
+      .transfer_length = transfer_len,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read32Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -217,18 +251,35 @@ TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kLba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(BuildCdw13(kTransferLen, kPrinfo, kFua), nvme_cmd.cdw[2]);
+  EXPECT_EQ(8, nvme_cmd.cdw[0]);
+  EXPECT_EQ(BuildCdw13(nlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
   EXPECT_EQ(kEilbrt, nvme_cmd.cdw[4]);
   EXPECT_EQ(kElbat | (kLbatm << 16), nvme_cmd.cdw[5]);
+}
+
+TEST_F(ReadTest, NonRead6ShouldReturnNoTranslationForZeroTransferLen) {
+  scsi::Read10Command cmd = {
+      .rdprotect = kUnsupportedRdProtect,
+      .fua = kFua,
+      .logical_block_address = 100,
+      .transfer_length = 0,
+  };
+  uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation;
+
+  translator::StatusCode status_code =
+      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
+  EXPECT_EQ(translator::StatusCode::kNoTranslation, status_code);
 }
 
 TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   scsi::Read10Command cmd = {
       .rdprotect = kUnsupportedRdProtect,
       .fua = kFua,
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = 100,
+      .transfer_length = 255,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -249,8 +300,8 @@ TEST_F(ReadTest, ShouldReturnFailureStatusForNullAllocPages) {
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
   scsi::Read6Command cmd = {
-      .logical_block_address = kLba,
-      .transfer_length = kTransferLen,
+      .logical_block_address = 100,
+      .transfer_length = 255,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);

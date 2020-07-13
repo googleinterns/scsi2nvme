@@ -13,7 +13,6 @@ namespace {  // anonymous namespace for helper functions
 StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
   bool pract;     // Protection Information Action 1 bit
   uint8_t prchk;  // Protection Information Check 3 bits
-  prinfo = 0;     // Protection Information field 4 bits
 
   switch (rdprotect) {  // 3 bits
     case 0b0:
@@ -45,8 +44,7 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
       return StatusCode::kInvalidInput;
   }
 
-  prinfo |= prchk;
-  prinfo |= (pract << 3);
+  prinfo = prchk | (pract << 3);
 
   return StatusCode::kSuccess;
 }
@@ -56,7 +54,7 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
   // cdw14 expected initial logical block reference
   nvme_cmd.cdw[4] = eilbrt;
   // cdw15 bits 15:0 expected logical block application tag
-  nvme_cmd.cdw[5] |= elbat;
+  nvme_cmd.cdw[5] = elbat;
   // cdw15 bits 31:16 expected logical block application tag mask
   nvme_cmd.cdw[5] |= (elbatm << 16);
 }
@@ -64,7 +62,7 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 // Translates fields common to all Read commands
 // Named Legacy because it is called directly by Read6, an obsolete command
 // lacking fields common to other Read commands
-StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
+StatusCode LegacyRead(uint64_t lba, uint32_t transfer_length,
                       nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation) {
   StatusCode status_code = allocation.SetPages(1, 1);
@@ -75,21 +73,27 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
 
   nvme_cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::NvmOpcode::kRead),
-      .psdt = 0b00  // PRPs are used for data transfer
+      .psdt = 0  // PRPs are used for data transfer
   };
 
   nvme_cmd.mptr = allocation.mdata_addr;
   nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
-  nvme_cmd.cdw[0] = lba;              // cdw10 Starting lba bits 31:00
-  nvme_cmd.cdw[2] = transfer_length;  // cdw12 nlb bits 15:00
+  nvme_cmd.cdw[0] = lba;  // cdw10 Starting lba bits 31:00
+  nvme_cmd.cdw[1] = lba >> 31;
+  nvme_cmd.cdw[2] = transfer_length - 1;  // cdw12 nlb bits 15:00
 
   return StatusCode::kSuccess;
 }
 
 // Translates fields common to Read10, Read12, Read16, Read32
-StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
-                uint16_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
+StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
+                uint32_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
                 Allocation& allocation) {
+  if (transfer_length == 0) {
+    DebugLog("NVMe read command does not support transfering zero blocks");
+    return StatusCode::kNoTranslation;
+  }
+
   StatusCode status = LegacyRead(lba, transfer_length, nvme_cmd, allocation);
 
   if (status != StatusCode::kSuccess) {
@@ -120,7 +124,13 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return LegacyRead(read_cmd.logical_block_address, read_cmd.transfer_length,
+  // Transfer Length set to 0 specifies 256 logical blocks to be read
+  // Section 3.15
+  // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+  uint32_t updated_transfer_length =
+      read_cmd.transfer_length == 0 ? 256 : read_cmd.transfer_length;
+
+  return LegacyRead(read_cmd.logical_block_address, updated_transfer_length,
                     nvme_cmd, allocation);
 }
 
