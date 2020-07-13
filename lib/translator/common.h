@@ -43,6 +43,9 @@ struct Allocation {
   uint16_t data_page_count;   // Number of data pages
   uint64_t mdata_addr;        // Start of metadata buffer
   uint16_t mdata_page_count;  // Number of metadata pages
+
+  StatusCode SetPages(uint16_t data_page_count,
+                                uint16_t mdata_page_count);
 };
 
 void DebugLog(const char* format, ...);

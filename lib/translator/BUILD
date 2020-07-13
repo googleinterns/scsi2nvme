@@ -18,7 +18,8 @@ cc_library(
   srcs = ["translation.cc"],
   deps = [
     "@com_google_absl//absl/types:span",
-    "//lib/translator:common"
+    "//lib/translator:common",
+    "//lib/translator:write_lib",
   ],
   visibility = ["//visibility:public"]
 )
@@ -41,7 +42,7 @@ cc_library(
   hdrs = ["write.h"],
   srcs = ["write.cc"],
   deps = [
-    "//lib/translator::common",
+    "//lib/translator:common",
     "//lib:scsi_lib",
     "//third_party/spdk:nvme_lib",
     "@com_google_absl//absl/base",

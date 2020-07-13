@@ -15,26 +15,26 @@
 #ifndef LIB_TRANSLATOR_WRITE_H_
 #define LIB_TRANSLATOR_WRITE_H_
 
-#include "third_party/spdk_defs/nvme_defs.h"
+#include "third_party/spdk/nvme.h"
 
 #include "common.h"
 #include "lib/scsi.h"
 
 namespace translator {
 
-StatusCode Write6ToNvme(absl::span<const uint8_t> scsi_cmd,
+StatusCode Write6ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation);
 
-StatusCode Write10ToNvme(absl::span<const uint8_t> scsi_cmd,
+StatusCode Write10ToNvme(absl::Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation);
 
-StatusCode Write12ToNvme(absl::span<const uint8_t> scsi_cmd,
+StatusCode Write12ToNvme(absl::Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation);
 
-StatusCode Write16ToNvme(absl::span<const uint8_t> scsi_cmd,
+StatusCode Write16ToNvme(absl::Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation);
 

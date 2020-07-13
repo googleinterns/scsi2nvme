@@ -510,7 +510,7 @@ static_assert(sizeof(Write12Command) == 11);
 // SCSI Reference Manual Table 219
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct Write16Command {
-  uint8_t wr_proetect : 3;
+  uint8_t wr_protect : 3;
   bool dpo : 1;  // disable page output bit
   bool fua : 1;  // Forced Unit access bit
   bool reserved_1 : 1;
