@@ -15,28 +15,29 @@ jobs:
   # The first checks the code's style. The second builds & tests the library.
   check-style:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v2
-    
+
     - name: Setup Python
       uses: actions/setup-python@v2
       with:
         python-version: 2.7
-    
+
     - name: Install clang-format
       run: |
         sudo apt-get install clang-format
-    
+
     - name: Check style
       run: |
-        "${GITHUB_WORKSPACE}/third_party/run_clang_format/run-clang-format.py" -r lib test third_party/scsi_mock third_party/spdk_defs
-  
+        "${GITHUB_WORKSPACE}/third_party/run_clang_format/run-clang-format.py" -r lib test third_party/scsi_mock third_party/spdk
+
   build-and-test:
     env:
+      CC: gcc-8
       BAZEL_CXXOPTS: -std=c++17
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v2
 
@@ -52,7 +53,7 @@ jobs:
         mkdir -p "${GITHUB_WORKSPACE}/bin/"
         mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
         chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
-        
+
     - name: Build
       run: |
         "${GITHUB_WORKSPACE}/bin/bazel" build ...

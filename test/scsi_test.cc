@@ -12,19 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "lib/hello_world.h"
+#include "lib/scsi.h"
 
+#include "absl/base/casts.h"
 #include "gtest/gtest.h"
 
 namespace {
 
 /*
-    Tests the HelloWorld class to return the expected string
+  Tests the ControlByte class
 */
-TEST(HelloWorldClass, ShouldReturnHelloWorldString) {
-  HelloWorld *hw = new HelloWorld();
-  std::string expected = "Hello World!";
-  std::string actual = hw->get_hello_world_string();
-  EXPECT_EQ(expected, actual);
+
+TEST(ControlByteClass, ShouldReturnCorrectControlByte) {
+  uint8_t cbValue = 0b11000100;
+  scsi::ControlByte cb = absl::bit_cast<scsi::ControlByte>(cbValue);
+
+  EXPECT_EQ(0b00, cb.obsolete);
+  EXPECT_EQ(0b1, cb.naca);
+  EXPECT_EQ(0b000, cb.reserved);
+  EXPECT_EQ(0b11, cb.vendor_specific);
 }
 }  // namespace

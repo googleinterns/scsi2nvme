@@ -1,11 +1,20 @@
 cc_test(
-    name = "tests",
-    srcs = glob(["**/*.cc"]),
+    name = "scsi_test",
+    srcs = ["scsi_test.cc"],
     deps = [
-        "//lib:hello_world_lib",
-        "//lib:scsi_defs_lib",
-        "//third_party/spdk_defs:nvme_defs_lib",
+        "//lib:scsi_lib",
         "@googletest//:gtest_main",
         "@com_google_absl//absl/base",
     ],
 )
+
+cc_test(
+    name = "nvme_test",
+    srcs = ["nvme_test.cc"],
+    deps = [
+        "//third_party/spdk:nvme_lib",
+        "@googletest//:gtest_main",
+        "@com_google_absl//absl/base",
+    ],
+)
+

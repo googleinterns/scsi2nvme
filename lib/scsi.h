@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_SCSI_DEFS_H
-#define LIB_SCSI_DEFS_H
+#ifndef LIB_SCSI_H
+#define LIB_SCSI_H
 
 #include <cstdint>
 
@@ -21,7 +21,7 @@
 
 // The fields of structures in this namespace are arranged according to Big
 // Endian format.
-namespace scsi_defs {
+namespace scsi {
 
 using LunAddress = uint64_t;
 
@@ -38,6 +38,77 @@ enum class Status : uint8_t {
   kTaskSetFull = 0x28,
   kAcaActive = 0x30,
   kTaskAborted = 0x40,
+};
+
+// SCSI Reference Manual Table 11
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class SenseResponse : uint8_t {
+  kCurrentFixedError = 0x70,
+  kDeferredFixedError = 0x71,
+  kCurrentDescriptorError = 0x72,
+  kDeferredDescriptorError = 0x73,
+};
+
+// SCSI Reference Manual Table 28
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class SenseKey : uint8_t {
+  kNoSense = 0x0,
+  kRecoveredError = 0x1,
+  kNotReady = 0x2,
+  kMediumError = 0x3,
+  kHardwareError = 0x4,
+  kIllegalRequest = 0x5,
+  kUnitAttention = 0x6,
+  kDataProtect = 0x7,
+  kBlankCheck = 0x8,
+  kVendorSpecific = 0x9,
+  kCopyAborted = 0xa,
+  kAbortedCommand = 0xb,
+  kReserved = 0xc,
+  kVolumeOverflow = 0xd,
+  kMiscompare = 0xe,
+  kCompleted = 0xf,
+};
+
+// SCSI Reference Manual Table 29
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class AdditionalSenseCode : uint8_t {
+  kNoAdditionalSenseInfo = 0x0,
+  kPeripheralDeviceWriteFault = 0x03,
+  kLogicalUnitNotReadyCauseNotReportable = 0x04,
+  kWarningPowerLossExpected = 0x0b,
+  kLogicalBlockGuardCheckFailed = 0x10,
+  kLogicalBlockApplicationTagCheckFailed = 0x10,
+  kLogicalBlockReferenceTagCheckFailed = 0x10,
+  kUnrecoveredReadError = 0x11,
+  kMiscompareDuringVerifyOp = 0x1d,
+  kAccessDeniedInvalidLuIdentifier = 0x20,
+  kInvalidCommandOpCode = 0x20,
+  kLbaOutOfRange = 0x21,
+  kInvalidFieldInCdb = 0x24,
+  kFormatCommandFailed = 0x31,
+  kInternalTargetFailure = 0x44,
+};
+
+// SCSI Reference Manual Table 29
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+// Listed in the same order as the AdditionalSenseCode counterparts
+enum class AdditionalSenseCodeQualifier : uint8_t {
+  kNoAdditionalSenseInfo = 0x0,
+  kPeripheralDeviceWriteFault = 0x0,
+  kLogicalUnitNotReadyCauseNotReportable = 0x0,
+  kWarningPowerLossExpected = 0x08,
+  kLogicalBlockGuardCheckFailed = 0x01,
+  kLogicalBlockApplicationTagCheckFailed = 0x02,
+  kLogicalBlockReferenceTagCheckFailed = 0x03,
+  kUnrecoveredReadError = 0x0,
+  kMiscompareDuringVerifyOp = 0x0,
+  kAccessDeniedInvalidLuIdentifier = 0x09,
+  kInvalidCommandOpCode = 0x0,
+  kLbaOutOfRange = 0x0,
+  kInvalidFieldInCdb = 0x0,
+  kFormatCommandFailed = 0x01,
+  kInternalTargetFailure = 0x0,
 };
 
 // SCSI Reference Manual Table 61
@@ -803,6 +874,6 @@ struct UnmapBlockDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
-}  // namespace scsi_defs
+}  // namespace scsi
 
 #endif

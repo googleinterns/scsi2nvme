@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "hello_world.h"
+#include "third_party/spdk/nvme.h"
 
-std::string HelloWorld::get_hello_world_string() { return "Hello World!"; }
+#include "absl/base/casts.h"
+#include "gtest/gtest.h"
+
+// Tests
+
+namespace {};  // namespace
