@@ -12,10 +12,11 @@
 #ifndef NVME2SCSI_SCSI_MOCK_H
 #define NVME2SCSI_SCSI_MOCK_H
 
+#define VERSION "0.1"
+
 #include <linux/device.h>
 
 static const char kName[] = "SCSI2NVMe SCSI Mock";
-static const char kVersion[] = "0.1";
 static const int kQueueCount = 1;
 
 static struct bus_type pseudo_bus;
