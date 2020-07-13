@@ -26,7 +26,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
 static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }
 
 static const char* scsi_mock_info(struct Scsi_Host* host) {
-  return "SCSI Mock Host, Version 0.1";
+  return "SCSI Mock Host, Version " kVersion;
 }
 
 static struct scsi_host_template scsi_mock_template = {
@@ -134,4 +134,4 @@ static void __exit scsi_mock_exit(void) {
 device_initcall(scsi_mock_init);
 module_exit(scsi_mock_exit);
 MODULE_LICENSE("GPL");
-MODULE_VERSION("0.1");
+MODULE_VERSION(kVersion);
