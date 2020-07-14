@@ -14,6 +14,7 @@
 
 #include "common.h"
 
+#include <netinet/in.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -52,6 +53,21 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t)) {
   alloc_pages_callback = alloc_callback;
   dealloc_pages_callback = dealloc_callback;
+}
+
+uint64_t htonll(uint64_t value) {
+  static int test_val = 1337;
+
+  // Check first byte to determine endianness
+  if (*reinterpret_cast<const char*>(&test_val) == test_val) {
+    const uint32_t high_bits = htonl(static_cast<uint32_t>(value >> 32));
+    const uint32_t low_bits =
+        htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+    return (static_cast<uint64_t>(low_bits) << 32) | high_bits;
+  } else {
+    return value;
+  }
 }
 
 const char* ScsiOpcodeToString(scsi::OpCode opcode) {

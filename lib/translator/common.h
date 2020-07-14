@@ -57,6 +57,8 @@ void SetDebugCallback(void (*callback)(const char*));
 void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t));
 
+uint64_t htonll(uint64_t value);
+
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
