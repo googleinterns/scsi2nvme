@@ -66,10 +66,10 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 // lacking fields common to other Read commands
 StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation) {
-  StatusCode status_code = allocation.SetPages(1, 1);
+  StatusCode status= allocation.SetPages(1, 1);
 
-  if (status_code != StatusCode::kSuccess) {
-    return status_code;
+  if (status!= StatusCode::kSuccess) {
+    return status;
   }
 
   nvme_cmd = nvme::GenericQueueEntryCmd{
@@ -83,7 +83,7 @@ StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
   nvme_cmd.cdw[1] =
       __bswap_32((uint32_t)(lba >> 32));  // cdw11 starting lba bits 63:32
 
-  return StatusCode::kSuccess;
+  return status;
 }
 
 // Translates fields common to Read10, Read12, Read16, Read32
@@ -115,7 +115,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
       ((uint16_t)transfer_length - 1) | (prinfo << 26) | (fua << 30);
   nvme_cmd.cdw[2] = __bswap_32(cdw12);  // overwrite cdw12
 
-  return StatusCode::kSuccess;
+  return status;
 }
 
 }  // namespace
@@ -203,7 +203,7 @@ StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
   }
 
   SetLbaTags(read_cmd.eilbrt, read_cmd.elbat, read_cmd.lbatm, nvme_cmd);
-  return StatusCode::kSuccess;
+  return status;
 }
 
 }  // namespace translator
