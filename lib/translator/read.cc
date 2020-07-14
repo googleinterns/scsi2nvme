@@ -66,9 +66,9 @@ void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
 // lacking fields common to other Read commands
 StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation) {
-  StatusCode status= allocation.SetPages(1, 1);
+  StatusCode status = allocation.SetPages(1, 1);
 
-  if (status!= StatusCode::kSuccess) {
+  if (status != StatusCode::kSuccess) {
     return status;
   }
 
