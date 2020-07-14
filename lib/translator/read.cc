@@ -83,7 +83,7 @@ StatusCode LegacyRead(uint32_t lba, uint16_t transfer_length,
   nvme_cmd.cdw[0] = lba;              // cdw10 Starting lba bits 31:00
   nvme_cmd.cdw[2] = transfer_length;  // cdw12 nlb bits 15:00
 
-  return StatusCode::kSuccess;
+  return status_code;
 }
 
 // Translates fields common to Read10, Read12, Read16, Read32
@@ -106,7 +106,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint32_t lba,
   nvme_cmd.cdw[2] |= (prinfo << 26);  // cdw12 prinfo bits 29:26
   nvme_cmd.cdw[2] |= (fua << 30);     // cdw12 fua bit 30;
 
-  return StatusCode::kSuccess;
+  return status_code;
 }
 
 }  // namespace
