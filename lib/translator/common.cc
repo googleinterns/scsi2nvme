@@ -14,7 +14,12 @@
 
 #include "common.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
 #include <netinet/in.h>
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 
