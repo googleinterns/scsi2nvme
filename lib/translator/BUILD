@@ -14,11 +14,12 @@ cc_library(
 
 cc_library(
   name = "translation",
-  hdrs = ["translation.h", "test_unit_ready.h"],
-  srcs = ["translation.cc", "test_unit_ready.cc"],
+  hdrs = ["translation.h"],
+  srcs = ["translation.cc"],
   deps = [
     "@com_google_absl//absl/types:span",
-    "//lib/translator:common"
+    "common",
+    "test_unit_ready"
   ],
   visibility = ["//visibility:public"]
 )
@@ -30,7 +31,7 @@ cc_library(
   deps = [
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
-      "//lib/translator:common",
+      "common",
       "@com_google_absl//absl/base",
       "@com_google_absl//absl/types:span",
   ],
@@ -44,7 +45,7 @@ cc_library(
   deps = [
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
-      "//lib/translator:common",
+      "common",
       "@com_google_absl//absl/base",
   ],
   visibility = ["//visibility:public"],
