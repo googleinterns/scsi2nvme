@@ -55,7 +55,7 @@ uint32_t BuildCdw12(uint16_t tl, uint8_t prinfo, bool fua) {
 
 TEST(Write6Command, ShouldReturnInvalidStatusCode) {
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   uint8_t write6_cmd[sizeof(scsi::Write6Command) - 1];
   translator::StatusCode status_code =
@@ -65,7 +65,7 @@ TEST(Write6Command, ShouldReturnInvalidStatusCode) {
 
 TEST(Write10Command, ShouldReturnInvalidStatusCode) {
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   uint8_t write10_cmd[sizeof(scsi::Write10Command) - 1];
   translator::StatusCode status_code =
       translator::Write10ToNvme(write10_cmd, nvme_cmd, allocation);
@@ -74,7 +74,7 @@ TEST(Write10Command, ShouldReturnInvalidStatusCode) {
 
 TEST(Write12Command, ShouldReturnInvalidStatusCode) {
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   uint8_t write12_cmd[sizeof(scsi::Write12Command) - 1];
   translator::StatusCode status_code =
@@ -84,7 +84,7 @@ TEST(Write12Command, ShouldReturnInvalidStatusCode) {
 
 TEST(Write16Command, ShouldReturnInvalidStatusCode) {
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   uint8_t write16_cmd[sizeof(scsi::Write16Command) - 1];
   translator::StatusCode status_code =
@@ -102,7 +102,7 @@ TEST_F(WriteTest, Write6ShouldReturnValidStatusCode) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Write6ToNvme(span_buf, nvme_cmd, allocation);
@@ -121,7 +121,7 @@ TEST_F(WriteTest, Write10ShouldReturnValidStatusCode) {
   translator::WriteValue(cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Write10ToNvme(span_buf, nvme_cmd, allocation);
@@ -142,7 +142,7 @@ TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Write12ToNvme(span_buf, nvme_cmd, allocation);
@@ -161,7 +161,7 @@ TEST_F(WriteTest, Write16ShouldReturnValidStatusCode) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Write16ToNvme(span_buf, nvme_cmd, allocation);
@@ -178,7 +178,7 @@ TEST_F(WriteTest, Write6ShouldBuildCorrectNvmeCommandStruct) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write6ToNvme(span_buf, nvme_cmd, allocation);
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
@@ -199,7 +199,7 @@ TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write10ToNvme(span_buf, nvme_cmd, allocation);
 
@@ -224,7 +224,7 @@ TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write12ToNvme(span_buf, nvme_cmd, allocation);
 
@@ -249,7 +249,7 @@ TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write16ToNvme(span_buf, nvme_cmd, allocation);
 
@@ -277,7 +277,7 @@ TEST_F(WriteTest, Write10ShoudlFailOnWrongProtectBit) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write10ToNvme(span_buf, nvme_cmd, allocation);
 
@@ -296,7 +296,7 @@ TEST_F(WriteTest, Write12ShoudlFailOnWrongProtectBit) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write12ToNvme(span_buf, nvme_cmd, allocation);
 
@@ -315,7 +315,7 @@ TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
   translator::WriteValue(scsi_cmd, span_buf);
 
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation;
+  translator::Allocation allocation = {};
   translator::StatusCode status_code =
       translator::Write16ToNvme(span_buf, nvme_cmd, allocation);
 
