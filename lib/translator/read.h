@@ -25,6 +25,7 @@ namespace translator {
 // SCSI has 4 Read commands: Read(6), Read(10), Read(12), Read(16)
 // Each translation function takes in a raw SCSI command in bytes,
 // casts it to scsi::Read[6,10,12,16]Command,
+// ensures SCSI command is layed out in Big Endian using hton[sl](),
 // and builds an NVMe Read command
 
 // Read(6) is obsolete, but may still be implemented on some devices.
