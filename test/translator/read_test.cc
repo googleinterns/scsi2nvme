@@ -31,6 +31,8 @@ constexpr uint8_t kUnsupportedRdProtect = 0b111;
 constexpr uint8_t kFua = 0b1;
 constexpr uint16_t kTransferLen = 0x1a2b;
 constexpr uint16_t kNlb = 0x2a1a;
+constexpr uint32_t kNsid = 0x1a2b3c4d;
+constexpr uint32_t kNvmeNsid = 0x4d3c2b1a;
 
 class ReadTest : public ::testing::Test {
  protected:
@@ -58,7 +60,7 @@ TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -82,11 +84,12 @@ TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(nlb, nvme_cmd.cdw[2]);
@@ -109,11 +112,12 @@ TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(0xff00, nvme_cmd.cdw[2]);
@@ -125,7 +129,7 @@ TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -145,11 +149,12 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
@@ -161,7 +166,7 @@ TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -181,11 +186,12 @@ TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
@@ -197,7 +203,7 @@ TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -216,11 +222,12 @@ TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
+  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(cdw11, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
@@ -239,7 +246,7 @@ TEST_F(ReadTest, NonRead6ShouldReturnNoTranslationForZeroTransferLen) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kNoTranslation, status_code);
 }
 
@@ -256,7 +263,7 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -278,7 +285,7 @@ TEST_F(ReadTest, ShouldReturnFailureStatusForNullAllocPages) {
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 

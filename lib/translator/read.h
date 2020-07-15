@@ -37,19 +37,19 @@ namespace translator {
 
 StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation);
+                       Allocation& allocation, uint32_t nsid);
 
 StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation);
+                        Allocation& allocation, uint32_t nsid);
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation);
+                        Allocation& allocation, uint32_t nsid);
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation);
+                        Allocation& allocation, uint32_t nsid);
 
 }  // namespace translator
 
