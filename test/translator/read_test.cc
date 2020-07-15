@@ -22,7 +22,7 @@
 namespace {
 
 /*
-   Tests the translator::Read6, Read10, Read12, Read16, Read32 functions
+   Tests the translator::Read6, Read10, Read12, Read16 functions
 */
 
 constexpr uint8_t kRdProtect = 0b101;

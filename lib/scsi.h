@@ -455,9 +455,9 @@ struct Read32Command {
   bool fua_nv : 1;  // Forced Access Unit Non-Volatile
   uint16_t reserved_3 : 9;
   uint64_t logical_block_address : 64;
-  uint32_t eilbrt : 32;  // Expected Initial Logical Block Reference Tag
-  uint16_t elbat : 16;   // Expected Logical Block Application Tag
-  uint16_t lbatm : 16;   // Logical Block Application Tag Mask
+  uint32_t expected_initial_logical_block_reference_tag : 32;
+  uint16_t expected_logical_block_application_tag : 16;
+  uint16_t logical_block_application_tag_mask : 16;
   uint32_t transfer_length : 32;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(Read32Command) == 31);
