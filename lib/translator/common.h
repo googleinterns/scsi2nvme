@@ -44,6 +44,8 @@ struct Allocation {
   uint64_t mdata_addr;        // Start of metadata buffer
   uint16_t mdata_page_count;  // Number of metadata pages
 
+  // Sets [m]data_page_count, calls AllocPages([m]data_page_count),
+  // and returns StatusCode based on whether AllocPages was successful
   StatusCode SetPages(uint16_t data_page_count, uint16_t mdata_page_count);
 };
 

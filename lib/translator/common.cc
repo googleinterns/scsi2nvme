@@ -56,12 +56,19 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
 
 StatusCode Allocation::SetPages(uint16_t data_page_count,
                                 uint16_t mdata_page_count) {
+  if ((data_page_count != 0 && this->data_addr != 0) ||
+      (mdata_page_count != 0 && this->mdata_addr != 0)) {
+    DebugLog("Trying to override data that has not been flushed");
+    return StatusCode::kFailure;
+  }
+
   this->data_page_count = data_page_count;
   this->data_addr = AllocPages(data_page_count);
   this->mdata_page_count = mdata_page_count;
   this->mdata_addr = AllocPages(mdata_page_count);
 
-  if (this->data_addr == 0 || this->mdata_addr == 0) {
+  if ((data_page_count != 0 && this->data_addr == 0) ||
+      (mdata_page_count != 0 && this->mdata_addr == 0)) {
     DebugLog("Error when requesting memory");
     return StatusCode::kFailure;
   }
