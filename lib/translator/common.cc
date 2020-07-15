@@ -14,6 +14,12 @@
 
 #include "common.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
+
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -54,14 +60,36 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
   dealloc_pages_callback = dealloc_callback;
 }
 
+uint64_t htonll(uint64_t value) {
+  static int test_val = 42;
+
+  // Check first byte to determine endianness
+  if (*reinterpret_cast<const char*>(&test_val) == test_val) {
+    const uint32_t high_bits = htonl(static_cast<uint32_t>(value >> 32));
+    const uint32_t low_bits =
+        htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+    return (static_cast<uint64_t>(low_bits) << 32) | high_bits;
+  } else {
+    return value;
+  }
+}
+
 StatusCode Allocation::SetPages(uint16_t data_page_count,
                                 uint16_t mdata_page_count) {
+  if ((data_page_count != 0 && this->data_addr != 0) ||
+      (mdata_page_count != 0 && this->mdata_addr != 0)) {
+    DebugLog("Trying to override data that has not been flushed");
+    return StatusCode::kFailure;
+  }
+
   this->data_page_count = data_page_count;
   this->data_addr = AllocPages(data_page_count);
   this->mdata_page_count = mdata_page_count;
   this->mdata_addr = AllocPages(mdata_page_count);
 
-  if (this->data_addr == 0 || this->mdata_addr == 0) {
+  if ((data_page_count != 0 && this->data_addr == 0) ||
+      (mdata_page_count != 0 && this->mdata_addr == 0)) {
     DebugLog("Error when requesting memory");
     return StatusCode::kFailure;
   }
@@ -69,7 +97,7 @@ StatusCode Allocation::SetPages(uint16_t data_page_count,
   return StatusCode::kSuccess;
 }
 
-absl::string_view ScsiOpcodeToString(scsi::OpCode opcode) {
+const char* ScsiOpcodeToString(scsi::OpCode opcode) {
   switch (opcode) {
     case scsi::OpCode::kTestUnitReady:
       return "kTestUnitReady";
