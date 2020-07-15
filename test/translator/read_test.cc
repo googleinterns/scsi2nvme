@@ -97,7 +97,7 @@ TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation= {};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -113,7 +113,7 @@ TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
 TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -133,7 +133,7 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -149,7 +149,7 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
 TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read12Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -169,7 +169,7 @@ TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -185,7 +185,7 @@ TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
 TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read16Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -206,7 +206,7 @@ TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -222,7 +222,7 @@ TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
 TEST_F(ReadTest, Read32ShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read32Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read32ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -253,7 +253,7 @@ TEST_F(ReadTest, Read32ShouldReturnCorrectTranslation) {
   uint8_t scsi_cmd[sizeof(scsi::Read32Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read32ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -278,7 +278,7 @@ TEST_F(ReadTest, NonRead6ShouldReturnNoTranslationForZeroTransferLen) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -295,7 +295,7 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation);
@@ -317,7 +317,7 @@ TEST_F(ReadTest, ShouldReturnFailureStatusForNullAllocPages) {
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation={};
+  translator::Allocation allocation = {};
 
   translator::StatusCode status_code =
       translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation);
