@@ -106,6 +106,8 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
   // cdw12 nlb bits 15:00
   // cdw12 printfo bits 29:26
   // cdw12 fua bit 30
+  // Since NVMe has a protocol limit of 16 bits on transfer size,
+  // we can enforce a transfer limit of 16 bits on our SCSI device
   uint32_t cdw12 =
       ((uint16_t)transfer_length - 1) | (prinfo << 26) | (fua << 30);
   nvme_cmd.cdw[2] = __bswap_32(cdw12);  // overwrite cdw12

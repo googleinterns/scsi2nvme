@@ -63,6 +63,9 @@ TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
+  // uint16_t becaise Read6 lba has a max size of 21 bits,
+  // which causes issues in testing when using uint32_t,
+  // calling htonl(), and then truncating to 21 bits
   uint16_t lba = htons(0x1a2b);
   uint16_t cdw10 = 0x2b1a;
 
@@ -90,6 +93,9 @@ TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
 }
 
 TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
+  // uint16_t becaise Read6 lba has a max size of 21 bits,
+  // which causes issues in testing when using uint32_t,
+  // calling htonl(), and then truncating to 21 bits
   uint16_t lba = htons(0x1a2b);
   uint16_t cdw10 = 0x2b1a;
 
