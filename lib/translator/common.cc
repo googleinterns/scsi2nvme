@@ -61,7 +61,7 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
 }
 
 uint64_t htonll(uint64_t value) {
-  static int test_val = 42;
+  static uint32_t test_val = 42;
 
   // Check first byte to determine endianness
   if (*reinterpret_cast<const char*>(&test_val) == test_val) {
