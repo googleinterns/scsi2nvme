@@ -63,11 +63,6 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
           Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0]);
       nvme_cmd_count_ = 1;
       break;
-    case scsi::OpCode::kRead32:
-      pipeline_status_ =
-          Read32ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0]);
-      nvme_cmd_count_ = 1;
-      break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;

@@ -1,5 +1,10 @@
 #include "read.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
 #include <byteswap.h>
 
 #include "absl/types/span.h"
@@ -49,16 +54,6 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
   prinfo = prchk | (pract << 3);
 
   return StatusCode::kSuccess;
-}
-
-void SetLbaTags(uint32_t eilbrt, uint16_t elbat, uint16_t elbatm,
-                nvme::GenericQueueEntryCmd& nvme_cmd) {
-  // cdw14 expected initial logical block reference
-  nvme_cmd.cdw[4] = __bswap_32(eilbrt);
-
-  // cdw15 bits 15:0 expected logical block application tag
-  // cdw15 bits 31:16 expected logical block application tag mask
-  nvme_cmd.cdw[5] = __bswap_32(elbat | (elbatm << 16));
 }
 
 // Translates fields common to all Read commands
@@ -129,8 +124,10 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status =
-      LegacyRead(read_cmd.logical_block_address, nvme_cmd, allocation);
+  // Ensure Big Endian
+  uint32_t lba = htonl((uint32_t)read_cmd.logical_block_address);
+
+  StatusCode status = LegacyRead(lba, nvme_cmd, allocation);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -155,8 +152,12 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd, allocation);
+  // Ensure Big Endian
+  uint32_t lba = htonl(read_cmd.logical_block_address);
+  uint32_t transfer_length = htons(read_cmd.transfer_length);
+
+  return Read(read_cmd.rdprotect, read_cmd.fua, lba, transfer_length, nvme_cmd,
+              allocation);
 }
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
@@ -167,6 +168,10 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
     DebugLog("Malformed Read12 command");
     return StatusCode::kInvalidInput;
   }
+
+  // Ensure Big Endian
+  read_cmd.logical_block_address = htonl(read_cmd.logical_block_address);
+  read_cmd.transfer_length = htonl(read_cmd.transfer_length);
 
   return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
               read_cmd.transfer_length, nvme_cmd, allocation);
@@ -181,29 +186,12 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
+  // Ensure Big Endian
+  read_cmd.logical_block_address = htonll(read_cmd.logical_block_address);
+  read_cmd.transfer_length = htonl(read_cmd.transfer_length);
+
   return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
               read_cmd.transfer_length, nvme_cmd, allocation);
-}
-
-StatusCode Read32ToNvme(absl::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation) {
-  scsi::Read32Command read_cmd;
-  if (!ReadValue(scsi_cmd, read_cmd)) {
-    DebugLog("Malformed Read32 command");
-    return StatusCode::kInvalidInput;
-  }
-
-  StatusCode status =
-      Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-           read_cmd.transfer_length, nvme_cmd, allocation);
-
-  if (status != StatusCode::kSuccess) {
-    return status;
-  }
-
-  SetLbaTags(read_cmd.eilbrt, read_cmd.elbat, read_cmd.lbatm, nvme_cmd);
-  return status;
 }
 
 }  // namespace translator
