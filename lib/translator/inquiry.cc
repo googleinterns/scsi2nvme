@@ -152,6 +152,66 @@ void TranslateUnitSerialNumberVpd(
   WriteValue(result, buffer);
   WriteValue(product_serial_number, buffer.subspan(sizeof(result)));
 }
+
+void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
+                             absl::Span<uint8_t> buffer) {
+  // The value is in units of the minimum memory
+  // page size (CAP.MPSMIN) and is reported as a power of two (2^n).
+  // A value of 0h indicates that there is no maximum data transfer size
+  uint32_t max_transfer_length;
+  if (identify_ctrl.mdts > 16) {
+    // Max transfer length should be 2^16 according to section 3.13 of
+    // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
+    DebugLog("max transfer length is > 2^16");
+    max_transfer_length = 1 << 16;
+  } else {
+    max_transfer_length = identify_ctrl.mdts ? 1 << identify_ctrl.mdts : 0;
+  }
+
+  // TODO: put in common?
+  const uint8_t kMaxCompareWriteLen = 255;
+  // compare and write length is 8 bits. we ensure the size fits.
+  uint32_t compare_and_write_len = (max_transfer_length > kMaxCompareWriteLen)
+                                       ? kMaxCompareWriteLen
+                                       : max_transfer_length;
+
+  // TODO: named var for page len
+  scsi::BlockLimitsVpd result = {
+      .page_code = scsi::PageCode::kBlockLimitsVpd,
+      .page_length = 0x003c,
+
+      // Shall be set to 00h if Fused Operation is not supported;
+      // May be set to a non-zero value that is less than or equal
+      // to the value in MAXIMUM TRANSFER LENGTH field if
+      // Fused Operation is supported.
+      .max_compare_write_length =
+          identify_ctrl.fuses.compare_and_write ? compare_and_write_len : 0,
+
+      // Shall be set to value calculated according to method
+      // described in NVMe v1.1 Identify Controller Data
+      // Structure: Maximum Data Transfer Size (MDTS)
+
+      // The maximum transfer data size is reported as 2^(scsi MDTS)
+      // 0 means no max limit
+      .max_transfer_length = max_transfer_length,
+
+      // Shall be set to 0000_0000h if Dataset Management
+      // command – Deallocate (AD) attribute is not supported.
+      // Shall be set to non-zero value if Dataset Management
+      // command – Deallocate (AD) attribute is supported.
+      .max_unmap_lba_count = identify_ctrl.oncs.dsm,
+
+      // Shall be set to 0000_0000h if Dataset Management
+      // command – Deallocate (AD) attribute is not supported.
+      // Shall be set to 0000_0100h if Dataset Management
+      // command – Deallocate (AD) attribute is supported.
+
+      // TODO: add named var for 0x0100
+      .max_unmap_block_descriptor_count = identify_ctrl.oncs.dsm ? 0x0100 : 0};
+
+  WriteValue(result, buffer);
+}
+
 }  // namespace
 
 StatusCode InquiryToNvme(absl::Span<const uint8_t> raw_scsi,
@@ -244,8 +304,9 @@ StatusCode InquiryToScsi(
         // page toapplication client, refer to 6.1.5.
         break;
       case scsi::PageCode::kBlockLimitsVpd:
-        // TODO: May be supported by returning Block Limits VPD data page to
+        // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
+        TranslateBlockLimitsVpd(identify_ctrl, buffer);
         break;
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
         // TODO: Return Block Device Characteristics Vpd Page to application

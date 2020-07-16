@@ -25,7 +25,7 @@
 
 namespace translator {
 
-// Precondtions:
+// Preconditions:
 // scsi_cmd is a pointer to a Inquiry Command without the OpCode
 // identify_ns and identify_ctrl refers to nvme_cmds_ in the Translation object
 // alloc_len refers to the allocation length field of the response object

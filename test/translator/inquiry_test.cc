@@ -101,9 +101,9 @@ TEST_F(InquiryTest, InquiryToNvmeFailRead) {
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {};
 
-  uint8_t bad_buffer_[1] = {};
+  uint8_t bad_buffer[1] = {};
   translator::StatusCode status = translator::InquiryToNvme(
-      bad_buffer_, nvme_cmds_[1], nvme_cmds_[0], alloc_len, lun, allocations);
+      bad_buffer, nvme_cmds_[1], nvme_cmds_[0], alloc_len, lun, allocations);
 
   EXPECT_EQ(status, translator::StatusCode::kInvalidInput);
 }
@@ -350,5 +350,291 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNone) {
   for (int i = 0; i < 30; ++i) {
     EXPECT_EQ(product_serial_number[i], formatted_hex_string[i]);
   }
+}
+
+TEST_F(InquiryTest, BlockLimitsVpd) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 0;
+  identify_ctrl_.fuses.compare_and_write = 0;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdts) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 5;
+  identify_ctrl_.fuses.compare_and_write = 0;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdFuse) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 0;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdDsm) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 0;
+  identify_ctrl_.fuses.compare_and_write = 0;
+  identify_ctrl_.oncs.dsm = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdtsFuse) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 5;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseLarge) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 10;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  // TODO: put in common?
+  const uint8_t kMaxCompareWriteLen = 255;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length, kMaxCompareWriteLen);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseVeryLarge) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 65;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  // TODO: put in common?
+  const uint8_t kMaxCompareWriteLen = 255;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length, kMaxCompareWriteLen);
+
+  uint32_t largest_transfer = 1 << 16;
+  EXPECT_EQ(result.max_transfer_length, largest_transfer);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdtsOncs) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 5;
+  identify_ctrl_.fuses.compare_and_write = 0;
+  identify_ctrl_.oncs.dsm = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdFuseOncs) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 0;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+}
+
+TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kBlockLimitsVpd};
+
+  identify_ctrl_.mdts = 5;
+  identify_ctrl_.fuses.compare_and_write = 1;
+  identify_ctrl_.oncs.dsm = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::BlockLimitsVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  uint32_t max_transfer_length =
+      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
+  EXPECT_EQ(result.page_length, 0x003c);
+  EXPECT_EQ(result.max_compare_write_length,
+            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
+  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
+  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count,
+            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
 }
 }  // namespace

@@ -934,6 +934,34 @@ struct DeviceIdentificationVpd {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
+// SCSI Reference Manual Table 450
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct BlockLimitsVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint16_t page_length : 16;
+  uint8_t _reserved : 7;
+  bool wsnz : 1;
+  uint8_t max_compare_write_length : 8;
+  uint16_t optimal_translater_length_granularity : 16;
+  uint32_t max_transfer_length : 32;
+  uint32_t optimal_transfer_length : 32;
+  uint32_t max_prefetch_length : 32;
+  uint32_t max_unmap_lba_count : 32;
+  uint32_t max_unmap_block_descriptor_count : 32;
+  uint32_t optimal_unmap_granularity : 32;
+  bool ugavalid : 1;
+  uint32_t unmap_graularity_alignment : 31;
+  uint64_t max_write_same_length : 64;
+  uint32_t max_atomic_transfer_length : 32;
+  uint32_t atomic_alignment : 32;
+  uint32_t atomic_transfer_length_granularity : 32;
+  uint32_t max_atomic_transfer_length_with_atomic_boundary : 32;
+  uint32_t max_atomic_boundary_size : 32;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(BlockLimitsVpd) == 64);
+
 }  // namespace scsi
 
 #endif

@@ -32,7 +32,6 @@ cc_library(
   hdrs = ["translation.h"],
   srcs = ["translation.cc"],
   deps = [
-    "@com_google_absl//absl/types:span",
     ":common",
     ":inquiry_lib"
   ],
