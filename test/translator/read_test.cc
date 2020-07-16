@@ -54,7 +54,7 @@ uint32_t BuildCdw12(uint16_t nlb, uint8_t prinfo, bool fua) {
   return (nlb << 16) | (fua << 6) | (prinfo << 2);
 }
 
-TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read6Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
   translator::Allocation allocation = {};
@@ -64,7 +64,7 @@ TEST_F(ReadTest, Read6ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
-TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   // uint16_t becaise Read6 lba has a max size of 21 bits,
   // which causes issues in testing when using uint32_t,
   // calling htonl(), and then truncating to 21 bits
@@ -95,7 +95,7 @@ TEST_F(ReadTest, Read6ShouldReturnCorrectTranslation) {
   EXPECT_EQ(nlb, nvme_cmd.cdw[2]);
 }
 
-TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
+TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   // uint16_t becaise Read6 lba has a max size of 21 bits,
   // which causes issues in testing when using uint32_t,
   // calling htonl(), and then truncating to 21 bits
@@ -123,7 +123,7 @@ TEST_F(ReadTest, Read6ShouldRead256BlocksForZeroTransferLen) {
   EXPECT_EQ(0xff00, nvme_cmd.cdw[2]);
 }
 
-TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
   translator::Allocation allocation = {};
@@ -133,7 +133,7 @@ TEST_F(ReadTest, Read10ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
-TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   uint32_t lba = htonl(0x1a2b3c4d);
   uint32_t cdw10 = 0x4d3c2b1a;
 
@@ -160,7 +160,7 @@ TEST_F(ReadTest, Read10ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read12Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
   translator::Allocation allocation = {};
@@ -170,7 +170,7 @@ TEST_F(ReadTest, Read12ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
-TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   uint32_t lba = htonl(0x1a2b3c4d);
   uint32_t cdw10 = 0x4d3c2b1a;
 
@@ -197,7 +197,7 @@ TEST_F(ReadTest, Read12ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
+TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read16Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
   translator::Allocation allocation = {};
@@ -207,7 +207,7 @@ TEST_F(ReadTest, Read16ShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
-TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
+TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   uint64_t lba = translator::htonll(0x1a2b3c4d5e6f7f8f);
   uint32_t cdw10 = 0x8f7f6f5e;
   uint32_t cdw11 = 0x4d3c2b1a;
@@ -233,7 +233,7 @@ TEST_F(ReadTest, Read16ShouldReturnCorrectTranslation) {
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
 
-TEST_F(ReadTest, NonRead6ShouldReturnNoTranslationForZeroTransferLen) {
+TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {
   scsi::Read10Command cmd = {
       .rdprotect = kUnsupportedRdProtect,
       .fua = kFua,
