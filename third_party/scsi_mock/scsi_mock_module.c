@@ -11,12 +11,19 @@
 
 #include "scsi_mock_module.h"
 
+#include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/scatterlist.h>
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
+
+static struct bus_type pseudo_bus;
+static struct device* pseudo_root_dev;
+static struct device pseudo_adapter;
+static struct device_driver scsi_mock_driverfs = {.name = kName,
+                                                  .bus = &pseudo_bus};
 
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   printk("RECIEVED COMMAND");
