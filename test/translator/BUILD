@@ -1,4 +1,13 @@
 cc_test(
+    name = "inquiry_tests",
+    srcs = ["inquiry_test.cc"],
+    deps = [
+        "//lib/translator:inquiry_lib",
+        "@googletest//:gtest_main"
+    ],
+)
+
+cc_test(
   name = "common_tests",
   srcs = [ "common_test.cc" ],
   deps = [

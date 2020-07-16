@@ -26,6 +26,11 @@
 
 namespace translator {
 
+// Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
+// This value is not null terminated and should be size 8
+constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
+static_assert(kNvmeVendorIdentification.size() == 8);
+
 // The maximum amplification ratio of any supported SCSI:NVMe translation
 constexpr int kMaxCommandRatio = 3;
 
@@ -81,5 +86,4 @@ bool WriteValue(const T& data, absl::Span<uint8_t> out) {
 }
 
 }  // namespace translator
-
 #endif

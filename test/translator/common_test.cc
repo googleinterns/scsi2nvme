@@ -20,9 +20,7 @@
 
 namespace {
 
-/*
-   Tests the logging methods
-*/
+// Tests the logging methods
 
 TEST(Common, ShouldCorrectlyCallback) {
   const char* buf = "Testing%d";
