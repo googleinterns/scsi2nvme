@@ -65,7 +65,12 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
 // Network endianness is always big endian
 // Converts value to big endian if Host is little endian
 // No op if Host is big endian
-// Intended use: ensuring SCSI commands are in big endian
+uint64_t htonll(uint64_t value);
+
+// Network to Host endianness transformation for uint64_t
+// Network endianness is always big endian
+// Converts value to little endian if Host is little endian
+// No op if Host is big endian
 uint64_t htonll(uint64_t value);
 
 // does not return string_view for compatibility with DebugLog
