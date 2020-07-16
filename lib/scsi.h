@@ -934,6 +934,27 @@ struct DeviceIdentificationVpd {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
+// SCSI Reference Manual Table 467
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct LogicalBlockProvisioningVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint16_t page_length : 16;
+  uint8_t threshold_exponent : 8;
+  bool lbpu : 1;
+  bool lbpws : 1;
+  bool lbpws10 : 1;
+  uint8_t lbprz : 3;
+  bool anc_sup : 1;
+  bool dp : 1;
+  uint8_t min_percentage : 5;
+  uint8_t provisioning_type : 3;
+  uint8_t threshold_percentage : 8;
+  uint8_t provisioning_group_descriptor[56];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(LogicalBlockProvisioningVpd) == 64);
+
 // SCSI Reference Manual Table 450
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct BlockLimitsVpd {

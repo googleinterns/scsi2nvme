@@ -637,4 +637,91 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
   EXPECT_EQ(result.max_unmap_block_descriptor_count,
             identify_ctrl_.oncs.dsm ? 0x0100 : 0);
 }
+
+TEST_F(InquiryTest, LogicalBlockProvisioningVpd) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kLogicalBlockProvisioningVpd;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::LogicalBlockProvisioningVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  bool ad = identify_ctrl_.oncs.dsm;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kLogicalBlockProvisioningVpd);
+  EXPECT_EQ(result.lbprz, ad);
+  EXPECT_EQ(result.anc_sup, 0);
+  EXPECT_EQ(result.provisioning_type, 0);
+  EXPECT_EQ(result.lbpu, 0);
+}
+
+TEST_F(InquiryTest, LogicalBlockProvisioningVpdDsm) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kLogicalBlockProvisioningVpd;
+
+  identify_ctrl_.oncs.dsm = 1;
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::LogicalBlockProvisioningVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  bool ad = identify_ctrl_.oncs.dsm;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kLogicalBlockProvisioningVpd);
+  EXPECT_EQ(result.lbprz, ad);
+  EXPECT_EQ(result.anc_sup, 0);
+  EXPECT_EQ(result.provisioning_type, 1);
+  EXPECT_EQ(result.lbpu, 1);
+}
+
+TEST_F(InquiryTest, LogicalBlockProvisioningVpdThinprov) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kLogicalBlockProvisioningVpd;
+
+  identify_ns_.nsfeat.thin_prov = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::LogicalBlockProvisioningVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  bool ad = identify_ctrl_.oncs.dsm;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kLogicalBlockProvisioningVpd);
+  EXPECT_EQ(result.lbprz, ad);
+  EXPECT_EQ(result.anc_sup, 0);
+  EXPECT_EQ(result.provisioning_type, 0);
+  EXPECT_EQ(result.lbpu, 0);
+}
+
+TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kLogicalBlockProvisioningVpd;
+
+  identify_ctrl_.oncs.dsm = 1;
+  identify_ns_.nsfeat.thin_prov = 1;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::LogicalBlockProvisioningVpd result{};
+  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+
+  bool ad = identify_ctrl_.oncs.dsm;
+
+  EXPECT_EQ(result.page_code, scsi::PageCode::kLogicalBlockProvisioningVpd);
+  EXPECT_EQ(result.lbprz, ad);
+  EXPECT_EQ(result.anc_sup, 0);
+  EXPECT_EQ(result.provisioning_type, 2);
+  EXPECT_EQ(result.lbpu, 1);
+}
+
 }  // namespace

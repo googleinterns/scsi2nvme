@@ -212,6 +212,78 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
   WriteValue(result, buffer);
 }
 
+void TranslateLogicalBlockProvisioningVpd(
+    const nvme::IdentifyControllerData& identify_ctrl,
+    const nvme::IdentifyNamespace& identify_ns, absl::Span<uint8_t> buffer) {
+  bool ad = identify_ctrl.oncs.dsm;
+
+  scsi::LogicalBlockProvisioningVpd result = {
+      .page_code = scsi::PageCode::kLogicalBlockProvisioningVpd,
+      .page_length = 0x04,  // TODO: constant val in common.h
+
+      // THRESHOLD_EXPONENT
+      // Shall be set to 00h to indicate that there are no thin provisioning
+      // thresholds This would require modification if thin-provisioning is
+      // supported
+
+      // TODO:
+      // Right now we assume this field is 0.
+      // If thin provisioning is enabled, we can calculate a valid threshold
+      // exponnet from the READ CAPACITY (16) parameter data.
+
+      // .threshold_exponent= identify_ns.nsfeat.thin_prov ? read_capacity : 0,
+
+      // LBPRZ
+      // Shall be set to 1 if Dataset Management command – Deallocate (AD)
+      // attribute is supported and the device returns all zeros for reads of
+      // deallocated LBAs, otherwise set to 0.
+
+      // TODO: the AD attribute itself may not guarantee the device returns all
+      // zeros for reads of deallocated LBAs. May have to double check this one
+      // if there are any errors.
+      .lbprz = ad,
+
+      // ANC_SUP
+      // Shall be set to 0, to indicate that setting the ANCHOR bit in UNMAP is
+      // not supported if the namespace is not resource or thin provisioned.
+
+  };
+
+  // PROVISIONING TYPE
+  // Shall be set to 0 (Full) if Dataset Management command – Deallocate (AD)
+  // attribute is not supported and Identify Namespace Data = NSFEAT bit 0 is
+  // reported “0” indicating that the namespace is not thin-provisioned.
+
+  // Shall be set to 1(Resource) if Dataset Management command – Deallocate (AD)
+  // attribute is supported and Identify Namespace Data – NSFEAT bit 0 is
+  // reported “0”,, indicating that the namespace is resource-provisioned.
+
+  // Shall be set to 2(Thin) if Dataset Management command – Deallocate (AD)
+  // attribute is supported and Identify Namespace Data – NSFEAT bit 0 is
+  // reported “1”, indicating that the namespace is thin-provisioned.
+  if (!ad && !identify_ns.nsfeat.thin_prov) {
+    result.provisioning_type = 0;
+  } else if (ad && !identify_ns.nsfeat.thin_prov) {
+    result.provisioning_type = 1;
+  } else if (ad && identify_ns.nsfeat.thin_prov) {
+    result.provisioning_type = 2;
+  }
+
+  // LBPU
+  // Shall be set to 0 if Dataset Management command – Deallocate (AD) attribute
+  // is not supported. Shall be set to 1 if Dataset Management command –
+  // Deallocate (AD) attribute is supported. Shall be set to 1 if PROVISIONING
+  // TYPE is set to 1 or 2. This is reporting whether use of UNMAP to unmap LBAs
+  // is supported.
+  if (ad || result.provisioning_type == 1 || result.provisioning_type == 2) {
+    result.lbpu = 1;
+  } else {
+    result.lbpu = 0;
+  }
+
+  WriteValue(result, buffer);
+}
+
 }  // namespace
 
 StatusCode InquiryToNvme(absl::Span<const uint8_t> raw_scsi,
@@ -313,12 +385,15 @@ StatusCode InquiryToScsi(
         // client, refer to 6.1.7.
         break;
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
+        TranslateLogicalBlockProvisioningVpd(identify_ctrl, identify_ns,
+                                             buffer);
+        break;
       // May be supported by returning Logical Block Provisioning VPD Page to
       // application client, refer to 6.1.8.
       default:
         // Command may be terminated with CHECK CONDITION status, ILLEGAL
         // REQUEST dense key, and ILLEGAL FIELD IN CDB additional sense code
-        DebugLog("Malformed Inquiry Command");
+        DebugLog("Inquiry Command parameters do not map to any action.");
         return StatusCode::kInvalidInput;
     }
   } else {
