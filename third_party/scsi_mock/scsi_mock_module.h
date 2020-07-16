@@ -14,7 +14,4 @@
 
 #define VERSION "0.1"
 
-static const char kName[] = "SCSI2NVMe SCSI Mock";
-static const int kQueueCount = 1;
-
 #endif

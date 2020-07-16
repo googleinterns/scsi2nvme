@@ -19,6 +19,11 @@
 #include <scsi/scsi.h>
 #include <scsi/scsi_host.h>
 
+static const char kName[] = "SCSI2NVMe SCSI Mock";
+static const int kQueueCount = 1;
+static const int kCanQueue = 64;
+static const int kCmdPerLun = 1;
+
 static struct bus_type pseudo_bus;
 static struct device* pseudo_root_dev;
 static struct device pseudo_adapter;
@@ -43,10 +48,10 @@ static struct scsi_host_template scsi_mock_template = {
     .queuecommand = scsi_queuecommand,
     .eh_abort_handler = scsi_abort,
     .proc_name = kName,
-    .can_queue = 64,
+    .can_queue = kCanQueue,
     .this_id = 7,
     .sg_tablesize = SG_MAX_SEGMENTS,
-    .cmd_per_lun = 1};
+    .cmd_per_lun = kCmdPerLun};
 
 static int bus_match(struct device* dev, struct device_driver* driver) {
   return 1;
