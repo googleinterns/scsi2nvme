@@ -14,9 +14,6 @@
 
 #include "lib/translator/read.h"
 
-#include <byteswap.h>
-#include <netinet/in.h>
-
 #include "gtest/gtest.h"
 
 namespace {
@@ -30,9 +27,8 @@ constexpr uint8_t kPrinfo = 0b0111;  // expected transformation of kRdProtect
 constexpr uint8_t kUnsupportedRdProtect = 0b111;
 constexpr uint8_t kFua = 0b1;
 constexpr uint16_t kTransferLen = 0x1a2b;
-constexpr uint16_t kNlb = 0x2a1a;
+constexpr uint16_t kNlb = 0x1a2a;
 constexpr uint32_t kNsid = 0x1a2b3c4d;
-constexpr uint32_t kNvmeNsid = 0x4d3c2b1a;
 
 class ReadTest : public ::testing::Test {
  protected:
@@ -51,7 +47,7 @@ class ReadTest : public ::testing::Test {
 
 // Accounts for NVMe little endianness
 uint32_t BuildCdw12(uint16_t nlb, uint8_t prinfo, bool fua) {
-  return (nlb << 16) | (fua << 6) | (prinfo << 2);
+  return nlb | (prinfo << 26) | (fua << 30);
 }
 
 TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
@@ -65,14 +61,10 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
-  // uint16_t becaise Read6 lba has a max size of 21 bits,
-  // which causes issues in testing when using uint32_t,
-  // calling htonl(), and then truncating to 21 bits
-  uint16_t lba = htons(0x1a2b);
-  uint16_t cdw10 = 0x2b1a;
+  uint32_t lba = 0x1a2b3c;  // max 21 bits
 
   uint8_t transfer_len = 0x1b;
-  uint16_t nlb = 0x1a00;
+  uint16_t nlb = 0x1a;
 
   scsi::Read6Command cmd = {
       .logical_block_address = lba,
@@ -89,18 +81,14 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
-  EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
+  EXPECT_EQ(kNsid, nvme_cmd.nsid);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(nlb, nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
-  // uint16_t becaise Read6 lba has a max size of 21 bits,
-  // which causes issues in testing when using uint32_t,
-  // calling htonl(), and then truncating to 21 bits
-  uint16_t lba = htons(0x1a2b);
-  uint16_t cdw10 = 0x2b1a;
+  uint32_t lba = 0x1a2b3c;  // max 21 bits
 
   scsi::Read6Command cmd = {
       .logical_block_address = lba,
@@ -117,10 +105,10 @@ TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
-  EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
+  EXPECT_EQ(kNsid, nvme_cmd.nsid);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
-  EXPECT_EQ(0xff00, nvme_cmd.cdw[2]);
+  EXPECT_EQ(255, nvme_cmd.cdw[2]);
 }
 
 TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
@@ -134,14 +122,13 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
-  uint32_t lba = htonl(0x1a2b3c4d);
-  uint32_t cdw10 = 0x4d3c2b1a;
+  uint32_t lba = 0x1a2b3c4d;
 
   scsi::Read10Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = lba,
-      .transfer_length = htons(kTransferLen),
+      .transfer_length = kTransferLen,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -154,8 +141,8 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
-  EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
+  EXPECT_EQ(kNsid, nvme_cmd.nsid);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
@@ -171,14 +158,13 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
-  uint32_t lba = htonl(0x1a2b3c4d);
-  uint32_t cdw10 = 0x4d3c2b1a;
+  uint32_t lba = 0x1a2b3c4d;
 
   scsi::Read12Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
       .logical_block_address = lba,
-      .transfer_length = htonl(kTransferLen),
+      .transfer_length = kTransferLen,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -191,8 +177,8 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
-  EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
+  EXPECT_EQ(kNsid, nvme_cmd.nsid);
+  EXPECT_EQ(lba, nvme_cmd.cdw[0]);
   EXPECT_EQ(0, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
 }
@@ -208,14 +194,14 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
-  uint64_t lba = translator::htonll(0x1a2b3c4d5e6f7f8f);
-  uint32_t cdw10 = 0x8f7f6f5e;
-  uint32_t cdw11 = 0x4d3c2b1a;
+  uint64_t lba = 0x1a2b3c4d5e6f7f8f;
+  uint32_t cdw10 = 0x5e6f7f8f;
+  uint32_t cdw11 = 0x1a2b3c4d;
 
   scsi::Read16Command cmd = {.rdprotect = kRdProtect,
                              .fua = kFua,
                              .logical_block_address = lba,
-                             .transfer_length = htonl(kTransferLen)};
+                             .transfer_length = kTransferLen};
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
   nvme::GenericQueueEntryCmd nvme_cmd;
@@ -227,7 +213,7 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
   EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNvmeNsid, nvme_cmd.nsid);
+  EXPECT_EQ(kNsid, nvme_cmd.nsid);
   EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
   EXPECT_EQ(cdw11, nvme_cmd.cdw[1]);
   EXPECT_EQ(BuildCdw12(kNlb, kPrinfo, kFua), nvme_cmd.cdw[2]);
@@ -267,7 +253,9 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
-TEST_F(ReadTest, ShouldReturnFailureStatusForNullAllocPages) {
+// Not under TEST_F(ReadTest, ...) because it overrides the
+// alloc_callback behaviour that's required before all other tests
+TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
   auto alloc_callback = [](uint16_t count) -> uint64_t {
     EXPECT_EQ(1, count);
     return 0;

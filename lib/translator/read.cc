@@ -70,14 +70,14 @@ StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
   nvme_cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::NvmOpcode::kRead),
       .psdt = 0,  // PRPs are used for data transfer
-      .nsid = __bswap_32(nsid)};
+      .nsid = nsid};
 
-  nvme_cmd.mptr = __bswap_64(allocation.mdata_addr);
-  nvme_cmd.dptr.prp.prp1 = __bswap_64(allocation.data_addr);
+  nvme_cmd.mptr = allocation.mdata_addr;
+  nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
   nvme_cmd.cdw[0] =
-      __bswap_32(static_cast<uint32_t>(lba));  // cdw10 Starting lba bits 31:00
-  nvme_cmd.cdw[1] = __bswap_32(
-      static_cast<uint32_t>(lba >> 32));  // cdw11 starting lba bits 63:32
+      static_cast<uint32_t>(lba);  // cdw10 Starting lba bits 31:00
+  nvme_cmd.cdw[1] =
+      static_cast<uint32_t>(lba >> 32);  // cdw11 starting lba bits 63:32
 
   return status;
 }
@@ -109,7 +109,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
   // we can enforce a transfer limit of 16 bits on our SCSI device
   uint32_t cdw12 = (static_cast<uint16_t>(transfer_length) - 1) |
                    (prinfo << 26) | (fua << 30);
-  nvme_cmd.cdw[2] = __bswap_32(cdw12);  // overwrite cdw12
+  nvme_cmd.cdw[2] = cdw12;  // overwrite cdw12
 
   return status;
 }
@@ -125,10 +125,8 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  // Ensure Big Endian
-  uint32_t lba = htonl(read_cmd.logical_block_address);
-
-  StatusCode status = LegacyRead(lba, nvme_cmd, allocation, nsid);
+  StatusCode status =
+      LegacyRead(read_cmd.logical_block_address, nvme_cmd, allocation, nsid);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -139,7 +137,7 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
   // Section 3.15 Seagate SCSI specs
   uint16_t updated_transfer_length =
       read_cmd.transfer_length == 0 ? 255 : read_cmd.transfer_length - 1;
-  nvme_cmd.cdw[2] = __bswap_16(updated_transfer_length);
+  nvme_cmd.cdw[2] = updated_transfer_length;
 
   return status;
 }
@@ -153,12 +151,8 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  // Ensure Big Endian
-  uint32_t lba = htonl(read_cmd.logical_block_address);
-  uint16_t transfer_length = htons(read_cmd.transfer_length);
-
-  return Read(read_cmd.rdprotect, read_cmd.fua, lba, transfer_length, nvme_cmd,
-              allocation, nsid);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
 }
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
@@ -170,12 +164,8 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  // Ensure Big Endian
-  uint32_t lba = htonl(read_cmd.logical_block_address);
-  uint32_t transfer_length = htonl(read_cmd.transfer_length);
-
-  return Read(read_cmd.rdprotect, read_cmd.fua, lba, transfer_length, nvme_cmd,
-              allocation, nsid);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
 }
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
@@ -187,12 +177,8 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  // Ensure Big Endian
-  uint64_t lba = htonll(read_cmd.logical_block_address);
-  uint32_t transfer_length = htonl(read_cmd.transfer_length);
-
-  return Read(read_cmd.rdprotect, read_cmd.fua, lba, transfer_length, nvme_cmd,
-              allocation, nsid);
+  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
+              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
 }
 
 }  // namespace translator
