@@ -15,10 +15,6 @@
 #ifndef LIB_TRANSLATOR_COMMON_H
 #define LIB_TRANSLATOR_COMMON_H
 
-#include <cstring>
-#include <type_traits>
-
-#include "absl/strings/string_view.h"
 #include "absl/types/span.h"
 
 #include "lib/scsi.h"

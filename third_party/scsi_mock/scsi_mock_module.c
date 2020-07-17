@@ -17,6 +17,7 @@
 #include <linux/module.h>
 #include <linux/scatterlist.h>
 #include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_host.h>
 
 static const char kName[] = "SCSI2NVMe SCSI Mock";
@@ -31,14 +32,14 @@ static struct device_driver scsi_mock_driverfs = {.name = kName,
                                                   .bus = &pseudo_bus};
 
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
-  printk("RECIEVED COMMAND");
   u64 lun = cmd->device->lun;
   unsigned char* cmd_buf = cmd->cmnd;
-  u16 cmd_len = cmd->_len;
-  u16 data_len = cmd->sbd.length;
-  unsigned char* data_buf[scsi_bufflen(scp)];
-  scsi_sg_copy_to_buffer(scp, buf, scsi_bufflen(scp));
-  bool isDataIn = scp->sc_data_direction == DMA_FROM_DEVICE;
+  u16 cmd_len = cmd->cmd_len;
+  u16 data_len = scsi_bufflen(cmd);
+  bool isDataIn = cmd->sc_data_direction == DMA_FROM_DEVICE;
+  unsigned char data_buf[data_len];
+  scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
+  printk("RECIEVED COMMAND");
   return 0;
 }
 
