@@ -20,9 +20,7 @@
 
 namespace {
 
-/*
-   Tests the logging methods
-*/
+// Tests the logging methods
 
 TEST(Common, ShouldCorrectlyCallback) {
   const char* buf = "Testing%d";
@@ -34,6 +32,10 @@ TEST(Common, ShouldCorrectlyCallback) {
   };
   translator::SetDebugCallback(callback);
   translator::DebugLog(buf, 123);
+
+  // necessary to "undo" the expected behavior of this test
+  void (*debug_callback)(const char*) = nullptr;
+  translator::SetDebugCallback(debug_callback);
 }
 
 TEST(Common, ShouldNotReadValueFromSpan) {
@@ -76,6 +78,77 @@ TEST(Common, ShouldCorrectlyWriteValueToSpan) {
   bool result = translator::WriteValue(cb, buffer);
   EXPECT_TRUE(result);
   EXPECT_EQ(0b11000100, buffer[0]);
+}
+
+TEST(Common, ShouldBuildAllocationWithSuccessStatus) {
+  translator::Allocation allocation = {};
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
+    if (count == 1) {
+      return 1337;
+    }
+    if (count == 3) {
+      return 7331;
+    }
+    return 0;
+  };
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
+  translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  translator::StatusCode status_code = allocation.SetPages(1, 3);
+
+  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ(1, allocation.data_page_count);
+  EXPECT_EQ(1337, allocation.data_addr);
+  EXPECT_EQ(3, allocation.mdata_page_count);
+  EXPECT_EQ(7331, allocation.mdata_addr);
+}
+
+TEST(Common, ShouldBuildAllocationZeroPageCountaWithSuccessStatus) {
+  translator::Allocation allocation = {};
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
+    if (count == 2) {
+      return 1337;
+    }
+    return 0;
+  };
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
+  translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  translator::StatusCode status_code = allocation.SetPages(2, 0);
+
+  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ(2, allocation.data_page_count);
+  EXPECT_EQ(1337, allocation.data_addr);
+  EXPECT_EQ(0, allocation.mdata_page_count);
+  EXPECT_EQ(0, allocation.mdata_addr);
+
+  status_code = allocation.SetPages(0, 2);
+
+  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ(0, allocation.data_page_count);
+  EXPECT_EQ(0, allocation.data_addr);
+  EXPECT_EQ(2, allocation.mdata_page_count);
+  EXPECT_EQ(1337, allocation.mdata_addr);
+}
+
+TEST(Common, ShouldFailBuildAllocationWhenOverrdingMemory) {
+  translator::Allocation allocation = {.data_addr = 1337, .mdata_addr = 0};
+
+  translator::StatusCode status_code = allocation.SetPages(1, 1);
+  EXPECT_EQ(translator::StatusCode::kFailure, status_code);
+}
+
+TEST(Common, ShouldFailBuildAllocationWhenAllocPageFails) {
+  translator::Allocation allocation = {};
+  auto alloc_callback = [](uint16_t count) -> uint64_t {
+    EXPECT_EQ(1, count);
+    return 0;
+  };
+  void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
+  translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
+
+  translator::StatusCode status_code = allocation.SetPages(1, 1);
+  EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 
 }  // namespace

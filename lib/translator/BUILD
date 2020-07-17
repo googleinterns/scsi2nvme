@@ -1,4 +1,19 @@
 cc_library(
+  name = "inquiry_lib",
+  srcs = ["inquiry.cc"],
+  hdrs = ["inquiry.h"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
+      ":common",
+      "@com_google_absl//absl/base",
+      "@com_google_absl//absl/types:span",
+      "@com_google_absl//absl/strings",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "common",
   hdrs = ["common.h"],
   srcs = ["common.cc"],
@@ -17,10 +32,25 @@ cc_library(
   hdrs = ["translation.h"],
   srcs = ["translation.cc"],
   deps = [
+    ":request_sense_lib",
     "@com_google_absl//absl/types:span",
-    "//lib/translator:common"
+    ":common",
+    ":inquiry_lib"
   ],
   visibility = ["//visibility:public"]
+)
+
+cc_library(
+  name = "request_sense_lib",
+  hdrs = ["request_sense.h"],
+  srcs = ["request_sense.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
+      ":common",
+      "@com_google_absl//absl/base",
+  ],
+  visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -30,7 +60,7 @@ cc_library(
   deps = [
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
-      "//lib/translator:common",
+      ":common",
       "@com_google_absl//absl/base",
   ],
   visibility = ["//visibility:public"],

@@ -719,7 +719,7 @@ struct IdentifyNamespace {
   uint16_t noiob : 16;     // namespace optimal I/O boundary in logical blocks
   uint64_t nvmcap[2];      // NVM capacity
   uint8_t reserved64[40];  // includes fields added in NVMe Revision 1.4
-  uint8_t nguid[16];       // namespace globally unique identifier
+  uint64_t nguid[2];       // namespace globally unique identifier
   uint64_t eui64 : 64;     // IEEE extended unique identifier
 
   struct {

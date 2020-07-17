@@ -19,9 +19,7 @@
 
 namespace {
 
-/*
-  Tests the ControlByte class
-*/
+// Tests the ControlByte class
 
 TEST(ControlByteClass, ShouldReturnCorrectControlByte) {
   uint8_t cbValue = 0b11000100;

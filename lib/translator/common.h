@@ -22,6 +22,11 @@
 
 namespace translator {
 
+// Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
+// This value is not null terminated and should be size 8
+constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
+static_assert(kNvmeVendorIdentification.size() == 8);
+
 // The maximum amplification ratio of any supported SCSI:NVMe translation
 constexpr int kMaxCommandRatio = 3;
 
@@ -39,6 +44,10 @@ struct Allocation {
   uint16_t data_page_count;   // Number of data pages
   uint64_t mdata_addr;        // Start of metadata buffer
   uint16_t mdata_page_count;  // Number of metadata pages
+
+  // Sets [m]data_page_count, calls AllocPages([m]data_page_count),
+  // and returns StatusCode based on whether AllocPages was successful
+  StatusCode SetPages(uint16_t data_page_count, uint16_t mdata_page_count);
 };
 
 void DebugLog(const char* format, ...);
@@ -73,5 +82,4 @@ bool WriteValue(const T& data, absl::Span<uint8_t> out) {
 }
 
 }  // namespace translator
-
 #endif
