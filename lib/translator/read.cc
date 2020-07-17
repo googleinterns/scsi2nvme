@@ -56,6 +56,16 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
   return StatusCode::kSuccess;
 }
 
+// Builds NVMe cdw 12 for Read10, Read12, Read16 translations
+uint32_t BuildCdw12(uint32_t transfer_length, uint8_t prinfo, bool fua) {
+  // cdw12 nlb bits 15:00 (zero based field), printfo bits 29:26, fua bit 30
+  // Since NVMe has a protocol limit of 16 bits on transfer size,
+  // we can enforce a transfer limit of 16 bits on our SCSI device
+  return (static_cast<uint32_t>(fua) << 30) |
+         (static_cast<uint32_t>(prinfo) << 26) |
+         (static_cast<uint16_t>(transfer_length) - 1);
+}
+
 // Translates fields common to all Read commands
 // Named Legacy because it is called directly by Read6, an obsolete command
 // lacking fields common to other Read commands
@@ -74,10 +84,11 @@ StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
 
   nvme_cmd.mptr = allocation.mdata_addr;
   nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
-  nvme_cmd.cdw[0] =
-      static_cast<uint32_t>(lba);  // cdw10 Starting lba bits 31:00
-  nvme_cmd.cdw[1] =
-      static_cast<uint32_t>(lba >> 32);  // cdw11 starting lba bits 63:32
+
+  // cdw10 Starting lba bits 31:00
+  nvme_cmd.cdw[0] = static_cast<uint32_t>(lba);
+  // cdw11 Starting lba bits 63:32
+  nvme_cmd.cdw[1] = static_cast<uint32_t>(lba >> 32);
 
   return status;
 }
@@ -104,12 +115,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
     return status;
   }
 
-  // cdw12 nlb bits 15:00 (zero based field), printfo bits 29:26, fua bit 30
-  // Since NVMe has a protocol limit of 16 bits on transfer size,
-  // we can enforce a transfer limit of 16 bits on our SCSI device
-  uint32_t cdw12 = (static_cast<uint16_t>(transfer_length) - 1) |
-                   (prinfo << 26) | (fua << 30);
-  nvme_cmd.cdw[2] = cdw12;  // overwrite cdw12
+  nvme_cmd.cdw[2] = BuildCdw12(transfer_length, prinfo, fua);
 
   return status;
 }
@@ -125,8 +131,9 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status =
-      LegacyRead(read_cmd.logical_block_address, nvme_cmd, allocation, nsid);
+  // Transform logical_block_address to network endian before casting to 64 bits
+  StatusCode status = LegacyRead(htonl(read_cmd.logical_block_address),
+                                 nvme_cmd, allocation, nsid);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -151,8 +158,10 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
+  // Transform logical_block_address to network endian before casting to 64 bits
+  return Read(read_cmd.rdprotect, read_cmd.fua,
+              ntohl(read_cmd.logical_block_address), read_cmd.transfer_length,
+              nvme_cmd, allocation, nsid);
 }
 
 StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
@@ -164,8 +173,10 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
+  // Transform logical_block_address to network endian before casting to 64 bits
+  return Read(read_cmd.rdprotect, read_cmd.fua,
+              ntohl(read_cmd.logical_block_address), read_cmd.transfer_length,
+              nvme_cmd, allocation, nsid);
 }
 
 StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
@@ -177,8 +188,10 @@ StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  return Read(read_cmd.rdprotect, read_cmd.fua, read_cmd.logical_block_address,
-              read_cmd.transfer_length, nvme_cmd, allocation, nsid);
+  // Transform logical_block_address to network endian
+  return Read(read_cmd.rdprotect, read_cmd.fua,
+              ntohll(read_cmd.logical_block_address), read_cmd.transfer_length,
+              nvme_cmd, allocation, nsid);
 }
 
 }  // namespace translator

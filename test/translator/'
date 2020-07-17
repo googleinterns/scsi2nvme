@@ -30,7 +30,7 @@ constexpr uint8_t kUnsupportedRdProtect = 0b111;
 constexpr uint8_t kFua = 0b1;
 constexpr uint16_t kTransferLen = 0x1a2b;
 constexpr uint16_t kNlb = 0x1a2a;
-constexpr uint32_t kCdw12 = 0x5c001a2a;  // based on kNlb, kFua, kPrinfo
+constexpr uint32_t kCdw12 = 0x5c001a2a; // based on kNlb, kFua, kPrinfo
 constexpr uint32_t kNsid = 0x1a2b3c4d;
 
 class ReadTest : public ::testing::Test {
@@ -48,6 +48,7 @@ class ReadTest : public ::testing::Test {
   }
 };
 
+
 TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read6Command) - 1];
   nvme::GenericQueueEntryCmd nvme_cmd;
@@ -60,7 +61,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   uint32_t network_endian_lba = 0x1a2b3c;  // max 21 bits
-  uint32_t host_endian_lba = ntohl(network_endian_lba);
+  uint32_t host_endian_lba  = ntohl(network_endian_lba);
 
   uint8_t transfer_len = 0x1b;
   uint16_t nlb = 0x1a;
@@ -89,6 +90,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
 TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   uint32_t network_endian_lba = 0x1a2b3e;  // max 21 bits
   uint32_t host_endian_lba = ntohl(network_endian_lba);
+
 
   scsi::Read6Command cmd = {
       .logical_block_address = network_endian_lba,
@@ -123,12 +125,12 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   uint32_t network_endian_lba = 0x1a2b3c4d;
-  uint32_t host_endian_lba = ntohl(network_endian_lba);
+  uin32_t host_endian_lba = ntohl(network_endian_lba);
 
   scsi::Read10Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = network_endian_lba,
+      .logical_block_address = network_endian_lba; 
       .transfer_length = kTransferLen,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
@@ -160,12 +162,12 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
 
 TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   uint32_t network_endian_lba = 0x1a2b3c4d;
-  uint32_t host_endian_lba = ntohl(network_endian_lba);
+  uin32_t host_endian_lba = ntohl(network_endian_lba);
 
   scsi::Read12Command cmd = {
       .rdprotect = kRdProtect,
       .fua = kFua,
-      .logical_block_address = network_endian_lba,
+      .logical_block_address = network_endian_lba, 
       .transfer_length = kTransferLen,
   };
   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
@@ -196,14 +198,13 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
 }
 
 TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
-  uint64_t network_endian_lba = 0x1a2b3c4d5e6f7f8f;
-  uint64_t host_endian_lba = translator::ntohll(network_endian_lba);
-  uint32_t cdw10 = host_endian_lba;
-  uint32_t cdw11 = host_endian_lba >> 32;
+  uint64_t lba = 0x1a2b3c4d5e6f7f8f;
+  uint32_t cdw10 = 0x5e6f7f8f;
+  uint32_t cdw11 = 0x1a2b3c4d;
 
   scsi::Read16Command cmd = {.rdprotect = kRdProtect,
                              .fua = kFua,
-                             .logical_block_address = network_endian_lba,
+                             .logical_block_address = translator::htonll(lba),
                              .transfer_length = kTransferLen};
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
