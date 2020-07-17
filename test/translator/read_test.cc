@@ -20,9 +20,7 @@
 
 namespace {
 
-/*
-   Tests the translator::Read6, Read10, Read12, Read16 functions
-*/
+// Tests the translator::Read6, Read10, Read12, Read16 functions
 
 constexpr uint8_t kRdProtect = 0b101;
 constexpr uint8_t kPrinfo = 0b0111;  // expected transformation of kRdProtect

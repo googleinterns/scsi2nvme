@@ -5,7 +5,6 @@
 #else
 #include <netinet/in.h>
 #endif
-#include <byteswap.h>
 
 #include "absl/types/span.h"
 
