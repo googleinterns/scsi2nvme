@@ -32,10 +32,25 @@ cc_library(
   hdrs = ["translation.h"],
   srcs = ["translation.cc"],
   deps = [
+    ":request_sense_lib",
+    "@com_google_absl//absl/types:span",
     ":common",
     ":inquiry_lib"
   ],
   visibility = ["//visibility:public"]
+)
+
+cc_library(
+  name = "request_sense_lib",
+  hdrs = ["request_sense.h"],
+  srcs = ["request_sense.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
+      ":common",
+      "@com_google_absl//absl/base",
+  ],
+  visibility = ["//visibility:public"],
 )
 
 cc_library(

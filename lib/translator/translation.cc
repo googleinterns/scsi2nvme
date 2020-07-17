@@ -15,6 +15,8 @@
 #include "translation.h"
 #include "inquiry.h"
 
+#include "request_sense.h"
+
 namespace translator {
 
 BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
@@ -45,6 +47,9 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
           InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
                         response.alloc_len, lun, allocations_);
       nvme_cmd_count_ = 2;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
       break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
@@ -78,6 +83,10 @@ ApiStatus Translation::Complete(
   switch (opc) {
     case scsi::OpCode::kInquiry:
       pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
       ret = ApiStatus::kSuccess;
       break;
   }

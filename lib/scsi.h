@@ -884,6 +884,52 @@ struct UnmapBlockDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
+// SCSI Reference Manual Table 164
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct RequestSenseCommand {
+  uint8_t reserved_1 : 7;
+  bool desc : 1;
+  uint16_t reserved_2 : 16;
+  uint8_t allocation_length : 8;
+  ControlByte control_byte;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(RequestSenseCommand) == 5);
+
+// SCSI Reference Manual Table 27
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct FixedFormatSenseData {
+  bool valid : 1;
+  uint8_t response_code : 7;
+  uint8_t _obsolete : 8;
+  bool filemark : 1;
+  bool eom : 1;
+  bool ili : 1;
+  bool reserved_1 : 1;
+  uint8_t sense_key : 4;
+  uint32_t info : 32;
+  uint8_t additional_sense_length : 8;
+  uint32_t command_specific_info : 32;
+  AdditionalSenseCode additional_sense_code : 8;
+  AdditionalSenseCodeQualifier additional_sense_code_qualifier : 8;
+  uint8_t field_replaceable_unit_code : 8;
+  bool sksv : 1;
+  uint32_t sense_key_specific : 23;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(FixedFormatSenseData) == 18);
+
+// SCSI Reference Manual Table 27
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct DescriptorFormatSenseData {
+  bool reserved_1 : 1;
+  uint8_t response_code : 7;
+  uint8_t reserved_2 : 4;
+  SenseKey sense_key : 4;
+  AdditionalSenseCode additional_sense_code : 8;
+  AdditionalSenseCodeQualifier additional_sense_code_qualifier : 8;
+  uint32_t reserved_3 : 24;
+  uint8_t additional_sense_length : 8;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DescriptorFormatSenseData) == 8);
 // SCSI Reference Manual Table 483
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct SupportedVitalProductData {
