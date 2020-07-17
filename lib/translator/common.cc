@@ -75,21 +75,6 @@ uint64_t htonll(uint64_t value) {
   }
 }
 
-uint64_t ntohll(uint64_t value) {
-  static uint32_t test_val = 42;
-
-  // Check first byte to determine endianness
-  if (*reinterpret_cast<const char*>(&test_val) == test_val) {  // little endian
-    const uint32_t high_bits = htonl(static_cast<uint32_t>(value >> 32));
-    const uint32_t low_bits =
-        htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
-
-    return (static_cast<uint64_t>(low_bits) << 32) | high_bits;
-  } else {  // big endian
-    return value;
-  }
-}
-
 StatusCode Allocation::SetPages(uint16_t data_page_count,
                                 uint16_t mdata_page_count) {
   if ((data_page_count != 0 && this->data_addr != 0) ||

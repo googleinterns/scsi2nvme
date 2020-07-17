@@ -71,7 +71,7 @@ uint64_t htonll(uint64_t value);
 // Network endianness is always big endian
 // Converts value to little endian if Host is little endian
 // No op if Host is big endian
-uint64_t htonll(uint64_t value);
+#define ntohll htonll
 
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
