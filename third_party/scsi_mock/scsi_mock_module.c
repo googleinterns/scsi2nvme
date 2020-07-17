@@ -32,6 +32,13 @@ static struct device_driver scsi_mock_driverfs = {.name = kName,
 
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   printk("RECIEVED COMMAND");
+  u64 lun = cmd->device->lun;
+  unsigned char* cmd_buf = cmd->cmnd;
+  u16 cmd_len = cmd->_len;
+  u16 data_len = cmd->sbd.length;
+  unsigned char* data_buf[scsi_bufflen(scp)];
+  scsi_sg_copy_to_buffer(scp, buf, scsi_bufflen(scp));
+  bool isDataIn = scp->sc_data_direction == DMA_FROM_DEVICE;
   return 0;
 }
 
