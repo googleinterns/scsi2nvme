@@ -18,9 +18,6 @@
 #include <cstring>
 #include <type_traits>
 
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
-
 #include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
 
@@ -28,8 +25,8 @@ namespace translator {
 
 // Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
 // This value is not null terminated and should be size 8
-constexpr absl::string_view kNvmeVendorIdentification = "NVMe    ";
-static_assert(kNvmeVendorIdentification.size() == 8);
+constexpr char kNvmeVendorIdentification[] = "NVMe    ";
+static_assert(strlen(kNvmeVendorIdentification) == 8);
 
 // The maximum amplification ratio of any supported SCSI:NVMe translation
 constexpr int kMaxCommandRatio = 3;
@@ -70,7 +67,32 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
 template <typename T>
-bool ReadValue(absl::Span<const uint8_t> data, T& out) {
+class Span {
+ public:
+  Span() : ptr_(nullptr), len_(0) {}
+  Span(T* ptr, size_t len) : ptr_(ptr), len_(len) {}
+  template <size_t N>
+  Span(T (&a)[N]) : Span(a, N) {}
+  template <typename Y>
+  Span(const Span<Y>& ref) : Span(ref.data(), ref.size()) {}
+  T* data() const { return ptr_; }
+  size_t size() const { return len_; }
+  bool empty() { return len_ == 0; }
+  T& operator[](size_t i) const { return *(ptr_ + i); }
+  Span subspan(size_t pos, size_t len = npos) {
+    if (pos >= len_) return Span<T>(nullptr, 0);
+    if (len > (len_ - pos) || len == npos) len = len_ - pos;
+    return Span<T>(ptr_ + pos, len);
+  }
+
+ private:
+  T* ptr_;
+  size_t len_;
+  constexpr static size_t npos = -1;
+};
+
+template <typename T>
+bool ReadValue(Span<const uint8_t> data, T& out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
   if (sizeof(T) > data.size()) return false;
   memcpy(&out, data.data(), sizeof(T));
@@ -78,7 +100,7 @@ bool ReadValue(absl::Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, absl::Span<uint8_t> out) {
+bool WriteValue(const T& data, Span<uint8_t> out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
   if (sizeof(T) > out.size()) return false;
   memcpy(out.data(), &data, sizeof(T));
