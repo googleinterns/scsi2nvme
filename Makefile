@@ -8,8 +8,7 @@ NVME_SRC_DIR := third_party/spdk
 SCSI_SRC_DIR := lib
 
 OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
-	$(MODULE_SRC_DIR)/engine.cc.o \
-	$(TRANSLATE_SRC_DIR)/translation.cc.o
+	$(MODULE_SRC_DIR)/engine.cc.o
 
 INC := -I$(PWD)
 

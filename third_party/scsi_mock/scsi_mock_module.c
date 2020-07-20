@@ -11,6 +11,8 @@
 
 #include "scsi_mock_module.h"
 
+#include "engine.h"
+
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -40,6 +42,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   unsigned char data_buf[data_len];
   scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
   printk("RECIEVED COMMAND");
+  ScsiToNvme(cmd_buf, cmd_len, lun, 0, 0, data_buf, data_len, isDataIn);
   return 0;
 }
 
