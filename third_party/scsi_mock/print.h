@@ -9,27 +9,14 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-#ifndef NVME2SCSI_ENGINE_H
-#define NVME2SCSI_ENGINE_H
-
-#include "print.h"
+#include <linux/kernel.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef __KERNEL__
-#include <linux/types.h>
-#endif
+void print(const char* msg);
 
-void SetEngineCallbacks(void);
-
-void ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
-  unsigned long long lun, unsigned char* sense_buf, unsigned short sense_len,
-  unsigned char* data_buf, unsigned short data_len, bool isDataIn);
- 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

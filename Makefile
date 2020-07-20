@@ -6,11 +6,17 @@ MODULE_SRC_DIR := third_party/scsi_mock
 TRANSLATE_SRC_DIR := lib/translator
 NVME_SRC_DIR := third_party/spdk
 SCSI_SRC_DIR := lib
+TRANSLATION_SRC_DIR := lib/translator
 
 OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
-	$(MODULE_SRC_DIR)/engine.cc.o
+	$(MODULE_SRC_DIR)/print.o \
+	$(MODULE_SRC_DIR)/engine.cc.o \
+	$(TRANSLATION_SRC_DIR)/common.cc.o \
+	$(TRANSLATION_SRC_DIR)/inquiry.cc.o \
+	$(TRANSLATION_SRC_DIR)/request_sense.cc.o \
+	$(TRANSLATION_SRC_DIR)/translation.cc.o
 
-INC := -I$(PWD)
+INC := -I$(PWD)/third_party -I$(PWD)
 
 $(NAME)-y := $(OBJS)
 

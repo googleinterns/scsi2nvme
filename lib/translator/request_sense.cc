@@ -17,7 +17,7 @@
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions
-void TranslateDescriptorSenseData(absl::Span<uint8_t> buffer) {
+void TranslateDescriptorSenseData(Span<uint8_t> buffer) {
   scsi::DescriptorFormatSenseData result = {
       // Shall be set to 72h indicating current errors are returned.
       .response_code = 0x72,
@@ -31,7 +31,7 @@ void TranslateDescriptorSenseData(absl::Span<uint8_t> buffer) {
   WriteValue(result, buffer);
 }
 
-void TranslateFixedSenseData(absl::Span<uint8_t> buffer) {
+void TranslateFixedSenseData(Span<uint8_t> buffer) {
   scsi::FixedFormatSenseData result = {
       // Shall be set to 70h indicating current errors are returned.
       .response_code = 0x70,
@@ -58,7 +58,7 @@ void TranslateFixedSenseData(absl::Span<uint8_t> buffer) {
 
 }  // namespace
 
-StatusCode RequestSenseToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode RequestSenseToNvme(Span<const uint8_t> scsi_cmd,
                               uint32_t& allocation_length) {
   scsi::RequestSenseCommand request_sense_cmd{};
   if (!ReadValue(scsi_cmd, request_sense_cmd)) {
@@ -74,8 +74,8 @@ StatusCode RequestSenseToNvme(absl::Span<const uint8_t> scsi_cmd,
   return StatusCode::kSuccess;
 }
 
-StatusCode RequestSenseToScsi(absl::Span<const uint8_t> scsi_cmd,
-                              absl::Span<uint8_t> buffer) {
+StatusCode RequestSenseToScsi(Span<const uint8_t> scsi_cmd,
+                              Span<uint8_t> buffer) {
   scsi::RequestSenseCommand request_sense_cmd{};
   if (!ReadValue(scsi_cmd, request_sense_cmd)) {
     DebugLog("Malformed RequestSense Command");

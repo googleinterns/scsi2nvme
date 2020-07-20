@@ -23,8 +23,8 @@ TEST(RequestSense, ToNvmeSuccess) {
   };
   uint32_t allocation_length = 0;
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd =
-      absl::MakeSpan(ptr, sizeof(scsi::RequestSenseCommand));
+  translator::Span<const uint8_t> scsi_cmd(ptr,
+                                           sizeof(scsi::RequestSenseCommand));
   EXPECT_EQ(translator::RequestSenseToNvme(scsi_cmd, allocation_length),
             translator::StatusCode::kSuccess);
   EXPECT_EQ(allocation_length, request_sense_cmd.allocation_length);
@@ -38,7 +38,7 @@ TEST(RequestSense, ToNvmeBadBuffer) {
   };
   uint32_t allocation_length = 0;
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(1));
+  translator::Span<const uint8_t> scsi_cmd(ptr, sizeof(1));
   EXPECT_EQ(translator::RequestSenseToNvme(scsi_cmd, allocation_length),
             translator::StatusCode::kInvalidInput);
   EXPECT_EQ(allocation_length, 0);
@@ -47,9 +47,9 @@ TEST(RequestSense, ToNvmeBadBuffer) {
 TEST(RequestSense, ToScsiBadBuffer) {
   const scsi::RequestSenseCommand request_sense_cmd{};
   uint8_t buf[100];
-  absl::Span<uint8_t> buffer = buf;
+  translator::Span<uint8_t> buffer = buf;
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(ptr, sizeof(1));
+  translator::Span<const uint8_t> scsi_cmd(ptr, sizeof(1));
   EXPECT_EQ(translator::RequestSenseToScsi(scsi_cmd, buffer),
             translator::StatusCode::kInvalidInput);
 }
@@ -62,8 +62,8 @@ TEST(RequestSense, ToNvmeBadControlByteNaca) {
   };
   uint32_t allocation_length = 0;
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd =
-      absl::MakeSpan(ptr, sizeof(scsi::RequestSenseCommand));
+  translator::Span<const uint8_t> scsi_cmd =
+      translator::Span(ptr, sizeof(scsi::RequestSenseCommand));
   EXPECT_EQ(translator::RequestSenseToNvme(scsi_cmd, allocation_length),
             translator::StatusCode::kInvalidInput);
   EXPECT_EQ(allocation_length, 0);
@@ -71,12 +71,12 @@ TEST(RequestSense, ToNvmeBadControlByteNaca) {
 
 TEST(RequestSense, ToScsiDescriptor) {
   uint8_t buf[100];
-  absl::Span<uint8_t> buffer = buf;
+  translator::Span<uint8_t> buffer = buf;
   const scsi::RequestSenseCommand request_sense_cmd = {
       .desc = 1, .allocation_length = 100, .control_byte = {.naca = 0}};
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd =
-      absl::MakeSpan(ptr, sizeof(scsi::RequestSenseCommand));
+  translator::Span<const uint8_t> scsi_cmd =
+      translator::Span(ptr, sizeof(scsi::RequestSenseCommand));
   translator::StatusCode status =
       translator::RequestSenseToScsi(scsi_cmd, buffer);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
@@ -91,12 +91,12 @@ TEST(RequestSense, ToScsiDescriptor) {
 
 TEST(RequestSense, ToScsiFixed) {
   uint8_t buf[100];
-  absl::Span<uint8_t> buffer = buf;
+  translator::Span<uint8_t> buffer = buf;
   const scsi::RequestSenseCommand request_sense_cmd = {
       .desc = 0, .allocation_length = 100, .control_byte = {.naca = 0}};
   const uint8_t* ptr = reinterpret_cast<const uint8_t*>(&request_sense_cmd);
-  absl::Span<const uint8_t> scsi_cmd =
-      absl::MakeSpan(ptr, sizeof(scsi::RequestSenseCommand));
+  translator::Span<const uint8_t> scsi_cmd =
+      translator::Span(ptr, sizeof(scsi::RequestSenseCommand));
   translator::StatusCode status =
       translator::RequestSenseToScsi(scsi_cmd, buffer);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);

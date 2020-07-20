@@ -112,6 +112,7 @@ static int scsi_mock_add_device(void) {
 
 static int __init scsi_mock_init(void) {
   int err;
+  SetEngineCallbacks();
   printk("Registering root device\n");
   pseudo_root_dev = root_device_register("pseudo_scsi_root");
   if (IS_ERR(pseudo_root_dev)) {
