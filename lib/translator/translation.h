@@ -15,8 +15,6 @@
 #ifndef LIB_TRANSLATOR_TRANSLATION_H
 #define LIB_TRANSLATOR_TRANSLATION_H
 
-#include "absl/types/span.h"
-
 #include "common.h"
 
 namespace translator {
