@@ -56,13 +56,10 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
 }
 
 // Builds NVMe cdw 12 for Read10, Read12, Read16 translations
-uint32_t BuildCdw12(uint32_t transfer_length, uint8_t prinfo, bool fua) {
+uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
   // cdw12 nlb bits 15:00 (zero based field), printfo bits 29:26, fua bit 30
-  // Since NVMe has a protocol limit of 16 bits on transfer size,
-  // we can enforce a transfer limit of 16 bits on our SCSI device
   return (static_cast<uint32_t>(fua) << 30) |
-         (static_cast<uint32_t>(prinfo) << 26) |
-         (static_cast<uint16_t>(transfer_length) - 1);
+         (static_cast<uint32_t>(prinfo) << 26) | (transfer_length - 1);
 }
 
 // Translates fields common to all Read commands
@@ -114,7 +111,15 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
     return status;
   }
 
-  nvme_cmd.cdw[2] = BuildCdw12(transfer_length, prinfo, fua);
+  // Since NVMe has a protocol limit of 16 bits on transfer size,
+  // we can enforce a transfer limit of 16 bits on our SCSI device
+  if (transfer_length > 0xffff) {
+    DebugLog("Transfer length exceeds limit of 16 bits");
+    return StatusCode::kInvalidInput;
+  }
+
+  nvme_cmd.cdw[2] =
+      BuildCdw12(static_cast<uint16_t>(transfer_length), prinfo, fua);
 
   return status;
 }

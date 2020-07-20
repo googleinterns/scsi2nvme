@@ -193,6 +193,25 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
+TEST_F(ReadTest, Read16ToNvmeLongTransferLengthShouldReturnInvalidInputStatus) {
+  uint64_t network_endian_lba = 0x1a2b3c4d5e6f7f8f;
+  uint32_t transfer_length = 0xffff + 1;
+
+  scsi::Read16Command cmd = {.rdprotect = kRdProtect,
+                             .fua = kFua,
+                             .logical_block_address = network_endian_lba,
+                             .transfer_length = transfer_length};
+  uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+
+  translator::StatusCode status_code =
+      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+
+  EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
+}
+
 TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   uint64_t network_endian_lba = 0x1a2b3c4d5e6f7f8f;
   uint64_t host_endian_lba = translator::ntohll(network_endian_lba);
