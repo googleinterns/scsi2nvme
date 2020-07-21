@@ -126,7 +126,7 @@ TEST_F(InquiryTest, StandardInquiry) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::InquiryData result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             static_cast<scsi::PeripheralQualifier>(0));
@@ -183,7 +183,7 @@ TEST_F(InquiryTest, SupportedVpdPages) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::SupportedVitalProductData result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             scsi::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -203,7 +203,7 @@ TEST_F(InquiryTest, SupportedVpdPages) {
 
   scsi::PageCode result_list[7];
   translator::Span<uint8_t> span_buffer = buffer_;
-  EXPECT_TRUE(translator::ReadValue(
+  ASSERT_TRUE(translator::ReadValue(
       span_buffer.subspan(sizeof(scsi::SupportedVitalProductData)),
       result_list));
 
@@ -229,7 +229,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdEui64) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             scsi::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -240,7 +240,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdEui64) {
 
   translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[20];
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
                             product_serial_number));
 
@@ -263,7 +263,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNguid) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             scsi::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -274,7 +274,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNguid) {
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
   translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[40];
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
                             product_serial_number));
 
@@ -296,7 +296,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdBoth) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             scsi::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -308,7 +308,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdBoth) {
 
   translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[40];
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
                             product_serial_number));
 
@@ -331,7 +331,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNone) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   EXPECT_EQ(result.peripheral_qualifier,
             scsi::PeripheralQualifier::kPeripheralDeviceConnected);
@@ -342,7 +342,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNone) {
 
   translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[30];
-  EXPECT_TRUE(
+  ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
                             product_serial_number));
 
@@ -365,7 +365,7 @@ TEST_F(InquiryTest, BlockLimitsVpd) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -393,7 +393,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdts) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -421,7 +421,7 @@ TEST_F(InquiryTest, BlockLimitsVpdFuse) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -449,7 +449,7 @@ TEST_F(InquiryTest, BlockLimitsVpdDsm) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -477,7 +477,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuse) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -505,7 +505,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseLarge) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -535,10 +535,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseVeryLarge) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
-
-  uint32_t max_transfer_length =
-      identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   // TODO: put in common?
   const uint8_t kMaxCompareWriteLen = 255;
@@ -567,7 +564,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsOncs) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -595,7 +592,7 @@ TEST_F(InquiryTest, BlockLimitsVpdFuseOncs) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -623,7 +620,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   uint32_t max_transfer_length =
       identify_ctrl_.mdts ? 1 << identify_ctrl_.mdts : 0;
@@ -647,7 +644,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpd) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   bool ad = identify_ctrl_.oncs.dsm;
 
@@ -668,7 +665,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdDsm) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   bool ad = identify_ctrl_.oncs.dsm;
 
@@ -690,7 +687,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdThinprov) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   bool ad = identify_ctrl_.oncs.dsm;
 
@@ -713,7 +710,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
-  EXPECT_TRUE(translator::ReadValue(buffer_, result));
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
 
   bool ad = identify_ctrl_.oncs.dsm;
 
