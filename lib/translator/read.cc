@@ -12,11 +12,11 @@ namespace {  // anonymous namespace for helper functions
 
 // Section 5.3
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
-StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
+StatusCode BuildPrinfo(uint8_t rd_protect, uint8_t& prinfo) {
   bool pract;     // Protection Information Action 1 bit
   uint8_t prchk;  // Protection Information Check 3 bits
 
-  switch (rdprotect) {  // 3 bits
+  switch (rd_protect) {  // 3 bits
     case 0b0:
       pract = 0b1;
       prchk = 0b111;
@@ -42,7 +42,7 @@ StatusCode BuildPrinfo(uint8_t rdprotect, uint8_t& prinfo) {
       // Should result in SCSI command termination with status: CHECK CONDITION,
       //  sense key: ILLEGAL REQUEST, additional sense code: LLEGAL FIELD IN CDB
       DebugLog("RDPROTECT with value %d has no translation to PRINFO",
-               rdprotect);
+               rd_protect);
       return StatusCode::kInvalidInput;
   }
 
@@ -86,7 +86,7 @@ StatusCode LegacyRead(uint64_t lba, nvme::GenericQueueEntryCmd& nvme_cmd,
 }
 
 // Translates fields common to Read10, Read12, Read16
-StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
+StatusCode Read(uint8_t rd_protect, bool fua, uint64_t lba,
                 uint32_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
                 Allocation& allocation, uint32_t nsid) {
   if (transfer_length == 0) {
@@ -101,7 +101,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
   }
 
   uint8_t prinfo;  // Protection Information field 4 bits;
-  status = BuildPrinfo(rdprotect, prinfo);
+  status = BuildPrinfo(rd_protect, prinfo);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -159,7 +159,7 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   // Transform logical_block_address to network endian before casting to 64 bits
-  return Read(read_cmd.rdprotect, read_cmd.fua,
+  return Read(read_cmd.rd_protect, read_cmd.fua,
               ntohl(read_cmd.logical_block_address), read_cmd.transfer_length,
               nvme_cmd, allocation, nsid);
 }
@@ -174,7 +174,7 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   // Transform logical_block_address to network endian before casting to 64 bits
-  return Read(read_cmd.rdprotect, read_cmd.fua,
+  return Read(read_cmd.rd_protect, read_cmd.fua,
               ntohl(read_cmd.logical_block_address), read_cmd.transfer_length,
               nvme_cmd, allocation, nsid);
 }
@@ -189,7 +189,7 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   // Transform logical_block_address to network endian
-  return Read(read_cmd.rdprotect, read_cmd.fua,
+  return Read(read_cmd.rd_protect, read_cmd.fua,
               ntohll(read_cmd.logical_block_address), read_cmd.transfer_length,
               nvme_cmd, allocation, nsid);
 }

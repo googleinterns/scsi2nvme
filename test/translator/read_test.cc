@@ -124,7 +124,7 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   uint32_t host_endian_lba = ntohl(network_endian_lba);
 
   scsi::Read10Command cmd = {
-      .rdprotect = kRdProtect,
+      .rd_protect = kRdProtect,
       .fua = kFua,
       .logical_block_address = network_endian_lba,
       .transfer_length = kTransferLen,
@@ -161,7 +161,7 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   uint32_t host_endian_lba = ntohl(network_endian_lba);
 
   scsi::Read12Command cmd = {
-      .rdprotect = kRdProtect,
+      .rd_protect = kRdProtect,
       .fua = kFua,
       .logical_block_address = network_endian_lba,
       .transfer_length = kTransferLen,
@@ -197,7 +197,7 @@ TEST_F(ReadTest, Read16ToNvmeLongTransferLengthShouldReturnInvalidInputStatus) {
   uint64_t network_endian_lba = 0x1a2b3c4d5e6f7f8f;
   uint32_t transfer_length = 0xffff + 1;
 
-  scsi::Read16Command cmd = {.rdprotect = kRdProtect,
+  scsi::Read16Command cmd = {.rd_protect = kRdProtect,
                              .fua = kFua,
                              .logical_block_address = network_endian_lba,
                              .transfer_length = transfer_length};
@@ -218,7 +218,7 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   uint32_t cdw10 = host_endian_lba;
   uint32_t cdw11 = host_endian_lba >> 32;
 
-  scsi::Read16Command cmd = {.rdprotect = kRdProtect,
+  scsi::Read16Command cmd = {.rd_protect = kRdProtect,
                              .fua = kFua,
                              .logical_block_address = network_endian_lba,
                              .transfer_length = kTransferLen};
@@ -241,7 +241,7 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
 
 TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {
   scsi::Read10Command cmd = {
-      .rdprotect = kUnsupportedRdProtect,
+      .rd_protect = kUnsupportedRdProtect,
       .fua = kFua,
       .logical_block_address = 100,
       .transfer_length = 0,
@@ -258,7 +258,7 @@ TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {
 
 TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   scsi::Read10Command cmd = {
-      .rdprotect = kUnsupportedRdProtect,
+      .rd_protect = kUnsupportedRdProtect,
       .fua = kFua,
       .logical_block_address = 100,
       .transfer_length = 255,
