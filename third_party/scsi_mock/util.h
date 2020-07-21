@@ -9,14 +9,23 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
+#ifndef NVME2SCSI_UTIL_H
+#define NVME2SCSI_UTIL_H
+
 #include <linux/kernel.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void print(const char* msg);
+void Print(const char* msg);
+
+unsigned long long AllocPages(unsigned short count);
+
+void DeallocPages(unsigned long long addr, unsigned short count);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

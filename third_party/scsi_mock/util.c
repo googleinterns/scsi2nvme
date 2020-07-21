@@ -9,8 +9,20 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-#include "print.h"
+#include "util.h"
 
-void print(const char* msg) {
+#include <linux/slab.h>
+
+const int NVME_MIN_PAGE_SIZE = 4096;
+
+void Print(const char* msg) {
   printk(msg);
+}
+
+unsigned long long AllocPages(unsigned short count) {
+  return (unsigned long long) kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_KERNEL);
+}
+
+void DeallocPages(unsigned long long addr, unsigned short count) {
+  kfree((void*)addr);
 }

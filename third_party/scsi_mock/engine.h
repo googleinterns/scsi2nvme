@@ -12,7 +12,7 @@
 #ifndef NVME2SCSI_ENGINE_H
 #define NVME2SCSI_ENGINE_H
 
-#include "print.h"
+#include "util.h"
 
 #ifdef __cplusplus
 extern "C" {

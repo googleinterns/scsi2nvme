@@ -9,7 +9,7 @@ SCSI_SRC_DIR := lib
 TRANSLATION_SRC_DIR := lib/translator
 
 OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
-	$(MODULE_SRC_DIR)/print.o \
+	$(MODULE_SRC_DIR)/util.o \
 	$(MODULE_SRC_DIR)/engine.cc.o \
 	$(TRANSLATION_SRC_DIR)/common.cc.o \
 	$(TRANSLATION_SRC_DIR)/inquiry.cc.o \
