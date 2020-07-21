@@ -3,3 +3,8 @@
 
 #ignore local editor files
 /.vscode*
+
+#ignore all compiled binaries
+*.o
+*.d
+*.ko
