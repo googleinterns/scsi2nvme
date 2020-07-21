@@ -6,9 +6,6 @@ cc_library(
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
       ":common",
-      "@com_google_absl//absl/base",
-      "@com_google_absl//absl/types:span",
-      "@com_google_absl//absl/strings",
   ],
   visibility = ["//visibility:public"],
 )
@@ -20,9 +17,7 @@ cc_library(
   deps = [
     "//third_party/spdk:nvme_lib",
     "//lib:scsi_lib",
-    "@com_google_absl//absl/types:span",
     "@com_google_absl//absl/base",
-    "@com_google_absl//absl/strings",
   ],
   visibility = ["//visibility:public"],
 )
@@ -33,7 +28,6 @@ cc_library(
   srcs = ["translation.cc"],
   deps = [
     ":request_sense_lib",
-    "@com_google_absl//absl/types:span",
     ":common",
     ":inquiry_lib",
     ":read_lib"
@@ -49,7 +43,6 @@ cc_library(
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
       ":common",
-      "@com_google_absl//absl/base",
   ],
   visibility = ["//visibility:public"],
 )
@@ -62,7 +55,6 @@ cc_library(
       "//third_party/spdk:nvme_lib",
       "//lib:scsi_lib",
       ":common",
-      "@com_google_absl//absl/base",
   ],
   visibility = ["//visibility:public"],
 )
