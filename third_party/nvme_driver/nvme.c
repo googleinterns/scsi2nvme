@@ -114,6 +114,8 @@ static int __init nvme_communication_init(void) {
     printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
     return -1;
   }
+  
+  printk("Block device registered\n");
 
   struct gendisk *bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
@@ -121,12 +123,16 @@ static int __init nvme_communication_init(void) {
     goto err;
   }
   
+  printk("Gendisk registered\n");
+
   struct nvme_ns *ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns))
   {
     printk("nvme_ns is null?.\n");
     goto err;
   }
+  
+  printk("Nvme_ns registered\n");
 
 err:
   if (ncmd) {
