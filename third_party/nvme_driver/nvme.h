@@ -12,6 +12,21 @@
 #ifndef NVME2SCSI_NVME_H
 #define NVME2SCSI_NVME_H
 
+#include "nvme_internal.h"
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/genhd.h>
+#include <linux/bio.h>
+#include <linux/blk-mq.h>
+#include <linux/blk_types.h>
+#include <linux/completion.h>
+#include <linux/nvme_ioctl.h>
+#include <linux/nvme.h>
+
 // TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one 
 // fixed device is enough for an MVP
 #define NVME_DEVICE_PATH "/dev/nvme0n1"

@@ -1,18 +1,4 @@
 #include "nvme.h"
-#include "nvme_internal.h"
-
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/blkdev.h>
-#include <linux/genhd.h>
-#include <linux/bio.h>
-#include <linux/blk-mq.h>
-#include <linux/blk_types.h>
-#include <linux/completion.h>
-#include <linux/nvme_ioctl.h>
-#include <linux/nvme.h>
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
