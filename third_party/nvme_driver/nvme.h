@@ -21,4 +21,7 @@
 // fixed device is enough for an MVP
 #define NVME_DEVICE_PATH "/dev/nvme0n1"
 
+int submit_admin_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout);
+int submit_io_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout);
+
 #endif // NVME2SCSI_NVME_H

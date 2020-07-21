@@ -16,14 +16,17 @@
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
+struct block_device *blk_dev;
+struct gendisk *bd_disk;
+struct nvme_ns *ns;
+
 union nvme_result {
   __le16 u16;
   __le32 u32;
   __le64 u64;
 };
 
-struct nvme_request
-{
+struct nvme_request {
   struct nvme_command *cmd;
   union nvme_result result;
   u8 retries;
@@ -110,7 +113,13 @@ out:
   return ret;
 }
 
-int 
+int submit_admin_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
+  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, nvme_cmd, buffer, bufflen, result, timeout);
+}
+
+int submit_io_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
+  return nvme_submit_user_cmd(bd_disk, ns->queue, nvme_cmd, buffer, bufflen, result, timeout);
+}
 
 static int __init nvme_communication_init(void) {
   
@@ -119,50 +128,24 @@ static int __init nvme_communication_init(void) {
   void *ret_buf = NULL;
   struct nvme_command *ncmd = NULL;
   
-  struct block_device *bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
+  bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
   if (IS_ERR(bdev)) {
     printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
     return -1;
   }
 
-  struct gendisk *bd_disk;
   bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
     printk("bd_disk is null?.\n");
     goto err;
   }
   
-  struct nvme_ns *ns = bdev->bd_disk->private_data;
+  ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns))
   {
     printk("nvme_ns is null?.\n");
     goto err;
   }
-
-  int buff_size = sizeof(struct nvme_id_ctrl);
-  ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
-  
-  if (!ret_buf) {
-    printk("Failed to malloc memory for return buffer\n");
-    goto err;
-  }
-
-  ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
-  if(!ncmd) {
-      printk("Failed to malloc memory for NVME Command Structure.\n");
-      goto err;
-  }
-
-  memset(ncmd, 0, sizeof(&ncmd));
-  ncmd->common.opcode = nvme_admin_identify;
-  ncmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
-
-  struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
-  u32 code_result = 0;
-  int submit_result = nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, ncmd, ret_buf, buff_size, &code_result, 0);
-
-  printk("NVMe Submit command complete. Status: %d\n", submit_result);
-  printk("Result VID: %d\n", result->vid);
 
 err:
   if (ncmd) {
