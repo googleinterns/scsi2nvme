@@ -130,16 +130,33 @@ static int __init nvme_communication_init(void) {
   }
 
   printk("Nvme_ns registered\n");
+  void *ret_buf = NULL;
+  struct nvme_command *ncmd = NULL;
+  int buff_size = sizeof(struct nvme_id_ctrl);
+  ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
+  if (!ret_buf)
+  {
+    printk("Failed to malloc?.\n");
+    goto err;
+  }
 
-err:
-  if (ncmd) {
-    kfree(ncmd);
-  }
-  if (ret_buf) {
-    kfree(ret_buf);
-  }
+  ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
+
+  memset(ncmd, 0, sizeof(&ncmd));
+  ncmd->common.opcode = nvme_admin_identify;
+  ncmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
+
+  struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
+  u32 code_result = 0;
+  int submit_result = submit_admin_command(ncmd, ret_buf, buff_size, &code_result, 0);
+
+  printk("submit_result. %d\n", submit_result);
+  printk("result. %u\n", code_result);  // probably not usefull
+  // should print 0x1AE0 (6880)
+  printk("vid. %d\n", result->vid);
   return 0;
 }
+
 static void __exit nvme_communication_exit(void) {
   printk(KERN_INFO "Exiting NVMe Communication module\n");
 }
