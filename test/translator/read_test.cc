@@ -81,7 +81,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
 
   nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
-  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode::kIdentify, nvme_identify_ns.opc);
   EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
   EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
 
@@ -113,7 +113,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
 
   nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
-  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode::kIdentify, nvme_identify_ns.opc);
   EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
   EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
 
@@ -157,7 +157,7 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
 
   nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
-  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode::kIdentify, nvme_identify_ns.opc);
   EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
   EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
 
@@ -201,7 +201,7 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
 
   nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
-  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode::kIdentify, nvme_identify_ns.opc);
   EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
   EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
 
@@ -264,7 +264,7 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
 
   nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
-  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode::kIdentify, nvme_identify_ns.opc);
   EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
   EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
 
@@ -314,9 +314,7 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
 // Not under TEST_F(ReadTest, ...) because it overrides the
 // alloc_callback behaviour that's required before all other tests
 TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
-  auto alloc_callback = [](uint16_t count) -> uint64_t {
-    return 0;
-  };
+  auto alloc_callback = [](uint16_t count) -> uint64_t { return 0; };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
