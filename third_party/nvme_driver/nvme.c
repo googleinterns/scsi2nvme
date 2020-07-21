@@ -7,6 +7,9 @@ MODULE_AUTHOR("wnukowski@google.com")
 MODULE_DESCRIPTION("Kernel module to talk to NVME devices")
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
+struct block_device *bdev;
+struct gendisk *bd_disk;
+struct nvme_ns *ns;
 
 union nvme_result {
   __le16 u16;
@@ -113,9 +116,7 @@ static int __init nvme_communication_init(void) {
   
   printk(KERN_INFO "Started NVMe Communication Module Insertion\n");
 
-  void *ret_buf = NULL;
-  struct nvme_command *ncmd = NULL;
-  struct block_device *bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
+  bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
   if (IS_ERR(bdev)) {
     printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
     return -1;
@@ -123,7 +124,7 @@ static int __init nvme_communication_init(void) {
   
   printk("Block device registered\n");
 
-  struct gendisk *bd_disk = bdev->bd_disk;
+  bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
     printk("bd_disk is null?.\n");
     goto err;
@@ -131,7 +132,7 @@ static int __init nvme_communication_init(void) {
   
   printk("Gendisk registered\n");
 
-  struct nvme_ns *ns = bdev->bd_disk->private_data;
+  ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns))
   {
     printk("nvme_ns is null?.\n");
@@ -148,11 +149,9 @@ err:
   {
     kfree(ret_buf);
   }
-  return -1;
+  return 0;
 }
-static void __exit nvme_communication_exit(void)
-{
-
+static void __exit nvme_communication_exit(void) {
   printk(KERN_INFO "Exiting NVMe Communication module\n");
 }
 
