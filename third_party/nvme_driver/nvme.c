@@ -2,10 +2,6 @@
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
-struct block_device *blk_dev;
-struct gendisk *bd_disk;
-struct nvme_ns *ns;
-
 union nvme_result {
   __le16 u16;
   __le32 u32;
@@ -99,13 +95,13 @@ out:
   return ret;
 }
 
-int submit_admin_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
-  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, nvme_cmd, buffer, bufflen, result, timeout);
-}
-
-int submit_io_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
-  return nvme_submit_user_cmd(bd_disk, ns->queue, nvme_cmd, buffer, bufflen, result, timeout);
-}
+// int submit_admin_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
+  // return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, nvme_cmd, buffer, bufflen, result, timeout);
+// }
+// 
+// int submit_io_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout) {
+  // return nvme_submit_user_cmd(bd_disk, ns->queue, nvme_cmd, buffer, bufflen, result, timeout);
+// }
 
 static int __init nvme_communication_init(void) {
   
@@ -113,20 +109,19 @@ static int __init nvme_communication_init(void) {
 
   void *ret_buf = NULL;
   struct nvme_command *ncmd = NULL;
-  
-  bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
+  struct block_device *bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
   if (IS_ERR(bdev)) {
     printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
     return -1;
   }
 
-  bd_disk = bdev->bd_disk;
+  struct gendisk *bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
     printk("bd_disk is null?.\n");
     goto err;
   }
   
-  ns = bdev->bd_disk->private_data;
+  struct nvme_ns *ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns))
   {
     printk("nvme_ns is null?.\n");
