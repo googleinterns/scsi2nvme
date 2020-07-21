@@ -65,9 +65,6 @@ cc_library(
   srcs = ["read.cc"],
   deps = [
       "//lib/translator:common",
-      "//lib:scsi_lib",
-      "//third_party/spdk:nvme_lib",
-      "@com_google_absl//absl/types:span",
   ],
   visibility = ["//visibility:public"],
 )

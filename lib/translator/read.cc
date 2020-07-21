@@ -6,10 +6,6 @@
 #include <netinet/in.h>
 #endif
 
-#include "absl/types/span.h"
-
-#include "common.h"
-
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions
@@ -126,7 +122,7 @@ StatusCode Read(uint8_t rdprotect, bool fua, uint64_t lba,
 
 }  // namespace
 
-StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
                        nvme::GenericQueueEntryCmd& nvme_cmd,
                        Allocation& allocation, uint32_t nsid) {
   scsi::Read6Command read_cmd;
@@ -153,7 +149,7 @@ StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
   return status;
 }
 
-StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid) {
   scsi::Read10Command read_cmd;
@@ -168,7 +164,7 @@ StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
               nvme_cmd, allocation, nsid);
 }
 
-StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid) {
   scsi::Read12Command read_cmd;
@@ -183,7 +179,7 @@ StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
               nvme_cmd, allocation, nsid);
 }
 
-StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid) {
   scsi::Read16Command read_cmd;

@@ -18,7 +18,6 @@
 #include "third_party/spdk/nvme.h"
 
 #include "common.h"
-#include "lib/scsi.h"
 
 namespace translator {
 
@@ -35,19 +34,19 @@ namespace translator {
 // different memory layouts. They all call the Read() translation function,
 // which calls LegacyRead() and handles some additional fields
 
-StatusCode Read6ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
                        nvme::GenericQueueEntryCmd& nvme_cmd,
                        Allocation& allocation, uint32_t nsid);
 
-StatusCode Read10ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid);
 
-StatusCode Read12ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid);
 
-StatusCode Read16ToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid);
 
