@@ -72,8 +72,8 @@ class Span {
   Span(T* ptr, size_t len) : ptr_(ptr), len_(len) {}
   template <size_t N>
   Span(T (&a)[N]) : Span(a, N) {}
-  template <typename Y,
-            typename = std::enable_if<std::is_convertible<T*, Y*>::value>>
+  template <typename Y, typename = std::enable_if<std::is_same<
+                            typename std::decay<T*>::type, Y*>::value>>
   Span(const Span<Y>& ref) : Span(ref.data(), ref.size()) {}
   T* data() const { return ptr_; }
   size_t size() const { return len_; }
