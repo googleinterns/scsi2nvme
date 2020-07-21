@@ -56,23 +56,23 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       break;
     case scsi::OpCode::kRead6:
       pipeline_status_ =
-          Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid);
-      nvme_cmd_count_ = 1;
+          Read6ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_, nsid);
+      nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kRead10:
       pipeline_status_ =
-          Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid);
-      nvme_cmd_count_ = 1;
+          Read10ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_, nsid);
+      nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kRead12:
       pipeline_status_ =
-          Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid);
-      nvme_cmd_count_ = 1;
+          Read12ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_, nsid);
+      nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kRead16:
       pipeline_status_ =
-          Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid);
-      nvme_cmd_count_ = 1;
+          Read16ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_, nsid);
+      nvme_cmd_count_ = 2;
       break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));

@@ -38,8 +38,11 @@ class ReadTest : public ::testing::Test {
   static void SetUpTestSuite() {
     // Mocks AllocPages to not return a null (0) value
     auto alloc_callback = [](uint16_t count) -> uint64_t {
-      EXPECT_EQ(1, count);
-      return 1337;
+      if (count != 0) {
+        return 1337;
+      } else {
+        return 0;
+      }
     };
     void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
     translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
@@ -48,11 +51,11 @@ class ReadTest : public ::testing::Test {
 
 TEST_F(ReadTest, Read6ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read6Command) - 1];
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -69,19 +72,26 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
-  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
-  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
-  EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNsid, nvme_cmd.nsid);
-  EXPECT_EQ(host_endian_lba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(0, nvme_cmd.cdw[1]);
-  EXPECT_EQ(nlb, nvme_cmd.cdw[2]);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
+  EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
+
+  nvme::GenericQueueEntryCmd nvme_read = nvme_cmds[1];
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_read.opc);
+  EXPECT_EQ(0, nvme_read.psdt);
+  EXPECT_EQ(kNsid, nvme_read.nsid);
+  EXPECT_EQ(host_endian_lba, nvme_read.cdw[0]);
+  EXPECT_EQ(0, nvme_read.cdw[1]);
+  EXPECT_EQ(nlb, nvme_read.cdw[2]);
 }
 
 TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
@@ -94,28 +104,35 @@ TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
-  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
-  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
-  EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNsid, nvme_cmd.nsid);
-  EXPECT_EQ(host_endian_lba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(0, nvme_cmd.cdw[1]);
-  EXPECT_EQ(255, nvme_cmd.cdw[2]);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
+  EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
+
+  nvme::GenericQueueEntryCmd nvme_read = nvme_cmds[1];
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_read.opc);
+  EXPECT_EQ(0, nvme_read.psdt);
+  EXPECT_EQ(kNsid, nvme_read.nsid);
+  EXPECT_EQ(host_endian_lba, nvme_read.cdw[0]);
+  EXPECT_EQ(0, nvme_read.cdw[1]);
+  EXPECT_EQ(255, nvme_read.cdw[2]);
 }
 
 TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read10Command) - 1];
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -131,28 +148,35 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
-  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
-  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
-  EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNsid, nvme_cmd.nsid);
-  EXPECT_EQ(host_endian_lba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(0, nvme_cmd.cdw[1]);
-  EXPECT_EQ(kCdw12, nvme_cmd.cdw[2]);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
+  EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
+
+  nvme::GenericQueueEntryCmd nvme_read = nvme_cmds[1];
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_read.opc);
+  EXPECT_EQ(0, nvme_read.psdt);
+  EXPECT_EQ(kNsid, nvme_read.nsid);
+  EXPECT_EQ(host_endian_lba, nvme_read.cdw[0]);
+  EXPECT_EQ(0, nvme_read.cdw[1]);
+  EXPECT_EQ(kCdw12, nvme_read.cdw[2]);
 }
 
 TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read12Command) - 1];
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read12ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -168,28 +192,35 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read12ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
-  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
-  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
-  EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNsid, nvme_cmd.nsid);
-  EXPECT_EQ(host_endian_lba, nvme_cmd.cdw[0]);
-  EXPECT_EQ(0, nvme_cmd.cdw[1]);
-  EXPECT_EQ(kCdw12, nvme_cmd.cdw[2]);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
+  EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
+
+  nvme::GenericQueueEntryCmd nvme_read = nvme_cmds[1];
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_read.opc);
+  EXPECT_EQ(0, nvme_read.psdt);
+  EXPECT_EQ(kNsid, nvme_read.nsid);
+  EXPECT_EQ(host_endian_lba, nvme_read.cdw[0]);
+  EXPECT_EQ(0, nvme_read.cdw[1]);
+  EXPECT_EQ(kCdw12, nvme_read.cdw[2]);
 }
 
 TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
   uint8_t scsi_cmd[sizeof(scsi::Read16Command) - 1];
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read16ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -203,11 +234,11 @@ TEST_F(ReadTest, Read16ToNvmeLongTransferLengthShouldReturnInvalidInputStatus) {
                              .transfer_length = transfer_length};
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read16ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
@@ -224,19 +255,26 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
                              .transfer_length = kTransferLen};
   uint8_t scsi_cmd[sizeof(scsi::Read16Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read16ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read16ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
 
-  EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
-  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_cmd.opc);
-  EXPECT_EQ(0, nvme_cmd.psdt);
-  EXPECT_EQ(kNsid, nvme_cmd.nsid);
-  EXPECT_EQ(cdw10, nvme_cmd.cdw[0]);
-  EXPECT_EQ(cdw11, nvme_cmd.cdw[1]);
-  EXPECT_EQ(kCdw12, nvme_cmd.cdw[2]);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  nvme::GenericQueueEntryCmd nvme_identify_ns = nvme_cmds[0];
+  EXPECT_EQ((uint8_t)nvme::AdminOpcode:: kIdentify, nvme_identify_ns.opc);
+  EXPECT_EQ(kNsid, nvme_identify_ns.nsid);
+  EXPECT_EQ(0, nvme_identify_ns.cdw[0]);
+
+  nvme::GenericQueueEntryCmd nvme_read = nvme_cmds[1];
+  EXPECT_EQ((uint8_t)nvme::NvmOpcode::kRead, nvme_read.opc);
+  EXPECT_EQ(0, nvme_read.psdt);
+  EXPECT_EQ(kNsid, nvme_read.nsid);
+  EXPECT_EQ(cdw10, nvme_read.cdw[0]);
+  EXPECT_EQ(cdw11, nvme_read.cdw[1]);
+  EXPECT_EQ(kCdw12, nvme_read.cdw[2]);
 }
 
 TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {
@@ -248,11 +286,11 @@ TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kNoTranslation, status_code);
 }
 
@@ -265,11 +303,11 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read10Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read10ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read10ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
@@ -277,7 +315,6 @@ TEST_F(ReadTest, ShouldReturnInvalidInputStatusForUnsupportedRdprotect) {
 // alloc_callback behaviour that's required before all other tests
 TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
   auto alloc_callback = [](uint16_t count) -> uint64_t {
-    EXPECT_EQ(1, count);
     return 0;
   };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
@@ -289,11 +326,11 @@ TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
   };
   uint8_t scsi_cmd[sizeof(scsi::Read6Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
-  translator::Allocation allocation = {};
+  nvme::GenericQueueEntryCmd nvme_cmds[2] = {};
+  translator::Allocation allocations[2] = {};
 
   translator::StatusCode status_code =
-      translator::Read6ToNvme(scsi_cmd, nvme_cmd, allocation, kNsid);
+      translator::Read6ToNvme(scsi_cmd, nvme_cmds, allocations, kNsid);
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 

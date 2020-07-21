@@ -25,7 +25,9 @@ namespace translator {
 // Each translation function takes in a raw SCSI command in bytes,
 // casts it to scsi::Read[6,10,12,16]Command,
 // ensures SCSI command is layed out in Big Endian using hton[sl](),
-// and builds an NVMe Read command
+// and builds 2 commands:
+// 1. NVMe Identify Namespace (to get the size of NVMe blocks in bytes)
+// 2. NVMe Read command
 
 // Read(6) is obsolete, but may still be implemented on some devices.
 // As such, it will call the LegacyRead() translation function
@@ -35,20 +37,20 @@ namespace translator {
 // which calls LegacyRead() and handles some additional fields
 
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid);
+                       Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                       Span<Allocation> allocations, uint32_t nsid);
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid);
+                        Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                        Span<Allocation> allocations, uint32_t nsid);
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid);
+                        Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                        Span<Allocation> allocations, uint32_t nsid);
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid);
+                        Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                        Span<Allocation> allocations, uint32_t nsid);
 
 }  // namespace translator
 
