@@ -12,11 +12,6 @@
 #ifndef NVME2SCSI_NVME_H
 #define NVME2SCSI_NVME_H
 
-#define MODULE_VERSION "0.1"
-#define MODULE_AUTHOR "wnukowski@google.com"
-#define MODULE_LICENSE "GPL"
-#define MODULE_DESCRIPTION "Kernel module to communicate with NVMe devices."
-
 // TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one 
 // fixed device is enough for an MVP
 #define NVME_DEVICE_PATH "/dev/nvme0n1"

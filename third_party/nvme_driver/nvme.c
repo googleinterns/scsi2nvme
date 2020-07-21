@@ -166,7 +166,5 @@ static void __exit nvme_communication_exit(void)
 module_init(nvme_communication_init);
 module_exit(nvme_communication_exit);
 
-MODULE_LICENSE(MODULE_LICENSE);
-MODULE_AUTHOR(MODULE_AUTHOR);
-MODULE_DESCRIPTION(MODULE_DESCRIPTION);
-MODULE_VERSION(MODULE_VERSION);
+MODULE_LICENSE("GPL");
+MODULE_VERSION("0.1");
