@@ -185,6 +185,16 @@ enum class OpCode : uint8_t {
   kVerify12 = 0xaf,
 };
 
+enum class PageCode : uint8_t {
+  kSupportedVpd = 0x00,
+  kUnitSerialNumber = 0x80,
+  kDeviceIdentification = 0x83,
+  kExtended = 0x86,
+  kBlockLimitsVpd = 0xb0,
+  kBlockDeviceCharacteristicsVpd = 0xb1,
+  kLogicalBlockProvisioningVpd = 0xb2
+};
+
 // SCSI Reference Manual Table 10
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct ControlByte {
@@ -228,7 +238,7 @@ struct InquiryCommand {
   uint8_t reserved : 6;
   bool obsolete : 1;  // formerly CMDDT
   bool evpd : 1;      // Enable Vital Product Data (EVPD)
-  uint8_t page_code : 8;
+  PageCode page_code : 8;
   uint16_t allocation_length : 16;
   ControlByte control_byte;
 } ABSL_ATTRIBUTE_PACKED;
@@ -296,9 +306,9 @@ struct InquiryData {
   bool reserved_6 : 1;
   bool cmdque : 1;  // Command Management Model bit
   bool vs_2 : 1;    // vendor specific bit
-  uint64_t vendor_identification : 64;
+  char vendor_identification[8];
   uint8_t product_identification[16];
-  uint32_t product_revision_level : 32;
+  uint8_t product_revision_level[4];
   uint8_t vendor_specific_1[20];
   uint8_t reserved_7 : 4;
   uint8_t clocking : 2;
@@ -873,6 +883,151 @@ struct UnmapBlockDescriptor {
   uint32_t reserved_1 : 32;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
+
+// SCSI Reference Manual Table 164
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct RequestSenseCommand {
+  uint8_t reserved_1 : 7;
+  bool desc : 1;
+  uint16_t reserved_2 : 16;
+  uint8_t allocation_length : 8;
+  ControlByte control_byte;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(RequestSenseCommand) == 5);
+
+// SCSI Reference Manual Table 27
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct FixedFormatSenseData {
+  bool valid : 1;
+  uint8_t response_code : 7;
+  uint8_t _obsolete : 8;
+  bool filemark : 1;
+  bool eom : 1;
+  bool ili : 1;
+  bool reserved_1 : 1;
+  uint8_t sense_key : 4;
+  uint32_t info : 32;
+  uint8_t additional_sense_length : 8;
+  uint32_t command_specific_info : 32;
+  AdditionalSenseCode additional_sense_code : 8;
+  AdditionalSenseCodeQualifier additional_sense_code_qualifier : 8;
+  uint8_t field_replaceable_unit_code : 8;
+  bool sksv : 1;
+  uint32_t sense_key_specific : 23;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(FixedFormatSenseData) == 18);
+
+// SCSI Reference Manual Table 27
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct DescriptorFormatSenseData {
+  bool reserved_1 : 1;
+  uint8_t response_code : 7;
+  uint8_t reserved_2 : 4;
+  SenseKey sense_key : 4;
+  AdditionalSenseCode additional_sense_code : 8;
+  AdditionalSenseCodeQualifier additional_sense_code_qualifier : 8;
+  uint32_t reserved_3 : 24;
+  uint8_t additional_sense_length : 8;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DescriptorFormatSenseData) == 8);
+// SCSI Reference Manual Table 483
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct SupportedVitalProductData {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint8_t _reserved : 8;
+  uint8_t page_length : 8;
+  // PageCode supported_page_list[256];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(SupportedVitalProductData) == 4);
+
+// SCSI Reference Manual Table 484
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct UnitSerialNumber {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint8_t _reserved : 8;
+  uint8_t page_length : 8;
+  // uint8_t product_serial_number[256];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(UnitSerialNumber) == 4);
+
+// SCSI Reference Manual Table 460
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct IdentificationDescriptor {
+  uint8_t protocol_identifier : 4;
+  uint8_t code_set : 4;
+  bool piv : 1;
+  bool _reserved1 : 1;
+  uint8_t association : 2;
+  uint8_t identifier_type : 4;
+  uint8_t _reserved2 : 8;
+  uint8_t identifier_length : 8;
+  // uint8_t identifier[256];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(IdentificationDescriptor) == 4);
+
+// SCSI Reference Manual Table 459
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct DeviceIdentificationVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint8_t page_length : 8;
+  // IdentificationDescriptor identification_descriptor_list[256];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DeviceIdentificationVpd) == 3);
+
+// SCSI Reference Manual Table 467
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct LogicalBlockProvisioningVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint16_t page_length : 16;
+  uint8_t threshold_exponent : 8;
+  bool lbpu : 1;
+  bool lbpws : 1;
+  bool lbpws10 : 1;
+  uint8_t lbprz : 3;
+  bool anc_sup : 1;
+  bool dp : 1;
+  uint8_t min_percentage : 5;
+  uint8_t provisioning_type : 3;
+  uint8_t threshold_percentage : 8;
+  uint8_t provisioning_group_descriptor[56];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(LogicalBlockProvisioningVpd) == 64);
+
+// SCSI Reference Manual Table 450
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct BlockLimitsVpd {
+  PeripheralQualifier peripheral_qualifier : 3;
+  PeripheralDeviceType peripheral_device_type : 5;
+  PageCode page_code : 8;
+  uint16_t page_length : 16;
+  uint8_t _reserved : 7;
+  bool wsnz : 1;
+  uint8_t max_compare_write_length : 8;
+  uint16_t optimal_translater_length_granularity : 16;
+  uint32_t max_transfer_length : 32;
+  uint32_t optimal_transfer_length : 32;
+  uint32_t max_prefetch_length : 32;
+  uint32_t max_unmap_lba_count : 32;
+  uint32_t max_unmap_block_descriptor_count : 32;
+  uint32_t optimal_unmap_granularity : 32;
+  bool ugavalid : 1;
+  uint32_t unmap_graularity_alignment : 31;
+  uint64_t max_write_same_length : 64;
+  uint32_t max_atomic_transfer_length : 32;
+  uint32_t atomic_alignment : 32;
+  uint32_t atomic_transfer_length_granularity : 32;
+  uint32_t max_atomic_transfer_length_with_atomic_boundary : 32;
+  uint32_t max_atomic_boundary_size : 32;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(BlockLimitsVpd) == 64);
 
 }  // namespace scsi
 

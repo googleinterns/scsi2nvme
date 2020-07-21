@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "translation.h"
+#include "inquiry.h"
+
+#include "request_sense.h"
 
 #include "read.h"
 
@@ -43,6 +46,13 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
+      pipeline_status_ =
+          InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
+                        response.alloc_len, lun, allocations_);
+      nvme_cmd_count_ = 2;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
       break;
     case scsi::OpCode::kRead6:
       pipeline_status_ =
@@ -91,9 +101,15 @@ ApiStatus Translation::Complete(
 
   // Switch cases should not return
   ApiStatus ret;
+  absl::Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
+      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
       ret = ApiStatus::kSuccess;
       break;
   }
@@ -124,5 +140,4 @@ void Translation::FlushMemory() {
     }
   }
 }
-
 };  // namespace translator
