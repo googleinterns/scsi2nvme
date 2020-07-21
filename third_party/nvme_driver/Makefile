@@ -1,4 +1,4 @@
-obj-m += nvme.o
+obj-m += nvme_lib.o
 ccflags-y := -std=gnu99 -Wno-declaration-after-statement
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
