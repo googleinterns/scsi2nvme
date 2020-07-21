@@ -15,19 +15,17 @@
 #ifndef LIB_TRANSLATOR_READ_CAPACITY_10_H
 #define LIB_TRANSLATOR_READ_CAPACITY_10_H
 
-#include "absl/types/span.h"
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 #include "lib/scsi.h"
+#include "third_party/spdk/nvme.h"
 
 namespace translator {
 
-StatusCode ReadCapacity10ToNvme(absl::Span<const uint8_t> raw_scsi,
+StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
                                 nvme::GenericQueueEntryCmd& identify_ns,
                                 scsi::LunAddress lun, Allocation allocation);
 
-StatusCode ReadCapacity10ToScsi(absl::Span<uint8_t> buffer,
+StatusCode ReadCapacity10ToScsi(Span<uint8_t> buffer,
                                 nvme::GenericQueueEntryCmd gen_identify_ns);
 
 };  // namespace translator

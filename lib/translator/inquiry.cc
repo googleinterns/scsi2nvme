@@ -337,10 +337,10 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
   };
 
   uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[0].dptr.prp.prp1);
-  Span ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
-  Span ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
+  Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
   nvme::IdentifyControllerData identify_ctrl = {};
   if (!ReadValue(ctrl_span, identify_ctrl)) {
