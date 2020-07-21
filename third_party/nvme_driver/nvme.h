@@ -14,24 +14,26 @@
 
 #include "nvme_internal.h"
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/blkdev.h>
-#include <linux/genhd.h>
 #include <linux/bio.h>
 #include <linux/blk-mq.h>
 #include <linux/blk_types.h>
+#include <linux/blkdev.h>
 #include <linux/completion.h>
-#include <linux/nvme_ioctl.h>
+#include <linux/fs.h>
+#include <linux/genhd.h>
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/nvme.h>
+#include <linux/nvme_ioctl.h>
 
-// TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one 
+// TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one
 // fixed device is enough for an MVP
 #define NVME_DEVICE_PATH "/dev/nvme0n1"
 
-int submit_admin_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout);
-int submit_io_command(struct nvme_command *nvme_cmd, void *buffer, unsigned bufflen, u32 *result, unsigned timeout);
+int submit_admin_command(struct nvme_command* nvme_cmd, void* buffer,
+                         unsigned bufflen, u32* result, unsigned timeout);
+int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
+                      unsigned bufflen, u32* result, unsigned timeout);
 
-#endif // NVME2SCSI_NVME_H
+#endif  // NVME2SCSI_NVME_H
