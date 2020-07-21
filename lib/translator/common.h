@@ -63,6 +63,18 @@ void SetDebugCallback(void (*callback)(const char*));
 void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t));
 
+// Host to Network endianness transformation for uint64_t
+// Network endianness is always big endian
+// Converts value to big endian if Host is little endian
+// No op if Host is big endian
+uint64_t htonll(uint64_t value);
+
+// Network to Host endianness transformation for uint64_t
+// Network endianness is always big endian
+// Converts value to little endian if Host is little endian
+// No op if Host is big endian
+#define ntohll htonll
+
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
