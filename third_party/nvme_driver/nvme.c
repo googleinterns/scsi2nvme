@@ -1,5 +1,11 @@
 #include "nvme.h"
 
+
+MODULE_LICENSE("GPL");
+MODULE_VERSION("0.1");
+MODULE_AUTHOR("wnukowski@google.com")
+MODULE_DESCRIPTION("Kernel module to talk to NVME devices")
+
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
 union nvme_result {
@@ -153,5 +159,3 @@ static void __exit nvme_communication_exit(void)
 module_init(nvme_communication_init);
 module_exit(nvme_communication_exit);
 
-MODULE_LICENSE("GPL");
-MODULE_VERSION("0.1");
