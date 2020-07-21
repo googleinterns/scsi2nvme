@@ -43,7 +43,7 @@ TEST(Common, ShouldNotReadValueFromSpan) {
   uint8_t buffer[sizeof(scsi::Read6Command) - 1];
 
   bool result = translator::ReadValue(buffer, cmd);
-  EXPECT_FALSE(result);
+  ASSERT_FALSE(result);
 }
 
 TEST(Common, ShouldCorrectlyReadValueFromSpan) {
@@ -51,7 +51,7 @@ TEST(Common, ShouldCorrectlyReadValueFromSpan) {
   uint8_t buffer[sizeof(scsi::ControlByte)] = {0b11000100};
 
   bool result = translator::ReadValue(buffer, cb);
-  EXPECT_TRUE(result);
+  ASSERT_TRUE(result);
   EXPECT_EQ(0b00, cb.obsolete);
   EXPECT_EQ(0b1, cb.naca);
   EXPECT_EQ(0b000, cb.reserved);
