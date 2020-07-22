@@ -27,6 +27,11 @@ struct BeginResponse {
   uint32_t alloc_len;  // Defines size of buffer passed to Translation::Complete
 };
 
+struct CompleteResponse {
+  ApiStatus status;
+  scsi::Status scsi_status;  // Return value of library consumer functions
+};
+
 class Translation {
  public:
   Translation()
@@ -37,8 +42,9 @@ class Translation {
   // GetNvmeCmds()
   BeginResponse Begin(Span<const uint8_t> scsi_cmd, scsi::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  ApiStatus Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
-                     Span<uint8_t> buffer);
+  CompleteResponse Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
+                            Span<uint8_t> buffer_in,
+                            Span<uint8_t> sense_buffer);
   // Returns a span containing translated NVMe commands.
   Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
   // Aborts a given pipeline sequence and cleans up memory

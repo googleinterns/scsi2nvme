@@ -16,6 +16,7 @@
 #include "inquiry.h"
 #include "read_capacity_10.h"
 #include "request_sense.h"
+#include "status.h"
 
 namespace translator {
 
@@ -68,39 +69,68 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   return response;
 }
 
-ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
-                                Span<uint8_t> buffer) {
+CompleteResponse Translation::Complete(
+    Span<const nvme::GenericQueueEntryCpl> cpl_data, Span<uint8_t> buffer,
+    Span<uint8_t> sense_buffer) {
+  CompleteResponse resp = {};
   if (pipeline_status_ == StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Complete called before Begin");
-    return ApiStatus::kFailure;
+    resp.status = ApiStatus::kFailure;
+    return resp;
   }
+
+  if (cpl_data.size() != nvme_cmd_count_) {
+    DebugLog(
+        "Invalid use of API, completion count %u does not equal command count "
+        "%u",
+        cpl_data.size(), nvme_cmd_count_);
+    resp.status = ApiStatus::kFailure;
+    return resp;
+  }
+
   if (pipeline_status_ == StatusCode::kFailure) {
-    // TODO fill buffer with SCSI CHECK CONDITION response
+    ScsiStatus scsi_status = {
+        .status = scsi::Status::kCheckCondition,
+        .sense_key = scsi::SenseKey::kIllegalRequest,
+        .asc = scsi::AdditionalSenseCode::kInvalidFieldInCdb,
+        .ascq = scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo};
+    fill_sense_buffer(sense_buffer, scsi_status);
     AbortPipeline();
-    return ApiStatus::kSuccess;
+    resp.status = ApiStatus::kSuccess;
+    resp.scsi_status = scsi_status.status;
+    return resp;
+  }
+
+  // Verify NVMe commands completed successfully. If not translate error.
+  for (uint32_t i = 0; i < cpl_data.size(); ++i) {
+    const nvme::GenericQueueEntryCpl& cpl_entry = cpl_data[i];
+    const nvme::CplStatus& cpl_status = cpl_entry.cpl_status;
+    ScsiStatus scsi_status = StatusToScsi(cpl_status.sct, cpl_status.sc);
+    if (scsi_status.status != scsi::Status::kGood) {
+      fill_sense_buffer(sense_buffer, scsi_status);
+      resp.status = ApiStatus::kSuccess;
+      resp.scsi_status = scsi_status.status;
+      return resp;
+    }
   }
 
   // Switch cases should not return
-  ApiStatus ret;
+  resp.status = ApiStatus::kSuccess;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
-
   switch (opc) {
     case scsi::OpCode::kInquiry:
       pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
-      ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToScsi(buffer, nvme_cmds_[0]);
-      ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
-      ret = ApiStatus::kSuccess;
       break;
   }
   AbortPipeline();
-  return ret;
+  return resp;
 }
 
 Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
