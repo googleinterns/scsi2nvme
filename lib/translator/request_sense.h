@@ -18,18 +18,17 @@
 #include <cstring>
 #include <type_traits>
 
-#include "absl/types/span.h"
 #include "common.h"
 
 #include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
-StatusCode RequestSenseToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode RequestSenseToNvme(Span<const uint8_t> scsi_cmd,
                               uint32_t& allocation_length);
 
-StatusCode RequestSenseToScsi(absl::Span<const uint8_t> scsi_cmd,
-                              absl::Span<uint8_t> buffer);
+StatusCode RequestSenseToScsi(Span<const uint8_t> scsi_cmd,
+                              Span<uint8_t> buffer);
 
 }  // namespace translator
 #endif

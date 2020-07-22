@@ -19,8 +19,6 @@
 
 #include "common.h"
 #include "lib/scsi.h"
-
-#include "absl/types/span.h"
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
@@ -33,11 +31,11 @@ namespace translator {
 // Postconditions:
 // Fills out GenericQueueEntryCmd with appropriate Identify parameters and
 // allocates PRPs for responses
-StatusCode InquiryToNvme(absl::Span<const uint8_t> scsi_cmd,
+StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& identify_ns,
                          nvme::GenericQueueEntryCmd& identify_ctrl,
                          uint32_t& alloc_len, scsi::LunAddress lun,
-                         absl::Span<Allocation> allocations);
+                         Span<Allocation> allocations);
 
 // Preconditions:
 // scsi_cmd is a pointer to a Inquiry Command without the OpCode
@@ -46,9 +44,8 @@ StatusCode InquiryToNvme(absl::Span<const uint8_t> scsi_cmd,
 
 // Postconditions:
 // buffer contains SCSI response based on scsi_cmd parameters
-StatusCode InquiryToScsi(
-    absl::Span<const uint8_t> scsi_cmd, absl::Span<uint8_t> buffer,
-    absl::Span<const nvme::GenericQueueEntryCmd> nvme_cmds);
+StatusCode InquiryToScsi(Span<const uint8_t> scsi_cmd, Span<uint8_t> buffer,
+                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds);
 
 };  // namespace translator
 #endif

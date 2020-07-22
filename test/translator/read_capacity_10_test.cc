@@ -21,8 +21,8 @@ class ReadCapacity10Test : public ::testing::Test {
  protected:
   scsi::ReadCapacity10Command read_capacity_10_cmd_;
   nvme::GenericQueueEntryCmd identify_cmds_[1];
-  absl::Span<nvme::GenericQueueEntryCmd> nvme_cmds_;
-  absl::Span<const uint8_t> scsi_cmd_;
+  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds_;
+  translator::Span<const uint8_t> scsi_cmd_;
   nvme::IdentifyNamespace identify_ns_;
 
   uint8_t buffer_[200];
@@ -53,7 +53,8 @@ class ReadCapacity10Test : public ::testing::Test {
   void SetCommand() {
     const uint8_t* cmd_ptr =
         reinterpret_cast<const uint8_t*>(&read_capacity_10_cmd_);
-    scsi_cmd_ = absl::MakeSpan(cmd_ptr, sizeof(scsi::ReadCapacity10Command));
+    scsi_cmd_ = translator::Span<const uint8_t>(
+        cmd_ptr, sizeof(scsi::ReadCapacity10Command));
   }
 
   void SetNamespace(nvme::IdentifyNamespace* identify_ns_) {

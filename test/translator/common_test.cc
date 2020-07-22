@@ -14,7 +14,6 @@
 
 #include "lib/translator/common.h"
 
-#include "absl/types/span.h"
 #include "gtest/gtest.h"
 #include "lib/scsi.h"
 

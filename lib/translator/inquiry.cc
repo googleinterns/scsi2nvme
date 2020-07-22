@@ -22,7 +22,7 @@ namespace translator {
 namespace {
 void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
                               const nvme::IdentifyNamespace& identify_ns,
-                              absl::Span<uint8_t> buffer) {
+                              Span<uint8_t> buffer) {
   scsi::InquiryData result = {
       .version = scsi::Version::kSpc4,
       .response_data_format = scsi::ResponseDataFormat::kCompliant,
@@ -35,10 +35,10 @@ void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
   // Shall be set to “NVMe" followed by 4 spaces: “NVMe    “
   // Vendor Identification is not null terminated.
   static_assert(sizeof(result.vendor_identification) ==
-                kNvmeVendorIdentification.size());
+                strlen(kNvmeVendorIdentification));
 
-  memcpy(result.vendor_identification, kNvmeVendorIdentification.data(),
-         kNvmeVendorIdentification.size());
+  memcpy(result.vendor_identification, kNvmeVendorIdentification,
+         strlen(kNvmeVendorIdentification));
 
   // Shall be set to the first 16 bytes of the Model Number (MN) field within
   // the Identify Controller Data Structure
@@ -59,7 +59,7 @@ void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
   WriteValue(result, buffer);
 }
 
-void TranslateSupportedVpdPages(absl::Span<uint8_t> buffer) {
+void TranslateSupportedVpdPages(Span<uint8_t> buffer) {
   scsi::PageCode supported_page_list[7] = {
       scsi::PageCode::kSupportedVpd,
       scsi::PageCode::kUnitSerialNumber,
@@ -80,7 +80,7 @@ void TranslateSupportedVpdPages(absl::Span<uint8_t> buffer) {
 void TranslateUnitSerialNumberVpd(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, uint32_t nsid,
-    absl::Span<uint8_t> buffer) {
+    Span<uint8_t> buffer) {
   scsi::UnitSerialNumber result = {.page_code =
                                        scsi::PageCode::kUnitSerialNumber};
 
@@ -154,7 +154,7 @@ void TranslateUnitSerialNumberVpd(
 }
 
 void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
-                             absl::Span<uint8_t> buffer) {
+                             Span<uint8_t> buffer) {
   // The value is in units of the minimum memory
   // page size (CAP.MPSMIN) and is reported as a power of two (2^n).
   // A value of 0h indicates that there is no maximum data transfer size
@@ -214,7 +214,7 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
 
 void TranslateLogicalBlockProvisioningVpd(
     const nvme::IdentifyControllerData& identify_ctrl,
-    const nvme::IdentifyNamespace& identify_ns, absl::Span<uint8_t> buffer) {
+    const nvme::IdentifyNamespace& identify_ns, Span<uint8_t> buffer) {
   bool ad = identify_ctrl.oncs.dsm;
 
   scsi::LogicalBlockProvisioningVpd result = {
@@ -286,11 +286,11 @@ void TranslateLogicalBlockProvisioningVpd(
 
 }  // namespace
 
-StatusCode InquiryToNvme(absl::Span<const uint8_t> raw_scsi,
+StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
                          nvme::GenericQueueEntryCmd& identify_ns,
                          nvme::GenericQueueEntryCmd& identify_ctrl,
                          uint32_t& alloc_len, scsi::LunAddress lun,
-                         absl::Span<Allocation> allocations) {
+                         Span<Allocation> allocations) {
   scsi::InquiryCommand cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed Inquiry Command");
@@ -327,9 +327,8 @@ StatusCode InquiryToNvme(absl::Span<const uint8_t> raw_scsi,
 }
 
 // Main logic engine for the Inquiry command
-StatusCode InquiryToScsi(
-    absl::Span<const uint8_t> raw_scsi, absl::Span<uint8_t> buffer,
-    absl::Span<const nvme::GenericQueueEntryCmd> nvme_cmds) {
+StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
+                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds) {
   scsi::InquiryCommand inquiry_cmd = {};
 
   if (!ReadValue(raw_scsi, inquiry_cmd)) {
@@ -338,11 +337,10 @@ StatusCode InquiryToScsi(
   };
 
   uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[0].dptr.prp.prp1);
-  auto ctrl_span =
-      absl::MakeSpan(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
-  auto ns_span = absl::MakeSpan(ns_dptr, sizeof(nvme::IdentifyNamespace));
+  Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
   nvme::IdentifyControllerData identify_ctrl = {};
   if (!ReadValue(ctrl_span, identify_ctrl)) {

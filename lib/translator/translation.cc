@@ -19,7 +19,7 @@
 
 namespace translator {
 
-BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
+BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
@@ -39,7 +39,7 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
 
-  absl::Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
+  Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
@@ -68,9 +68,8 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   return response;
 }
 
-ApiStatus Translation::Complete(
-    absl::Span<const nvme::GenericQueueEntryCpl> cpl_data,
-    absl::Span<uint8_t> buffer) {
+ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
+                                Span<uint8_t> buffer) {
   if (pipeline_status_ == StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Complete called before Begin");
     return ApiStatus::kFailure;
@@ -83,7 +82,7 @@ ApiStatus Translation::Complete(
 
   // Switch cases should not return
   ApiStatus ret;
-  absl::Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
+  Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
 
   switch (opc) {
@@ -104,8 +103,8 @@ ApiStatus Translation::Complete(
   return ret;
 }
 
-absl::Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
-  return absl::MakeSpan(nvme_cmds_, nvme_cmd_count_);
+Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
+  return Span(nvme_cmds_, nvme_cmd_count_);
 }
 
 void Translation::AbortPipeline() {

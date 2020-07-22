@@ -16,7 +16,7 @@
 
 namespace translator {
 
-StatusCode ReadCapacity10ToNvme(absl::Span<const uint8_t> raw_scsi,
+StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
                                 nvme::GenericQueueEntryCmd& identify_ns,
                                 scsi::LunAddress lun, Allocation allocation) {
   scsi::ReadCapacity10Command cmd = {};
@@ -46,10 +46,10 @@ StatusCode ReadCapacity10ToNvme(absl::Span<const uint8_t> raw_scsi,
   return StatusCode::kSuccess;
 }
 
-StatusCode ReadCapacity10ToScsi(absl::Span<uint8_t> buffer,
+StatusCode ReadCapacity10ToScsi(Span<uint8_t> buffer,
                                 nvme::GenericQueueEntryCmd gen_identify_ns) {
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(gen_identify_ns.dptr.prp.prp1);
-  auto ns_span = absl::MakeSpan(ns_dptr, sizeof(nvme::IdentifyNamespace));
+  Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
   nvme::IdentifyNamespace identify_ns = {};
   if (!ReadValue(ns_span, identify_ns)) {

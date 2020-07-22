@@ -24,8 +24,8 @@ class InquiryTest : public ::testing::Test {
  protected:
   scsi::InquiryCommand inquiry_cmd_;
   nvme::GenericQueueEntryCmd identify_cmds_[2];
-  absl::Span<const uint8_t> scsi_cmd_;
-  absl::Span<nvme::GenericQueueEntryCmd> nvme_cmds_;
+  translator::Span<const uint8_t> scsi_cmd_;
+  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds_;
   nvme::IdentifyControllerData identify_ctrl_;
   nvme::IdentifyNamespace identify_ns_;
   uint8_t buffer_[200];
@@ -56,7 +56,7 @@ class InquiryTest : public ::testing::Test {
 
   void SetCommand() {
     const uint8_t* cmd_ptr = reinterpret_cast<const uint8_t*>(&inquiry_cmd_);
-    scsi_cmd_ = absl::MakeSpan(cmd_ptr, sizeof(scsi::InquiryCommand));
+    scsi_cmd_ = translator::Span(cmd_ptr, sizeof(scsi::InquiryCommand));
   }
 
   void SetController(nvme::IdentifyControllerData* identify_ctrl_) {
@@ -202,7 +202,7 @@ TEST_F(InquiryTest, SupportedVpdPages) {
       scsi::PageCode::kLogicalBlockProvisioningVpd};
 
   scsi::PageCode result_list[7];
-  absl::Span<uint8_t> span_buffer = buffer_;
+  translator::Span<uint8_t> span_buffer = buffer_;
   ASSERT_TRUE(translator::ReadValue(
       span_buffer.subspan(sizeof(scsi::SupportedVitalProductData)),
       result_list));
@@ -238,7 +238,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdEui64) {
   EXPECT_EQ(result.page_code, scsi::PageCode::kUnitSerialNumber);
   EXPECT_EQ(result.page_length, 20);
 
-  absl::Span<uint8_t> span_buffer = buffer_;
+  translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[20];
   ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
@@ -272,7 +272,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNguid) {
   EXPECT_EQ(result.page_code, scsi::PageCode::kUnitSerialNumber);
   EXPECT_EQ(result.page_length, 40);
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
-  absl::Span<uint8_t> span_buffer = buffer_;
+  translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[40];
   ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
@@ -306,7 +306,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdBoth) {
   EXPECT_EQ(result.page_length, 40);
   char formatted_hex_string[41] = "1234_5678_9abc_defa_1234_5678_9abc_defa.";
 
-  absl::Span<uint8_t> span_buffer = buffer_;
+  translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[40];
   ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
@@ -340,7 +340,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNone) {
   EXPECT_EQ(result.page_code, scsi::PageCode::kUnitSerialNumber);
   EXPECT_EQ(result.page_length, 30);
 
-  absl::Span<uint8_t> span_buffer = buffer_;
+  translator::Span<uint8_t> span_buffer = buffer_;
   uint8_t product_serial_number[30];
   ASSERT_TRUE(
       translator::ReadValue(span_buffer.subspan(sizeof(scsi::UnitSerialNumber)),
