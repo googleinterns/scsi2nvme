@@ -14,7 +14,7 @@
 
 #include "translation.h"
 #include "inquiry.h"
-
+#include "read_capacity_10.h"
 #include "request_sense.h"
 
 #include "read.h"
@@ -50,6 +50,11 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
           InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
                         response.alloc_len, lun, allocations_);
       nvme_cmd_count_ = 2;
+      break;
+    case scsi::OpCode::kReadCapacity10:
+      pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0],
+                                              lun, allocations_[0]);
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
@@ -102,9 +107,14 @@ ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
   ApiStatus ret;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
+
   switch (opc) {
     case scsi::OpCode::kInquiry:
       pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kReadCapacity10:
+      pipeline_status_ = ReadCapacity10ToScsi(buffer, nvme_cmds_[0]);
       ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kRequestSense:

@@ -307,7 +307,9 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
   identify_ns = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = lun};
   identify_ns.dptr.prp.prp1 = allocations[0].data_addr;
-  identify_ns.cdw[0] = 0x0;  // cns val
+  identify_ns.cdw[0] =
+      0x0;  // Controller or Namespace Structure (CNS): This field specifies the
+            // information to be returned to the host.
 
   StatusCode status_alloc2 = allocations[1].SetPages(1, 0);
   if (status_alloc2 != StatusCode::kSuccess) {
@@ -318,7 +320,9 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
   };
   identify_ctrl.dptr.prp.prp1 = allocations[1].data_addr;
-  identify_ctrl.cdw[0] = 0x1;  // cns val
+  identify_ctrl.cdw[0] =
+      0x1;  // Controller or Namespace Structure (CNS): This field specifies the
+            // information to be returned to the host.
   return StatusCode::kSuccess;
 }
 
@@ -333,10 +337,10 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
   };
 
   uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[0].dptr.prp.prp1);
-  Span ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
-  Span ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
+  Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
   nvme::IdentifyControllerData identify_ctrl = {};
   if (!ReadValue(ctrl_span, identify_ctrl)) {

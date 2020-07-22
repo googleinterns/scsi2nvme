@@ -1,4 +1,13 @@
 cc_test(
+    name = "read_capacity_10_tests",
+    srcs = ["read_capacity_10_test.cc"],
+    deps = [
+        "//lib/translator:read_capacity_10_lib",
+        "@googletest//:gtest_main"
+    ]
+)
+
+cc_test(
     name = "inquiry_tests",
     srcs = ["inquiry_test.cc"],
     deps = [
