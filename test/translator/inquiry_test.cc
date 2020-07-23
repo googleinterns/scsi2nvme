@@ -71,12 +71,12 @@ class InquiryTest : public ::testing::Test {
 
 TEST_F(InquiryTest, InquiryToNvme) {
   inquiry_cmd_.allocation_length = 4096;
-  scsi::LunAddress lun = 0x123;
+  uint32_t nsid = 0x123;
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {{}};
 
   translator::StatusCode status = translator::InquiryToNvme(
-      scsi_cmd_, nvme_cmds_[1], nvme_cmds_[0], alloc_len, lun, allocations);
+      scsi_cmd_, nvme_cmds_[1], nvme_cmds_[0], alloc_len, nsid, allocations);
 
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
@@ -84,7 +84,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
 
   EXPECT_EQ(nvme_cmds_[1].opc,
             static_cast<uint8_t>(nvme::AdminOpcode::kIdentify));
-  EXPECT_EQ(nvme_cmds_[1].nsid, lun);
+  EXPECT_EQ(nvme_cmds_[1].nsid, nsid);
   EXPECT_NE(nvme_cmds_[1].dptr.prp.prp1, 0);
   EXPECT_EQ(nvme_cmds_[1].cdw[0], 0);
 
@@ -97,13 +97,13 @@ TEST_F(InquiryTest, InquiryToNvme) {
 
 TEST_F(InquiryTest, InquiryToNvmeFailRead) {
   inquiry_cmd_.allocation_length = 4096;
-  scsi::LunAddress lun = 0x123;
+  uint32_t nsid = 0x123;
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {};
 
   uint8_t bad_buffer[1] = {};
   translator::StatusCode status = translator::InquiryToNvme(
-      bad_buffer, nvme_cmds_[1], nvme_cmds_[0], alloc_len, lun, allocations);
+      bad_buffer, nvme_cmds_[1], nvme_cmds_[0], alloc_len, nsid, allocations);
 
   EXPECT_EQ(status, translator::StatusCode::kInvalidInput);
 }
