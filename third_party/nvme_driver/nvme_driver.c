@@ -1,11 +1,12 @@
-#include "nvme.h"
+#include "nvme_driver.h"
 
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.1");
-MODULE_AUTHOR("wnukowski@google.com")
-MODULE_DESCRIPTION("Kernel module to talk to NVME devices")
+MODULE_AUTHOR("wnukowski@google.com");
+MODULE_DESCRIPTION("Kernel module to talk to NVME devices");
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
+
 struct block_device* bdev;
 struct gendisk* bd_disk;
 struct nvme_ns* ns;
@@ -128,32 +129,19 @@ static int __init nvme_communication_init(void) {
     printk("nvme_ns is null?.\n");
     goto err;
   }
-
-  printk("Nvme_ns registered\n");
-  void *ret_buf = NULL;
-  struct nvme_command *ncmd = NULL;
-  int buff_size = sizeof(struct nvme_id_ctrl);
-  ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
-  if (!ret_buf)
-  {
-    printk("Failed to malloc?.\n");
-    goto err;
-  }
-
-  ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
-
-  memset(ncmd, 0, sizeof(&ncmd));
-  ncmd->common.opcode = nvme_admin_identify;
-  ncmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
-
-  struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
-  u32 code_result = 0;
-  int submit_result = submit_admin_command(ncmd, ret_buf, buff_size, &code_result, 0);
-
-  printk("submit_result. %d\n", submit_result);
-  printk("result. %u\n", code_result);  // probably not usefull
-  // should print 0x1AE0 (6880)
-  printk("vid. %d\n", result->vid);
+  // struct nvme_command *ncmd;
+  // printk("Nvme_ns registered\n");
+  // ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
+  // memset(ncmd, 0, sizeof(&ncmd));
+  // ncmd->common.opcode = nvme_admin_identify;
+  // ncmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
+  // struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
+  // u32 code_result = 0;
+  // int submit_result = submit_admin_command(ncmd, ret_buf, buff_size, &code_result, 0);
+  // printk("submit_result. %d\n", submit_result);
+  // printk("result. %u\n", code_result);  // probably not usefull
+  // // should print 0x1AE0 (6880)
+  // printk("vid. %d\n", result->vid);
   return 0;
 }
 
