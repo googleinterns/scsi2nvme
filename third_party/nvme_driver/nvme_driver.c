@@ -123,7 +123,6 @@ static int __init nvme_communication_init(void) {
   bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
     printk("bd_disk is null?.\n");
-    goto err;
   }
 
   printk("Gendisk registered\n");
@@ -131,7 +130,6 @@ static int __init nvme_communication_init(void) {
   ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns)) {
     printk("nvme_ns is null?.\n");
-    goto err;
   }
   printk("NVMe device registered!\n");
 
@@ -143,7 +141,7 @@ static int __init nvme_communication_init(void) {
   void *ret_buf = kmalloc (buff_size, GFP_KERNEL);;
 
   struct nvme_command *ncmd;
-  ncmd = kzalloc(sizeof(struct nvme_cmmoand), GFP_KERNEL);
+  ncmd = kzalloc(sizeof(struct nvme_command), GFP_KERNEL);
   memset(ncmd, 0, sizeof(&ncmd));
 
   // setup the ncmd
@@ -167,8 +165,8 @@ static int __init nvme_communication_init(void) {
   
   // uncomment while reading the value
   u8 written_value = 0;
-  memcpy(&written_value, &ret_buff, 1);
-  printk("Value written is: %d\n", );
+  memcpy(&written_value, &ret_buf, 1);
+  printk("Value written is: %d\n", written_value);
   return 0;
 }
 
