@@ -7,6 +7,10 @@ MODULE_DESCRIPTION("Kernel module to talk to NVME devices");
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
+#define BITS_PER_SLICE 	6
+#define BITS_PER_WU 	7
+#define BITS_PER_DIE	6
+
 struct block_device* bdev;
 struct gendisk* bd_disk;
 struct nvme_ns* ns;
@@ -129,19 +133,42 @@ static int __init nvme_communication_init(void) {
     printk("nvme_ns is null?.\n");
     goto err;
   }
-  // struct nvme_command *ncmd;
-  // printk("Nvme_ns registered\n");
-  // ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
-  // memset(ncmd, 0, sizeof(&ncmd));
-  // ncmd->common.opcode = nvme_admin_identify;
-  // ncmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
-  // struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
-  // u32 code_result = 0;
-  // int submit_result = submit_admin_command(ncmd, ret_buf, buff_size, &code_result, 0);
-  // printk("submit_result. %d\n", submit_result);
-  // printk("result. %u\n", code_result);  // probably not usefull
-  // // should print 0x1AE0 (6880)
-  // printk("vid. %d\n", result->vid);
+  printk("NVMe device registered!\n");
+
+  u64 lba = 255; // random logical block address
+  u16 nlb = 255; // number of logical blocks
+
+  // setting up return buffer
+  int buff_size = 4096*64;
+  void *ret_buf = kmalloc (buff_size, GFP_KERNEL);;
+
+  struct nvme_command *ncmd;
+  ncmd = kzalloc(sizeof(struct nvme_cmmoand), GFP_KERNEL);
+  memset(ncmd, 0, sizeof(&ncmd));
+
+  // setup the ncmd
+  ncmd->rw.opcode = nvme_command_write;
+  ncmd->rw.flags = 0;
+	ncmd->rw.nsid = cpu_to_le32(1);
+	ncmd->rw.slba = cpu_to_le64(255); /* it must be the unit of 255 */
+	ncmd->rw.length = cpu_to_le16(63); /* it must be the unit of 255 */
+	ncmd->rw.control = 0;
+	ncmd->rw.dsmgmt = 0;
+	ncmd->rw.reftag = 0;
+	ncmd->rw.apptag = 0;
+	ncmd->rw.appmask = 0;
+  
+  u32 code_result = 0;
+  u8 random_data = 0x12;
+  memcpy(&ret_buf, &random_data, 1); // write random_data to device
+
+  int status = submit_io_command(ncmd, ret_buf, buff_size, &code_result, 0);
+  printk("Status of IO is: %d\n", status);
+  
+  // uncomment while reading the value
+  u8 written_value = 0;
+  memcpy(&written_value, &ret_buff, 1);
+  printk("Value written is: %d\n", );
   return 0;
 }
 
