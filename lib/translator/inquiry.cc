@@ -27,9 +27,9 @@ void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
       .version = scsi::Version::kSpc4,
       .response_data_format = scsi::ResponseDataFormat::kCompliant,
       .additional_length = 0x1f,
-      .tpgs = scsi::TPGS::kNotSupported,
       .protect =
           (identify_ns.dps.pit == 0 && identify_ns.dps.md_start == 0) ? 0 : 1,
+      .tpgs = scsi::TPGS::kNotSupported,
       .cmdque = 1};
 
   // Shall be set to “NVMe" followed by 4 spaces: “NVMe    “
@@ -171,9 +171,9 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
   // TODO: put in common?
   const uint8_t kMaxCompareWriteLen = 255;
   // compare and write length is 8 bits. we ensure the size fits.
-  uint32_t compare_and_write_len = (max_transfer_length > kMaxCompareWriteLen)
-                                       ? kMaxCompareWriteLen
-                                       : max_transfer_length;
+  uint8_t compare_and_write_len = (max_transfer_length > kMaxCompareWriteLen)
+                                      ? kMaxCompareWriteLen
+                                      : max_transfer_length;
 
   // TODO: named var for page len
   scsi::BlockLimitsVpd result = {
