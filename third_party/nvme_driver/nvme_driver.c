@@ -145,7 +145,7 @@ static int __init nvme_communication_init(void) {
   memset(ncmd, 0, sizeof(&ncmd));
 
   // setup the ncmd
-  ncmd->rw.opcode = nvme_command_write;
+  ncmd->rw.opcode = nvme_cmd_write;
   ncmd->rw.flags = 0;
 	ncmd->rw.nsid = cpu_to_le32(1);
 	ncmd->rw.slba = cpu_to_le64(255); /* it must be the unit of 255 */
