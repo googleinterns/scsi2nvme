@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lib/translator/read_capacity_10.h"
+
 #include "gtest/gtest.h"
 
 namespace {

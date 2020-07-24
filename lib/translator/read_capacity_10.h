@@ -15,9 +15,9 @@
 #ifndef LIB_TRANSLATOR_READ_CAPACITY_10_H
 #define LIB_TRANSLATOR_READ_CAPACITY_10_H
 
-#include "common.h"
-#include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
+
+#include "common.h"
 
 namespace translator {
 
