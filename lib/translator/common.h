@@ -19,7 +19,6 @@
 #include <type_traits>
 
 #include "lib/scsi.h"
-#include "third_party/spdk/nvme.h"
 
 namespace translator {
 
@@ -62,6 +61,10 @@ void SetDebugCallback(void (*callback)(const char*));
 
 void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t));
+
+// Returns true if system is little endian.
+// Returns false if system is big endian.
+bool IsLittleEndian();
 
 // Host to Network endianness transformation for uint64_t
 // Network endianness is always big endian

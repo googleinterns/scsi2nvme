@@ -40,18 +40,19 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
 
+  uint32_t nsid = static_cast<uint32_t>(lun) + 1;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
       pipeline_status_ =
           InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
-                        response.alloc_len, lun, allocations_);
+                        response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0],
-                                              lun, allocations_[0]);
+                                              nsid, allocations_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:

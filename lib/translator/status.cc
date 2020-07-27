@@ -14,6 +14,8 @@
 
 #include "status.h"
 
+#include "third_party/spdk/nvme.h"
+
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions

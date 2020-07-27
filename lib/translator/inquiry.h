@@ -17,9 +17,9 @@
 
 #include <cstdio>
 
-#include "common.h"
-#include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
+
+#include "common.h"
 
 namespace translator {
 
@@ -34,7 +34,7 @@ namespace translator {
 StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& identify_ns,
                          nvme::GenericQueueEntryCmd& identify_ctrl,
-                         uint32_t& alloc_len, scsi::LunAddress lun,
+                         uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations);
 
 // Preconditions:

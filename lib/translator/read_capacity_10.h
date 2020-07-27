@@ -15,18 +15,18 @@
 #ifndef LIB_TRANSLATOR_READ_CAPACITY_10_H
 #define LIB_TRANSLATOR_READ_CAPACITY_10_H
 
-#include "common.h"
-#include "lib/scsi.h"
 #include "third_party/spdk/nvme.h"
+
+#include "common.h"
 
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
                                 nvme::GenericQueueEntryCmd& identify_ns,
-                                scsi::LunAddress lun, Allocation allocation);
+                                uint32_t nsid, Allocation& allocation);
 
-StatusCode ReadCapacity10ToScsi(Span<uint8_t> buffer,
-                                nvme::GenericQueueEntryCmd gen_identify_ns);
+StatusCode ReadCapacity10ToScsi(
+    Span<uint8_t> buffer, const nvme::GenericQueueEntryCmd& gen_identify_ns);
 
 };  // namespace translator
 #endif
