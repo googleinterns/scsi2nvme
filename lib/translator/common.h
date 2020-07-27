@@ -129,7 +129,7 @@ struct ScsiStatus {
 };
 
 // Fills sense buffer with relevant data. Returns true on success.
-bool fill_sense_buffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
+bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
 
 }  // namespace translator
 #endif

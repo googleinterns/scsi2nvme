@@ -41,10 +41,10 @@ TEST(Translation, ShouldReturnInquirySuccess) {
 TEST(Translation, ShouldFailInvalidPipeline) {
   translator::Translation translation = {};
   translator::Span<const nvme::GenericQueueEntryCpl> cpl_data;
-  translator::Span<uint8_t> buffer;
+  translator::Span<uint8_t> buffer_in;
   translator::Span<uint8_t> sense_buffer;
   translator::CompleteResponse status =
-      translation.Complete(cpl_data, buffer, sense_buffer);
+      translation.Complete(cpl_data, buffer_in, sense_buffer);
   EXPECT_EQ(translator::ApiStatus::kFailure, status.status);
 }
 

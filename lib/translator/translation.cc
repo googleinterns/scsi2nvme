@@ -70,7 +70,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
 }
 
 CompleteResponse Translation::Complete(
-    Span<const nvme::GenericQueueEntryCpl> cpl_data, Span<uint8_t> buffer,
+    Span<const nvme::GenericQueueEntryCpl> cpl_data, Span<uint8_t> buffer_in,
     Span<uint8_t> sense_buffer) {
   CompleteResponse resp = {};
   if (pipeline_status_ == StatusCode::kUninitialized) {
@@ -94,7 +94,7 @@ CompleteResponse Translation::Complete(
         .sense_key = scsi::SenseKey::kIllegalRequest,
         .asc = scsi::AdditionalSenseCode::kInvalidFieldInCdb,
         .ascq = scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo};
-    fill_sense_buffer(sense_buffer, scsi_status);
+    FillSenseBuffer(sense_buffer, scsi_status);
     AbortPipeline();
     resp.status = ApiStatus::kSuccess;
     resp.scsi_status = scsi_status.status;
@@ -107,7 +107,7 @@ CompleteResponse Translation::Complete(
     const nvme::CplStatus& cpl_status = cpl_entry.cpl_status;
     ScsiStatus scsi_status = StatusToScsi(cpl_status.sct, cpl_status.sc);
     if (scsi_status.status != scsi::Status::kGood) {
-      fill_sense_buffer(sense_buffer, scsi_status);
+      FillSenseBuffer(sense_buffer, scsi_status);
       resp.status = ApiStatus::kSuccess;
       resp.scsi_status = scsi_status.status;
       return resp;
@@ -120,13 +120,14 @@ CompleteResponse Translation::Complete(
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
-      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      pipeline_status_ =
+          InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
       break;
     case scsi::OpCode::kReadCapacity10:
-      pipeline_status_ = ReadCapacity10ToScsi(buffer, nvme_cmds_[0]);
+      pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_cmds_[0]);
       break;
     case scsi::OpCode::kRequestSense:
-      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
+      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer_in);
       break;
   }
   AbortPipeline();

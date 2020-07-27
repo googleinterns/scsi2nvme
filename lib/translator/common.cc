@@ -169,7 +169,7 @@ const char* ScsiOpcodeToString(scsi::OpCode opcode) {
   }
 }
 
-bool fill_sense_buffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status) {
+bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status) {
   // Descriptor sense logic (d_sense set to 1)
   // Table 12 Seagate SCSI Spec
   scsi::DescriptorFormatSenseData dfsd;
