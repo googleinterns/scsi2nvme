@@ -22,9 +22,14 @@ extern "C" {
 #include <linux/types.h>
 #endif
 
+struct ScsiToNvmeResponse {
+  int return_code;
+  int alloc_len;
+};
+
 void SetEngineCallbacks(void);
 
-void ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
+struct ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   unsigned long long lun, unsigned char* sense_buf, unsigned short sense_len,
   unsigned char* data_buf, unsigned short data_len, bool isDataIn);
  

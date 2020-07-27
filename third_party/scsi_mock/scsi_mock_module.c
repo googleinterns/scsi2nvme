@@ -40,12 +40,20 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   u16 data_len = scsi_bufflen(cmd);
   unsigned char* sense_buf = cmd->sense_buffer;
   unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
-  bool isDataIn = cmd->sc_data_direction == DMA_FROM_DEVICE;
+  bool is_data_in = cmd->sc_data_direction == DMA_FROM_DEVICE;
   unsigned char data_buf[data_len];
+  
   scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
   printk("RECIEVED COMMAND");
-  ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, sense_len, data_buf, data_len, isDataIn);
-  return 0;
+  struct ScsiToNvmeResponse resp = ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, 
+    sense_len, data_buf, data_len, is_data_in);
+  // Copy response to SGL buffer
+  if (is_data_in) {
+    struct scsi_data_buffer* sdb = &cmd->sdb;
+    int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
+    scsi_set_resid(cmd, data_len - resp.alloc_len);
+  }
+  return resp.return_code;
 }
 
 static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }
