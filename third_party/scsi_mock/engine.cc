@@ -23,7 +23,7 @@ void SetEngineCallbacks(void) {
 
 void ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   unsigned long long lun, unsigned char* sense_buf, unsigned short sense_len,
-  unsigned char* data_buf, unsigned short data_len, bool isDataIn) {
+  unsigned char* data_buf, unsigned short data_len, bool is_data_in) {
   // Create translation object
   translator::Translation translation;
   
@@ -39,6 +39,11 @@ void ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   
   // Use NVMe completion responses to Complete translation
   translator::Span<nvme::GenericQueueEntryCpl> nvme_cpl;
-  translator::Span<uint8_t> buffer(data_in, begin_resp.alloc_len);
-  translation.Complete(nvme_cpl, buffer);
+  translator::Span<uint8_t> buffer_in;
+  if (is_data_in)
+    buffer_in = translator::Span(data_in, begin_resp.alloc_len);
+  translator::Span<uint8_t> sense_buffer(sense_buf, sense_len);
+  translator::CompleteResponse cpl_resp = translation.Complete(nvme_cpl, buffer_in, sense_buffer);
+  
+  
 }

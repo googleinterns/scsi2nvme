@@ -15,6 +15,7 @@ OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
 	$(TRANSLATION_SRC_DIR)/inquiry.cc.o \
 	$(TRANSLATION_SRC_DIR)/read_capacity_10.cc.o \
 	$(TRANSLATION_SRC_DIR)/request_sense.cc.o \
+	$(TRANSLATION_SRC_DIR)/status.cc.o \
 	$(TRANSLATION_SRC_DIR)/translation.cc.o
 
 INC := -I$(PWD)/third_party -I$(PWD)
