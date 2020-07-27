@@ -830,7 +830,7 @@ static_assert(sizeof(RequestSenseCommand) == 5);
 // SCSI Reference Manual Table 27
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct FixedFormatSenseData {
-  uint8_t response_code : 7;
+  SenseResponse response_code : 7;
   bool valid : 1;
   uint8_t _obsolete : 8;
   SenseKey sense_key : 4;
@@ -853,7 +853,7 @@ static_assert(sizeof(FixedFormatSenseData) == 18);
 // SCSI Reference Manual Table 12
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct DescriptorFormatSenseData {
-  uint8_t response_code : 7;
+  SenseResponse response_code : 7;
   bool reserved_1 : 1;
   SenseKey sense_key : 4;
   uint8_t reserved_2 : 4;
@@ -863,6 +863,7 @@ struct DescriptorFormatSenseData {
   uint8_t additional_sense_length : 8;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DescriptorFormatSenseData) == 8);
+
 // SCSI Reference Manual Table 483
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct SupportedVitalProductData {

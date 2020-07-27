@@ -122,5 +122,16 @@ bool WriteValue(const T& data, Span<uint8_t> out) {
   return true;
 }
 
+// Scsi status bundle
+struct ScsiStatus {
+  scsi::Status status;
+  scsi::SenseKey sense_key;
+  scsi::AdditionalSenseCode asc;
+  scsi::AdditionalSenseCodeQualifier ascq;
+};
+
+// Fills sense buffer with relevant data. Returns true on success.
+bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
+
 }  // namespace translator
 #endif

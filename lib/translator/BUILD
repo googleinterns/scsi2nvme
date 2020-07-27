@@ -18,6 +18,7 @@ cc_library(
     ":inquiry_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":status_lib",
   ],
   visibility = ["//visibility:public"]
 )

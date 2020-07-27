@@ -174,4 +174,23 @@ const char* ScsiOpcodeToString(scsi::OpCode opcode) {
   }
 }
 
+bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status) {
+  // Descriptor sense logic (d_sense set to 1)
+  // Table 12 Seagate SCSI Spec
+  scsi::DescriptorFormatSenseData dfsd;
+  if (!ReadValue(sense_buffer, dfsd)) {
+    DebugLog("Insufficient sense buffer size %u", sense_buffer.size());
+    return false;
+  }
+  dfsd.response_code = scsi::SenseResponse::kCurrentDescriptorError;
+  dfsd.sense_key = scsi_status.sense_key;
+  dfsd.additional_sense_code = scsi_status.asc;
+  dfsd.additional_sense_code_qualifier = scsi_status.ascq;
+  if (!WriteValue(dfsd, sense_buffer)) {
+    DebugLog("Failed to write to sense buffer");
+    return false;
+  }
+  return true;
+}
+
 }  // namespace translator

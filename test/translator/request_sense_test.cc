@@ -84,7 +84,7 @@ TEST(RequestSense, ToScsiDescriptor) {
   scsi::DescriptorFormatSenseData result{};
   ASSERT_TRUE(translator::ReadValue(buf, result));
 
-  EXPECT_EQ(result.response_code, 0x72);
+  EXPECT_EQ(result.response_code, scsi::SenseResponse::kCurrentDescriptorError);
   EXPECT_EQ(result.additional_sense_code,
             scsi::AdditionalSenseCode::kNoAdditionalSenseInfo);
 }
@@ -104,7 +104,7 @@ TEST(RequestSense, ToScsiFixed) {
   scsi::FixedFormatSenseData result{};
   ASSERT_TRUE(translator::ReadValue(buf, result));
 
-  EXPECT_EQ(result.response_code, 0x70);
+  EXPECT_EQ(result.response_code, scsi::SenseResponse::kCurrentFixedError);
   EXPECT_EQ(result.additional_sense_length, 0x0);
   EXPECT_EQ(result.command_specific_info, 0x0);
   EXPECT_EQ(result.additional_sense_code,

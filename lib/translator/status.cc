@@ -16,8 +16,6 @@
 
 #include "third_party/spdk/nvme.h"
 
-#include "common.h"
-
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions

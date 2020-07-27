@@ -15,16 +15,9 @@
 #ifndef LIB_TRANSLATOR_STATUS_H
 #define LIB_TRANSLATOR_STATUS_H
 
-#include "lib/scsi.h"
+#include "common.h"
 
 namespace translator {
-
-struct ScsiStatus {
-  scsi::Status status;
-  scsi::SenseKey sense_key;
-  scsi::AdditionalSenseCode asc;
-  scsi::AdditionalSenseCodeQualifier ascq;
-};
 
 /**
  * Takes in a raw NVMe status code type and status code
