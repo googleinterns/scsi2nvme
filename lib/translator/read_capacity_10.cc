@@ -18,7 +18,7 @@ namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
                                 nvme::GenericQueueEntryCmd& identify_ns,
-                                scsi::LunAddress lun, Allocation allocation) {
+                                uint32_t nsid, Allocation& allocation) {
   scsi::ReadCapacity10Command cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed ReadCapacity10 Command - Error in reading to buffer");
@@ -37,7 +37,7 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
   }
 
   identify_ns = nvme::GenericQueueEntryCmd{
-      .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = lun};
+      .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = nsid};
   identify_ns.dptr.prp.prp1 = allocation.data_addr;
   identify_ns.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
@@ -46,8 +46,8 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
   return StatusCode::kSuccess;
 }
 
-StatusCode ReadCapacity10ToScsi(Span<uint8_t> buffer,
-                                nvme::GenericQueueEntryCmd gen_identify_ns) {
+StatusCode ReadCapacity10ToScsi(
+    Span<uint8_t> buffer, const nvme::GenericQueueEntryCmd& gen_identify_ns) {
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(gen_identify_ns.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 

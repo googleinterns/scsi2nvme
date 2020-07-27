@@ -13,7 +13,6 @@
 
 #include "lib/translator/status.h"
 
-#include "absl/base/casts.h"
 #include "gtest/gtest.h"
 
 // Tests

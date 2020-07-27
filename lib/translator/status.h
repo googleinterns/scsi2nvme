@@ -15,8 +15,6 @@
 #ifndef LIB_TRANSLATOR_STATUS_H
 #define LIB_TRANSLATOR_STATUS_H
 
-#include "third_party/spdk/nvme.h"
-
 #include "lib/scsi.h"
 
 namespace translator {
