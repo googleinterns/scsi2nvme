@@ -32,7 +32,6 @@
 #define NVME_DEVICE_PATH "/dev/nvme0n1"
 
 int nvme_driver_init(void);
-void nvme_driver_exit(void);
 
 int submit_admin_command(struct nvme_command* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout);

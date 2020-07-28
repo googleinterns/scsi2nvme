@@ -12,6 +12,7 @@
 #include "scsi_mock_module.h"
 
 #include "engine.h"
+#include "nvme_driver.h"
 
 #include <linux/device.h>
 #include <linux/init.h>
@@ -123,6 +124,7 @@ static int scsi_mock_add_device(void) {
 static int __init scsi_mock_init(void) {
   int err;
   SetEngineCallbacks();
+  nvme_driver_init();
   printk("Registering root device\n");
   pseudo_root_dev = root_device_register("pseudo_scsi_root");
   if (IS_ERR(pseudo_root_dev)) {

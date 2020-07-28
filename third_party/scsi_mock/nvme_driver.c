@@ -158,7 +158,3 @@ int nvme_driver_init(void) {
   printk("Value written is: %d\n", written_value);
   return 0;
 }
-
-void nvme_driver_exit(void) {
-  printk(KERN_INFO "Exiting NVMe Communication module\n");
-}
