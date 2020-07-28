@@ -1,10 +1,5 @@
 #include "nvme_driver.h"
 
-MODULE_LICENSE("GPL");
-MODULE_VERSION("0.1");
-MODULE_AUTHOR("wnukowski@google.com");
-MODULE_DESCRIPTION("Kernel module to talk to NVME devices");
-
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
 #define BITS_PER_SLICE 	6
@@ -109,7 +104,7 @@ int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
                               result, timeout);
 }
 
-static int __init nvme_communication_init(void) {
+int nvme_driver_init(void) {
   printk(KERN_INFO "Started NVMe Communication Module Insertion\n");
 
   bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
@@ -164,9 +159,6 @@ static int __init nvme_communication_init(void) {
   return 0;
 }
 
-static void __exit nvme_communication_exit(void) {
+void nvme_driver_exit(void) {
   printk(KERN_INFO "Exiting NVMe Communication module\n");
 }
-
-module_init(nvme_communication_init);
-module_exit(nvme_communication_exit);
