@@ -78,6 +78,20 @@ uint64_t htonll(uint64_t value);
 // No op if Host is big endian
 #define ntohll htonll
 
+// Host to little endian transformation for uint16_t, uint32_t, uint64_t
+// Converts value to little endian if Host is big endian
+// No op if Host is little endian
+uint16_t htols(uint16_t value);
+uint32_t htoll(uint32_t value);
+uint64_t htolll(uint64_t value);
+
+// Little endian to Host transformation for uint16_t, uint32_t, uint64_t
+// Converts value to Host endian if Host is big endian
+// No op if Host is little endian
+#define ltohs htols
+#define ltohl htoll
+#define ltohll htolll
+
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
