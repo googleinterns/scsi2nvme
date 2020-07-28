@@ -53,7 +53,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - resp.alloc_len);
   }
-  return resp.return_code;=
+  return resp.return_code;
 }
 
 static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }

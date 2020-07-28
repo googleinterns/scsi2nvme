@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <type_traits>
+#include <new>
 
 #include "lib/scsi.h"
 
