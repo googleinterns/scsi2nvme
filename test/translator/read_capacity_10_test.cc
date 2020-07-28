@@ -155,6 +155,7 @@ TEST_F(ReadCapacity10Test, BlocklengthNonzeo) {
   EXPECT_EQ(result.block_length,
             identify_ns_.lbaf[identify_ns_.flbas.format].lbads);
 }
+
 TEST_F(ReadCapacity10Test, BlocklengthLimit) {
   identify_ns_.nsze = 0;
   identify_ns_.flbas.format = 0;
@@ -167,6 +168,12 @@ TEST_F(ReadCapacity10Test, BlocklengthLimit) {
             identify_ns_.nsze > 0xffffffff ? 0xffffffff : identify_ns_.nsze);
   EXPECT_EQ(result.block_length,
             identify_ns_.lbaf[identify_ns_.flbas.format].lbads);
+}
+
+TEST_F(ReadCapacity10Test, FailsOnNullptr) {
+  nvme_cmds_[0].dptr.prp.prp1 = 0;
+  ASSERT_EQ(translator::StatusCode::kFailure,
+            translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
 }
 
 }  // namespace

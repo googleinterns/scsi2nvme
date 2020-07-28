@@ -720,4 +720,20 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
   EXPECT_EQ(result.lbpu, 1);
 }
 
+TEST_F(InquiryTest, FailsOnControllerNullPointer) {
+  nvme_cmds_[1].dptr.prp.prp1 = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  ASSERT_EQ(status, translator::StatusCode::kFailure);
+}
+
+TEST_F(InquiryTest, FailsOnNamespaceNullPointer) {
+  nvme_cmds_[0].dptr.prp.prp1 = 0;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+  ASSERT_EQ(status, translator::StatusCode::kFailure);
+}
+
 }  // namespace

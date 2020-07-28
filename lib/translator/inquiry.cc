@@ -342,17 +342,19 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  nvme::IdentifyControllerData identify_ctrl = {};
-  if (!ReadValue(ctrl_span, identify_ctrl)) {
-    DebugLog("Malformed IdentifyController Data");
-    return StatusCode::kInvalidInput;
-  };
+  const nvme::IdentifyControllerData* identify_ctrl =
+      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
+  if (identify_ctrl == nullptr) {
+    DebugLog("Identify controller structure failed to cast");
+    return StatusCode::kFailure;
+  }
 
-  nvme::IdentifyNamespace identify_ns = {};
-  if (!ReadValue(ns_span, identify_ns)) {
-    DebugLog("Malformed IdentifyNamespace Data");
-    return StatusCode::kInvalidInput;
-  };
+  const nvme::IdentifyNamespace* identify_ns =
+      SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
+  if (identify_ns == nullptr) {
+    DebugLog("Identify namespace structure failed to cast");
+    return StatusCode::kFailure;
+  }
 
   // nsid should come from Namespace
   uint32_t nsid = nvme_cmds[1].nsid;
@@ -367,7 +369,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        TranslateUnitSerialNumberVpd(identify_ctrl, identify_ns, nsid, buffer);
+        TranslateUnitSerialNumberVpd(*identify_ctrl, *identify_ns, nsid,
+                                     buffer);
         break;
       case scsi::PageCode::kDeviceIdentification:
         // TODO: Return Device Identification data page toapplication client,
@@ -380,14 +383,14 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
-        TranslateBlockLimitsVpd(identify_ctrl, buffer);
+        TranslateBlockLimitsVpd(*identify_ctrl, buffer);
         break;
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
         // TODO: Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
         break;
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
-        TranslateLogicalBlockProvisioningVpd(identify_ctrl, identify_ns,
+        TranslateLogicalBlockProvisioningVpd(*identify_ctrl, *identify_ns,
                                              buffer);
         break;
       // May be supported by returning Logical Block Provisioning VPD Page to
@@ -400,7 +403,7 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    TranslateStandardInquiry(identify_ctrl, identify_ns, buffer);
+    TranslateStandardInquiry(*identify_ctrl, *identify_ns, buffer);
   }
   return StatusCode::kSuccess;
 }
