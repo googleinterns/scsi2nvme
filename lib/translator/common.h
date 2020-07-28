@@ -123,5 +123,41 @@ bool WriteValue(const T& data, Span<uint8_t> out) {
   return true;
 }
 
+// Returns a pointer of type T pointing to buf.data().
+// This creates a new object of type T.
+// Trying to access an existing object will result in undefined behavior.
+// Uses placement new operator to guarantee memory safety.
+// Validates alignment and size of buffer.
+template <typename T>
+T* SafePointerCastWrite(Span<uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return new (buf.data()) T;
+}
+
+// Returns a pointer of type const T pointing to buf.data().
+// Validates alignment and size of buffer.
+// Does not use placement new.
+template <typename T>
+const T* SafePointerCastRead(Span<const uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return reinterpret_cast<const T*>(buf.data());
+}
+
 }  // namespace translator
 #endif
