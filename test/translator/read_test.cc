@@ -314,4 +314,85 @@ TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 
+TEST_F(ReadTest, ReadToScsiInsufficientBufferShouldReturnFailure) {
+  uint32_t host_transfer_length = 16;
+  uint32_t network_transfer_length = htonl(host_transfer_length);
+  uint32_t transfer_length_bytes = host_transfer_length * kLbaSize;
+
+  uint8_t* data = new uint8_t[transfer_length_bytes];
+
+  scsi::Read12Command cmd = {
+      .fua = kFua,
+      .rd_protect = kRdProtect,
+      .logical_block_address = 0xffffffff,
+      .transfer_length = network_transfer_length,
+  };
+  uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+
+  // Build NVMe command
+  translator::StatusCode status_code = translator::Read12ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  // Write to the NVMe read data pointer
+  nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(data);
+
+  uint8_t* buffer =
+      new uint8_t[transfer_length_bytes - 1];  // insufficiently large buffer
+  status_code = translator::ReadToScsi(
+      translator::Span(buffer, transfer_length_bytes - 1), nvme_cmd, kLbaSize);
+
+  ASSERT_EQ(translator::StatusCode::kFailure, status_code);
+
+  delete[] data;
+  delete[] buffer;
+}
+
+TEST_F(ReadTest, ReadToScsiShouldReturnSuccess) {
+  uint32_t host_transfer_length = 16;
+  uint32_t network_transfer_length = htonl(host_transfer_length);
+  uint32_t transfer_length_bytes = host_transfer_length * kLbaSize;
+
+  // create an array size 8192 = {0, 1, 2, ... 255, 0, 1, .., 255}
+  uint8_t* data = new uint8_t[transfer_length_bytes];
+  for (int i = 0; i < transfer_length_bytes; ++i) {
+    data[i] = i % 256;
+  }
+
+  scsi::Read12Command cmd = {
+      .fua = kFua,
+      .rd_protect = kRdProtect,
+      .logical_block_address = 0xffffffff,
+      .transfer_length = network_transfer_length,
+  };
+  uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+
+  // Build NVMe command
+  translator::StatusCode status_code = translator::Read12ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+
+  // Write to the NVMe read data pointer
+  nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(data);
+
+  uint8_t* buffer =
+      new uint8_t[transfer_length_bytes];  // sufficiently large buffer
+  status_code = translator::ReadToScsi(
+      translator::Span(buffer, transfer_length_bytes), nvme_cmd, kLbaSize);
+
+  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
+  for (int i = 0; i < transfer_length_bytes; ++i) {
+    ASSERT_EQ(buffer[i], data[i]);
+  }
+
+  delete[] data;
+  delete[] buffer;
+}
+
 }  // namespace

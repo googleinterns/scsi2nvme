@@ -54,6 +54,14 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         Allocation& allocation, uint32_t nsid,
                         uint32_t page_size, uint32_t lba_size);
 
+// Common to Read(6), Read(10), Read(12), and Read(16)
+// Takes in the SCSI data-in buffer and an NVMe read command
+// and writes the data pointed to by the NVMe data pointer
+// to the SCSI data-in buffer
+StatusCode ReadToScsi(Span<uint8_t> buffer,
+                      const nvme::GenericQueueEntryCmd& nvme_cmd,
+                      uint32_t lba_size);
+
 }  // namespace translator
 
 #endif

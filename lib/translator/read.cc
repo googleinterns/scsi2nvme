@@ -231,4 +231,24 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   return StatusCode::kSuccess;
 }
 
+StatusCode ReadToScsi(Span<uint8_t> buffer,
+                      const nvme::GenericQueueEntryCmd& nvme_cmd,
+                      uint32_t lba_size) {
+  // Get NVMe read data
+  uint64_t data_ptr = nvme_cmd.dptr.prp.prp1;
+  // cdw 12 nlb bits 15:00 (zero based field)
+  uint16_t transfer_length = static_cast<uint16_t>(ltohl(nvme_cmd.cdw[2]) + 1);
+
+  uint32_t bytes_transferred = transfer_length * lba_size;
+
+  if (buffer.size() < bytes_transferred) {
+    DebugLog("Insufficient buffer size");
+    return StatusCode::kFailure;
+  }
+
+  memcpy(buffer.data(), reinterpret_cast<uint8_t*>(data_ptr),
+         bytes_transferred);
+  return StatusCode::kSuccess;
+}
+
 }  // namespace translator

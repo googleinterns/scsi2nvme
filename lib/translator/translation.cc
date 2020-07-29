@@ -22,6 +22,8 @@
 
 #include "read.h"
 
+#include "read.h"
+
 namespace translator {
 
 // TODO: Set up persistence structure to hold
@@ -148,6 +150,13 @@ ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kRead6:
+    case scsi::OpCode::kRead10:
+    case scsi::OpCode::kRead12:
+    case scsi::OpCode::kRead16:
+      pipeline_status_ = ReadToScsi(buffer, nvme_cmds_[0], kLbaSize);
       ret = ApiStatus::kSuccess;
       break;
   }
