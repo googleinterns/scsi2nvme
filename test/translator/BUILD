@@ -54,6 +54,16 @@ cc_test(
 )
 
 cc_test(
+  name = "verify_tests",
+  srcs = [ "verify_test.cc"],
+  deps = [
+    "//lib/translator:verify_lib",
+    "@googletest//:gtest_main",
+    "//lib/translator:common"
+  ]
+)
+
+cc_test(
   name = "request_sense_tests",
   srcs = [ "request_sense_test.cc" ],
   deps = [

@@ -18,6 +18,7 @@
 #include "read_capacity_10.h"
 #include "report_luns.h"
 #include "request_sense.h"
+#include "verify.h"
 
 namespace translator {
 
@@ -64,6 +65,10 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
       break;
+    case scsi::OpCode::kVerify10:
+      pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
+      break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
@@ -94,6 +99,11 @@ ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
+    case scsi::OpCode::kVerify10:
+      // TODO: translator should intercept and handle status code.
+      // a VerifyToScsi() is not needed
+      ret = ApiStatus::kSuccess;
+      break;
     case scsi::OpCode::kInquiry:
       pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
       ret = ApiStatus::kSuccess;

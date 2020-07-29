@@ -18,6 +18,7 @@ cc_library(
     ":inquiry_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":verify_lib",
     ":report_luns_lib",
   ],
   visibility = ["//visibility:public"]
@@ -73,6 +74,18 @@ cc_library(
   srcs = ["status.cc"],
   deps = [
       "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "verify_lib",
+  hdrs = ["verify.h"],
+  srcs = ["verify.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      "//lib:scsi_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
