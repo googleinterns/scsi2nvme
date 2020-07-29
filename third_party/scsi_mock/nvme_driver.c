@@ -23,11 +23,11 @@ struct block_device* bdev;
 struct gendisk* bd_disk;
 struct nvme_ns* ns;
 
-union nvme_result {
-  __le16 u16;
-  __le32 u32;
-  __le64 u64;
-};
+// union nvme_result {
+//   __le16 u16;
+//   __le32 u32;
+//   __le64 u64;
+// };
 
 struct nvme_request {
   struct nvme_command* cmd;
@@ -38,6 +38,10 @@ struct nvme_request {
   void* ctrl;
 };
 
+static inline struct nvme_request* nvme_req(struct request* req) {
+  return blk_mq_rq_to_pdu(req);
+}
+
 struct request* nvme_alloc_request(struct request_queue* q,
                                    struct nvme_command* cmd) {
   struct request* req;
@@ -45,17 +49,14 @@ struct request* nvme_alloc_request(struct request_queue* q,
   req = blk_mq_alloc_request(q, nvme_is_write(cmd), 0);
   if (IS_ERR(req)) return req;
 
-  req->cmd_type = REQ_TYPE_DRV_PRIV;
-  req->cmd = (unsigned char*)cmd;
-  req->cmd_len = sizeof(struct nvme_command);
-  req->errors = 0;
+  //req->cmd_type = REQ_TYPE_DRV_PRIV;
+  nvme_req(req)->cmd = cmd;
+  //req->cmd_len = sizeof(struct nvme_command);
+  //req->errors = 0;
 
   return req;
 }
 
-static inline struct nvme_request* nvme_req(struct request* req) {
-  return blk_mq_rq_to_pdu(req);
-}
 
 int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
                          struct nvme_command* cmd, void* buffer,
@@ -81,7 +82,7 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
     }
     bio = req->bio;
 
-    bio->bi_bdev = bdget_disk(disk, 0);
+    bio->bi_disk = disk;
     if (!bio->bi_bdev) {
       printk("bdget_disk failed?.\n");
       ret = -ENODEV;
@@ -90,15 +91,15 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
   }
 
   printk("Before block request execution.\n");
-  int req_res = blk_execute_rq(req->q, disk, req, 0);
-  printk(KERN_INFO "req_res %d\n", req_res);
+  blk_execute_rq(req->q, disk, req, 0);
+  //printk(KERN_INFO "req_res %d\n", req_res);
   printk(KERN_INFO "status %d\n", nvme_req(req)->status);
   printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
-  ret = req->errors;
-  if (result) *result = le32_to_cpu(cqe.result);
+  //ret = req->errors;
+  //if (result) *result = le32_to_cpu(cqe.result);
 out_unmap:
   if (bio) {
-    if (disk && bio->bi_bdev) bdput(bio->bi_bdev);
+    if (disk && bdev) bdput(bdev);
   }
 out:
   blk_mq_free_request(req);
