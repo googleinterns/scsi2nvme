@@ -20,7 +20,14 @@
 #include "request_sense.h"
 #include "verify.h"
 
+#include "read.h"
+
 namespace translator {
+
+// TODO: Set up persistence structure to hold
+// actual page size and lba size queried from NVMe device
+constexpr uint32_t kPageSize = 4096;
+constexpr uint32_t kLbaSize = 512;
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  scsi::LunAddress lun) {
@@ -64,6 +71,29 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
+      break;
+    case scsi::OpCode::kRead6:
+      pipeline_status_ =
+          Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                      kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead10:
+      pipeline_status_ =
+          Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead12:
+      pipeline_status_ =
+          Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead16:
+      pipeline_status_ =
+          Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
       break;
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);

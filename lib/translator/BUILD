@@ -16,6 +16,7 @@ cc_library(
     "//third_party/spdk:nvme_lib",
     ":common",
     ":inquiry_lib",
+    ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
     ":verify_lib",
@@ -58,6 +59,17 @@ cc_library(
 )
 
 cc_library(
+  name = "status_lib",
+  hdrs = ["status.h"],
+  srcs = ["status.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "request_sense_lib",
   hdrs = ["request_sense.h"],
   srcs = ["request_sense.cc"],
@@ -69,9 +81,9 @@ cc_library(
 )
 
 cc_library(
-  name = "status_lib",
-  hdrs = ["status.h"],
-  srcs = ["status.cc"],
+  name = "read_lib",
+  hdrs = ["read.h"],
+  srcs = ["read.cc"],
   deps = [
       "//third_party/spdk:nvme_lib",
       ":common",
@@ -85,7 +97,6 @@ cc_library(
   srcs = ["verify.cc"],
   deps = [
       "//third_party/spdk:nvme_lib",
-      "//lib:scsi_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],

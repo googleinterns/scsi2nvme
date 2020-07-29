@@ -54,12 +54,11 @@ cc_test(
 )
 
 cc_test(
-  name = "verify_tests",
-  srcs = [ "verify_test.cc"],
+  name = "read_tests",
+  srcs = [ "read_test.cc" ],
   deps = [
-    "//lib/translator:verify_lib",
-    "@googletest//:gtest_main",
-    "//lib/translator:common"
+    "//lib/translator:read_lib",
+    "@googletest//:gtest_main"
   ]
 )
 
@@ -71,3 +70,13 @@ cc_test(
     "@googletest//:gtest_main"
   ]
 )
+
+cc_test(
+  name = "verify_tests",
+  srcs = [ "verify_test.cc"],
+  deps = [
+    "//lib/translator:verify_lib",
+    "@googletest//:gtest_main",
+  ]
+)
+
