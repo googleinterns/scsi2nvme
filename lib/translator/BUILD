@@ -18,6 +18,7 @@ cc_library(
     ":inquiry_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":report_luns_lib",
   ],
   visibility = ["//visibility:public"]
 )
@@ -40,6 +41,17 @@ cc_library(
   deps = [
       "//third_party/spdk:nvme_lib",
       ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "report_luns_lib",
+  hdrs = ["report_luns.h"],
+  srcs = ["report_luns.cc"],
+  deps = [
+    "//third_party/spdk:nvme_lib",
+    ":common",
   ],
   visibility = ["//visibility:public"],
 )

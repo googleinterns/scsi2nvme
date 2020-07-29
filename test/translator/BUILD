@@ -36,6 +36,15 @@ cc_test(
 )
 
 cc_test(
+  name = "report_luns_test",
+  srcs = [ "report_luns_test.cc" ],
+  deps = [
+    "//lib/translator:report_luns_lib",
+    "@googletest//:gtest_main"
+  ]
+)
+
+cc_test(
   name = "status_test",
   srcs = [ "status_test.cc" ],
   deps = [

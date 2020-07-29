@@ -8,6 +8,8 @@
 // https://github.com/spdk/spdk/blob/master/include/spdk/nvme_spec.h
 namespace nvme {
 
+static const int kIdentifyNsListMaxLength = 1024;
+
 // NVMe Base Specification Figure 125
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 enum class StatusCodeType : uint8_t {
@@ -733,6 +735,11 @@ struct IdentifyNamespace {
   uint8_t vendor_specific[3712];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(IdentifyNamespace) == 4096);
+
+struct IdentifyNamespaceList {
+  uint32_t ids[kIdentifyNsListMaxLength];  // List of namespace IDs
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(IdentifyNamespaceList) == 4096);
 
 }  // namespace nvme
 
