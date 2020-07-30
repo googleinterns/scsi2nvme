@@ -23,12 +23,6 @@ struct block_device* bdev;
 struct gendisk* bd_disk;
 struct nvme_ns* ns;
 
-// union nvme_result {
-//   __le16 u16;
-//   __le32 u32;
-//   __le64 u64;
-// };
-
 struct nvme_request {
   struct nvme_command* cmd;
   union nvme_result result;
@@ -45,14 +39,16 @@ static inline struct nvme_request* nvme_req(struct request* req) {
 struct request* nvme_alloc_request(struct request_queue* q,
                                    struct nvme_command* cmd) {
   struct request* req;
-
-  req = blk_mq_alloc_request(q, nvme_is_write(cmd), 0);
+  unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
+  req = blk_mq_alloc_request(q, op, 0);
+  
   if (IS_ERR(req)) return req;
-
-  //req->cmd_type = REQ_TYPE_DRV_PRIV;
+  
+  req->cmd_flags |= REQ_FAILFAST_DRIVER;
+  nvme_req(req)->retries = 0;
+  nvme_req(req)->flags = 0;
+  req->req_flags |= RQF_DONTPREP;
   nvme_req(req)->cmd = cmd;
-  //req->cmd_len = sizeof(struct nvme_command);
-  //req->errors = 0;
 
   return req;
 }
@@ -92,11 +88,9 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
 
   printk("Before block request execution.\n");
   blk_execute_rq(req->q, disk, req, 0);
-  //printk(KERN_INFO "req_res %d\n", req_res);
   printk(KERN_INFO "status %d\n", nvme_req(req)->status);
   printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
-  //ret = req->errors;
-  //if (result) *result = le32_to_cpu(cqe.result);
+
 out_unmap:
   if (bio) {
     if (disk && bdev) bdput(bdev);
@@ -153,6 +147,7 @@ int nvme_driver_init(void) {
   cbuff[0] = 'a';
   cbuff[1] = 'b';
   cbuff[2] = 'c';
+  cbuff[3] = '\n';
 
   struct nvme_command *ncmd = NULL;
   ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
@@ -162,7 +157,6 @@ int nvme_driver_init(void) {
   ncmd->rw.nsid = cpu_to_le32(1);
   ncmd->rw.length = cpu_to_le16(1);
 
-  //struct nvme_id_ctrl *result = (struct nvme_id_ctrl *)ret_buf;
   u32 code_result = 0;
 
   int status = submit_io_command(ncmd, ret_buf, buff_size, &code_result, 0);
