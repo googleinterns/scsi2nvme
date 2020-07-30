@@ -14,6 +14,8 @@
 
 #include "lib/translator/inquiry.h"
 
+#include <netinet/in.h>
+
 #include "gtest/gtest.h"
 
 // Tests
@@ -69,7 +71,7 @@ class InquiryTest : public ::testing::Test {
 };
 
 TEST_F(InquiryTest, InquiryToNvme) {
-  inquiry_cmd_.allocation_length = 4096;
+  inquiry_cmd_.allocation_length = htons(4096);
   uint32_t nsid = 0x123;
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {{}};
@@ -79,7 +81,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
 
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
-  EXPECT_EQ(alloc_len, inquiry_cmd_.allocation_length);
+  EXPECT_EQ(alloc_len, 4096);
 
   EXPECT_EQ(nvme_cmds_[1].opc,
             static_cast<uint8_t>(nvme::AdminOpcode::kIdentify));
@@ -95,7 +97,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
 }
 
 TEST_F(InquiryTest, InquiryToNvmeFailRead) {
-  inquiry_cmd_.allocation_length = 4096;
+  inquiry_cmd_.allocation_length = htons(4096);
   uint32_t nsid = 0x123;
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {};
@@ -219,7 +221,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdEui64) {
   inquiry_cmd_ = scsi::InquiryCommand{
       .evpd = 1, .page_code = scsi::PageCode::kUnitSerialNumber};
 
-  identify_ns_.eui64 = 0x123456789abcdefa;
+  identify_ns_.eui64 = translator::htolll(0x123456789abcdefa);
   identify_ns_.nguid[0] = 0;
   identify_ns_.nguid[1] = 0;
 
@@ -399,12 +401,10 @@ TEST_F(InquiryTest, BlockLimitsVpdMdts) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, 0);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count, 0);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, 0);
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdFuse) {
@@ -455,12 +455,11 @@ TEST_F(InquiryTest, BlockLimitsVpdDsm) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, 0);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count,
+            htonl(static_cast<uint32_t>(identify_ctrl_.oncs.dsm)));
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, htonl(0x0100));
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdMdtsFuse) {
@@ -483,12 +482,10 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuse) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, max_transfer_length);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count, 0);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, 0);
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseLarge) {
@@ -515,10 +512,9 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseLarge) {
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
   EXPECT_EQ(result.max_compare_write_length, kMaxCompareWriteLen);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count, 0);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, 0);
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseVeryLarge) {
@@ -544,10 +540,9 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseVeryLarge) {
   EXPECT_EQ(result.max_compare_write_length, kMaxCompareWriteLen);
 
   uint32_t largest_transfer = 1 << 16;
-  EXPECT_EQ(result.max_transfer_length, largest_transfer);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_transfer_length, htonl(largest_transfer));
+  EXPECT_EQ(result.max_unmap_lba_count, 0);
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, 0);
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdMdtsOncs) {
@@ -570,12 +565,11 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsOncs) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, 0);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count,
+            htonl(static_cast<uint32_t>(identify_ctrl_.oncs.dsm)));
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, htonl(0x0100));
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdFuseOncs) {
@@ -598,12 +592,10 @@ TEST_F(InquiryTest, BlockLimitsVpdFuseOncs) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, max_transfer_length);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count, htonl(identify_ctrl_.oncs.dsm));
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, htonl(0x0100));
 }
 
 TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
@@ -626,12 +618,10 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
 
   EXPECT_EQ(result.page_code, scsi::PageCode::kBlockLimitsVpd);
   EXPECT_EQ(result.page_length, 0x003c);
-  EXPECT_EQ(result.max_compare_write_length,
-            identify_ctrl_.fuses.compare_and_write ? max_transfer_length : 0);
-  EXPECT_EQ(result.max_transfer_length, max_transfer_length);
-  EXPECT_EQ(result.max_unmap_lba_count, identify_ctrl_.oncs.dsm);
-  EXPECT_EQ(result.max_unmap_block_descriptor_count,
-            identify_ctrl_.oncs.dsm ? 0x0100 : 0);
+  EXPECT_EQ(result.max_compare_write_length, max_transfer_length);
+  EXPECT_EQ(result.max_transfer_length, htonl(max_transfer_length));
+  EXPECT_EQ(result.max_unmap_lba_count, htonl(identify_ctrl_.oncs.dsm));
+  EXPECT_EQ(result.max_unmap_block_descriptor_count, htonl(0x0100));
 }
 
 TEST_F(InquiryTest, LogicalBlockProvisioningVpd) {

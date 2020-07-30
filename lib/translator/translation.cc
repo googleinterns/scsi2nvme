@@ -15,14 +15,11 @@
 #include "translation.h"
 
 #include "inquiry.h"
+#include "read.h"
 #include "read_capacity_10.h"
 #include "report_luns.h"
 #include "request_sense.h"
 #include "verify.h"
-
-#include "read.h"
-
-#include "read.h"
 
 namespace translator {
 

@@ -14,6 +14,12 @@
 
 #include "read_capacity_10.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
+
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
@@ -60,8 +66,11 @@ StatusCode ReadCapacity10ToScsi(
 
   scsi::ReadCapacity10Data result = {
       .returned_logical_block_address =
-          identify_ns->nsze > 0xffffffff ? 0xffffffff : identify_ns->nsze,
-      .block_length = identify_ns->lbaf[identify_ns->flbas.format].lbads,
+          htonl(ltohll(identify_ns->nsze) > 0xffffffff
+                    ? 0xffffffff
+                    : static_cast<uint32_t>(ltohll(identify_ns->nsze))),
+      .block_length = htoll(static_cast<uint32_t>(
+          identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 
   WriteValue(result, buffer);
