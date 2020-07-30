@@ -52,7 +52,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   if (is_data_in) {
     struct scsi_data_buffer* sdb = &cmd->sdb;
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
-    scsi_set_resid(cmd, data_len - resp.alloc_len);
+    scsi_set_resid(cmd, data_len - sdb_len);
   }
   return resp.return_code;
 }

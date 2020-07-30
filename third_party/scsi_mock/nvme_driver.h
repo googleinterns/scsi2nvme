@@ -12,7 +12,24 @@
 #ifndef NVME2SCSI_NVME_H
 #define NVME2SCSI_NVME_H
 
+#ifdef __KERNEL__
 #include "nvme_internal.h"
+#else
+struct nvme_command {
+  uint8_t opcode;
+  uint8_t flags;
+  uint16_t command_id;
+  uint32_t nsid;
+  uint32_t cdw2[2];
+  uint64_t metadata;
+  struct {
+    uint64_t prp1;
+    uint64_t prp2;
+  };
+  uint32_t cdw3[6];
+};
+using u32 = uint32_t;
+#endif
 
 // TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one
 // fixed device is enough for an MVP
