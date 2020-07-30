@@ -41,5 +41,7 @@ int submit_admin_command(struct nvme_command* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout);
 int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
                       unsigned bufflen, u32* result, unsigned timeout);
+                      
+int send_sample_write_request()
 
 #endif  // NVME2SCSI_NVME_H
