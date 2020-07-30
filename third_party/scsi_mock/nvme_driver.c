@@ -83,7 +83,7 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
     bio = req->bio;
 
     bio->bi_disk = disk;
-    if (!bio->bi_bdev) {
+    if (!bio->bi_disk) {
       printk("bdget_disk failed?.\n");
       ret = -ENODEV;
       goto out_unmap;
