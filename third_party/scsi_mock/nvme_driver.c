@@ -112,30 +112,7 @@ int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
                               result, timeout);
 }
 
-int nvme_driver_init(void) {
-  printk(KERN_INFO "Started NVMe Communication Module Insertion\n");
-
-  bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
-  if (IS_ERR(bdev)) {
-    printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
-    return -1;
-  }
-
-  printk("Block device registered\n");
-
-  bd_disk = bdev->bd_disk;
-  if (IS_ERR_OR_NULL(bd_disk)) {
-    printk("bd_disk is null?.\n");
-  }
-
-  printk("Gendisk registered\n");
-
-  ns = bdev->bd_disk->private_data;
-  if (IS_ERR_OR_NULL(ns)) {
-    printk("nvme_ns is null?.\n");
-  }
-  printk("NVMe device registered!\n");
-
+int send_sample_write_request() {
   int buff_size = sizeof(struct nvme_id_ctrl);
   void *ret_buf = NULL;
   ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
@@ -161,10 +138,32 @@ int nvme_driver_init(void) {
 
   int status = submit_io_command(ncmd, ret_buf, buff_size, &code_result, 0);
   printk("Status of IO is: %d\n", status);
+}
 
-  // uncomment while reading the value
-  u8 written_value = 0;
-  memcpy(&written_value, &ret_buf, 1);
-  printk("Value written is: %d\n", written_value);
+int nvme_driver_init(void) {
+  printk(KERN_INFO "Started NVMe Communication Module Insertion\n");
+
+  bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
+  if (IS_ERR(bdev)) {
+    printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
+    return -1;
+  }
+
+  printk("Block device registered\n");
+
+  bd_disk = bdev->bd_disk;
+  if (IS_ERR_OR_NULL(bd_disk)) {
+    printk("bd_disk is null?.\n");
+    return -1;
+  }
+
+  printk("Gendisk registered\n");
+
+  ns = bdev->bd_disk->private_data;
+  if (IS_ERR_OR_NULL(ns)) {
+    printk("nvme_ns is null?.\n");
+    return -1;
+  }
+  printk("NVMe device registered!\n");
   return 0;
 }
