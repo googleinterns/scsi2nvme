@@ -45,13 +45,13 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::Span<const nvme::GenericQueueEntryCmd> nvme_cmds = translation.GetNvmeCmds();
   nvme::GenericQueueEntryCpl cpl_buf[nvme_cmds.size()] = {};
   for (uint32_t i = 0; i < nvme_cmds.size(); ++i) {
-    nvme_command nvme_cmd;
-    memcpy(&nvme_cmd, &nvme_cmds[i], sizeof(nvme_cmd));
-    static_assert(sizeof(nvme_cmd) == sizeof(nvme_cmds[i]));
+    NvmeCommand tmp_cmd;
+    memcpy(&tmp_cmd, &nvme_cmds[i], sizeof(tmp_cmd));
+    static_assert(sizeof(tmp_cmd) == sizeof(nvme_cmds[i]));
     void* buffer = reinterpret_cast<void*>(nvme_cmds[i].dptr.prp.prp1);
     unsigned bufflen = 4096;
     uint32_t result = 0;
-    submit_io_command(&nvme_cmd, buffer, bufflen, &result, 60);
+    submit_io_command(&tmp_cmd, buffer, bufflen, &result, 60);
     cpl_buf[i].cdw0 = result;
   }
   

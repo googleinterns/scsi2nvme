@@ -1,4 +1,5 @@
 #include "nvme_driver.h"
+#include "nvme_internal.h"
 
 #include <linux/bio.h>
 #include <linux/blk-mq.h>
@@ -100,19 +101,25 @@ out:
   return ret;
 }
 
-int submit_admin_command(struct nvme_command* nvme_cmd, void* buffer,
+int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout) {
-  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, nvme_cmd, buffer,
+  struct nvme_command kernel_nvme_cmd;
+  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd, buffer,
                               bufflen, result, timeout);
 }
 
-int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
+int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
                       unsigned bufflen, u32* result, unsigned timeout) {
-  return nvme_submit_user_cmd(bd_disk, ns->queue, nvme_cmd, buffer, bufflen,
+  struct nvme_command kernel_nvme_cmd;
+  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer, bufflen,
                               result, timeout);
 }
 
-int send_sample_write_request() {
+/*int send_sample_write_request() {
   int buff_size = sizeof(struct nvme_id_ctrl);
   void *ret_buf = NULL;
   ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
@@ -138,7 +145,7 @@ int send_sample_write_request() {
 
   int status = submit_io_command(ncmd, ret_buf, buff_size, &code_result, 0);
   printk("Status of IO is: %d\n", status);
-}
+}*/
 
 int nvme_driver_init(void) {
   printk(KERN_INFO "Started NVMe Communication Module Insertion\n");

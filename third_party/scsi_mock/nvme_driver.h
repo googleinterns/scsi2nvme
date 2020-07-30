@@ -12,24 +12,32 @@
 #ifndef NVME2SCSI_NVME_H
 #define NVME2SCSI_NVME_H
 
-#ifdef __KERNEL__
-#include "nvme_internal.h"
-#else
-struct nvme_command {
-  uint8_t opcode;
-  uint8_t flags;
-  uint16_t command_id;
-  uint32_t nsid;
-  uint32_t cdw2[2];
-  uint64_t metadata;
-  struct {
-    uint64_t prp1;
-    uint64_t prp2;
-  };
-  uint32_t cdw3[6];
-};
-using u32 = uint32_t;
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+#endif
+
+struct NvmeCommand {
+  u8 opcode;
+  u8 flags;
+  u16 command_id;
+  u32 nsid;
+  u32 cdw2[2];
+  u64 metadata;
+  struct {
+    u64 prp1;
+    u64 prp2;
+  };
+  u32 cdw3[6];
+};
 
 // TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one
 // fixed device is enough for an MVP
@@ -37,11 +45,16 @@ using u32 = uint32_t;
 
 int nvme_driver_init(void);
 
-int submit_admin_command(struct nvme_command* nvme_cmd, void* buffer,
+int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout);
-int submit_io_command(struct nvme_command* nvme_cmd, void* buffer,
+int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
                       unsigned bufflen, u32* result, unsigned timeout);
                       
 int send_sample_write_request(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif  // NVME2SCSI_NVME_H
