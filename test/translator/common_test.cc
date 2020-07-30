@@ -14,15 +14,12 @@
 
 #include "lib/translator/common.h"
 
-#include "absl/types/span.h"
 #include "gtest/gtest.h"
 #include "lib/scsi.h"
 
 namespace {
 
-/*
-   Tests the logging methods
-*/
+// Tests the logging methods
 
 TEST(Common, ShouldCorrectlyCallback) {
   const char* buf = "Testing%d";
@@ -45,7 +42,7 @@ TEST(Common, ShouldNotReadValueFromSpan) {
   uint8_t buffer[sizeof(scsi::Read6Command) - 1];
 
   bool result = translator::ReadValue(buffer, cmd);
-  EXPECT_FALSE(result);
+  ASSERT_FALSE(result);
 }
 
 TEST(Common, ShouldCorrectlyReadValueFromSpan) {
@@ -53,7 +50,7 @@ TEST(Common, ShouldCorrectlyReadValueFromSpan) {
   uint8_t buffer[sizeof(scsi::ControlByte)] = {0b11000100};
 
   bool result = translator::ReadValue(buffer, cb);
-  EXPECT_TRUE(result);
+  ASSERT_TRUE(result);
   EXPECT_EQ(0b00, cb.obsolete);
   EXPECT_EQ(0b1, cb.naca);
   EXPECT_EQ(0b000, cb.reserved);
@@ -151,6 +148,71 @@ TEST(Common, ShouldFailBuildAllocationWhenAllocPageFails) {
 
   translator::StatusCode status_code = allocation.SetPages(1, 1);
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
+}
+
+TEST(Common, SafePointerCastWrite) {
+  uint32_t expected_val = 0x13292022;
+
+  uint32_t write_buffer = 0;
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&write_buffer);
+  translator::Span<uint8_t> span(buf, sizeof(uint32_t));
+
+  uint32_t* val = translator::SafePointerCastWrite<uint32_t>(span);
+
+  ASSERT_NE(nullptr, val);
+  *val = expected_val;
+  ASSERT_EQ(expected_val, write_buffer);
+}
+
+TEST(Common, SafePointerCastRead) {
+  uint32_t expected_val = 0x13292022;
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&expected_val);
+  translator::Span<uint8_t> span(buf, sizeof(uint32_t));
+
+  const uint32_t* val = translator::SafePointerCastRead<uint32_t>(span);
+
+  ASSERT_NE(nullptr, val);
+  ASSERT_EQ(expected_val, *val);
+}
+
+TEST(Common, PointerCastReadInvalidSize) {
+  uint32_t expected_val = 0;
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&expected_val);
+  translator::Span<uint8_t> span(buf, 1);
+
+  const uint32_t* val = translator::SafePointerCastRead<uint32_t>(span);
+
+  ASSERT_EQ(nullptr, val);
+}
+
+TEST(Common, PointerCastWriteInvalidSize) {
+  uint32_t expected_val = 0;
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&expected_val);
+  translator::Span<uint8_t> span(buf, 3);
+
+  uint32_t* val = translator::SafePointerCastWrite<uint32_t>(span);
+
+  ASSERT_EQ(nullptr, val);
+}
+
+TEST(Common, PointerCastReadBadAlignment) {
+  uint32_t expected_vals[2];
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&expected_vals);
+  translator::Span<uint8_t> span(buf + 1, sizeof(uint32_t));
+
+  const uint32_t* val = translator::SafePointerCastRead<uint32_t>(span);
+
+  ASSERT_EQ(nullptr, val);
+}
+
+TEST(Common, PointerCastWriteBadAlignment) {
+  uint32_t expected_vals[2];
+  uint8_t* buf = reinterpret_cast<uint8_t*>(&expected_vals);
+  translator::Span<uint8_t> span(buf + 1, sizeof(uint32_t));
+
+  uint32_t* val = translator::SafePointerCastWrite<uint32_t>(span);
+
+  ASSERT_EQ(nullptr, val);
 }
 
 }  // namespace

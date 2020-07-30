@@ -14,6 +14,13 @@
 
 #include "common.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
+#include <byteswap.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -52,6 +59,50 @@ void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t)) {
   alloc_pages_callback = alloc_callback;
   dealloc_pages_callback = dealloc_callback;
+}
+
+bool IsLittleEndian() {
+  static uint32_t test_val = 42;
+  // Check first byte to determine endianness
+  if (*reinterpret_cast<const char*>(&test_val) == test_val)  // little endian
+    return true;
+  return false;  // big endian
+}
+
+uint64_t htonll(uint64_t value) {
+  if (IsLittleEndian()) {  // little endian
+    const uint32_t high_bits = htonl(static_cast<uint32_t>(value >> 32));
+    const uint32_t low_bits =
+        htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+    return (static_cast<uint64_t>(low_bits) << 32) | high_bits;
+  } else {  // big endian
+    return value;
+  }
+}
+
+uint16_t htols(uint16_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_16(value);
+  }
+}
+
+uint32_t htoll(uint32_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_32(value);
+  }
+}
+
+uint64_t htolll(uint64_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_64(value);
+  }
 }
 
 StatusCode Allocation::SetPages(uint16_t data_page_count,

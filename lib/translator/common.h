@@ -18,13 +18,14 @@
 #include <cstring>
 #include <type_traits>
 
-#include "absl/strings/string_view.h"
-#include "absl/types/span.h"
-
 #include "lib/scsi.h"
-#include "third_party/spdk/nvme.h"
 
 namespace translator {
+
+// Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
+// This value is not null terminated and should be size 8
+constexpr char kNvmeVendorIdentification[] = "NVMe    ";
+static_assert(strlen(kNvmeVendorIdentification) == 8);
 
 // The maximum amplification ratio of any supported SCSI:NVMe translation
 constexpr int kMaxCommandRatio = 3;
@@ -61,11 +62,67 @@ void SetDebugCallback(void (*callback)(const char*));
 void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t));
 
+// Returns true if system is little endian.
+// Returns false if system is big endian.
+bool IsLittleEndian();
+
+// Host to Network endianness transformation for uint64_t
+// Network endianness is always big endian
+// Converts value to big endian if Host is little endian
+// No op if Host is big endian
+uint64_t htonll(uint64_t value);
+
+// Network to Host endianness transformation for uint64_t
+// Network endianness is always big endian
+// Converts value to little endian if Host is little endian
+// No op if Host is big endian
+#define ntohll htonll
+
+// Host to little endian transformation for uint16_t, uint32_t, uint64_t
+// Converts value to little endian if Host is big endian
+// No op if Host is little endian
+uint16_t htols(uint16_t value);
+uint32_t htoll(uint32_t value);
+uint64_t htolll(uint64_t value);
+
+// Little endian to Host transformation for uint16_t, uint32_t, uint64_t
+// Converts value to Host endian if Host is big endian
+// No op if Host is little endian
+#define ltohs htols
+#define ltohl htoll
+#define ltohll htolll
+
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
 template <typename T>
-bool ReadValue(absl::Span<const uint8_t> data, T& out) {
+class Span {
+ public:
+  Span() : ptr_(nullptr), len_(0) {}
+  Span(T* ptr, size_t len) : ptr_(ptr), len_(len) {}
+  template <size_t N>
+  Span(T (&a)[N]) : Span(a, N) {}
+  template <typename Y, typename = std::enable_if<std::is_same<
+                            typename std::decay<T*>::type, Y*>::value>>
+  Span(const Span<Y>& ref) : Span(ref.data(), ref.size()) {}
+  T* data() const { return ptr_; }
+  size_t size() const { return len_; }
+  bool empty() { return len_ == 0; }
+  T& operator[](size_t i) const { return *(ptr_ + i); }
+  Span subspan(size_t pos, size_t len = npos) {
+    if (pos >= len_) return Span<T>(nullptr, 0);
+    if (len > (len_ - pos) || len == npos) len = len_ - pos;
+    return Span<T>(ptr_ + pos, len);
+  }
+
+ private:
+  T* ptr_;
+  size_t len_;
+  constexpr static size_t npos = -1;
+};
+
+template <typename T>
+bool ReadValue(Span<const uint8_t> data, T& out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
   if (sizeof(T) > data.size()) return false;
   memcpy(&out, data.data(), sizeof(T));
@@ -73,13 +130,48 @@ bool ReadValue(absl::Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, absl::Span<uint8_t> out) {
+bool WriteValue(const T& data, Span<uint8_t> out) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
   if (sizeof(T) > out.size()) return false;
   memcpy(out.data(), &data, sizeof(T));
   return true;
 }
 
-}  // namespace translator
+// Returns a pointer of type T pointing to buf.data().
+// This creates a new object of type T.
+// Trying to access an existing object will result in undefined behavior.
+// Uses placement new operator to guarantee memory safety.
+// Validates alignment and size of buffer.
+template <typename T>
+T* SafePointerCastWrite(Span<uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return new (buf.data()) T;
+}
 
+// Returns a pointer of type const T pointing to buf.data().
+// Validates alignment and size of buffer.
+// Does not use placement new.
+template <typename T>
+const T* SafePointerCastRead(Span<const uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return reinterpret_cast<const T*>(buf.data());
+}
+
+}  // namespace translator
 #endif

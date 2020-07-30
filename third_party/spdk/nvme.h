@@ -8,6 +8,8 @@
 // https://github.com/spdk/spdk/blob/master/include/spdk/nvme_spec.h
 namespace nvme {
 
+static const int kIdentifyNsListMaxLength = 1024;
+
 // NVMe Base Specification Figure 125
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 enum class StatusCodeType : uint8_t {
@@ -719,7 +721,7 @@ struct IdentifyNamespace {
   uint16_t noiob : 16;     // namespace optimal I/O boundary in logical blocks
   uint64_t nvmcap[2];      // NVM capacity
   uint8_t reserved64[40];  // includes fields added in NVMe Revision 1.4
-  uint8_t nguid[16];       // namespace globally unique identifier
+  uint64_t nguid[2];       // namespace globally unique identifier
   uint64_t eui64 : 64;     // IEEE extended unique identifier
 
   struct {
@@ -733,6 +735,11 @@ struct IdentifyNamespace {
   uint8_t vendor_specific[3712];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(IdentifyNamespace) == 4096);
+
+struct IdentifyNamespaceList {
+  uint32_t ids[kIdentifyNsListMaxLength];  // List of namespace IDs
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(IdentifyNamespaceList) == 4096);
 
 }  // namespace nvme
 

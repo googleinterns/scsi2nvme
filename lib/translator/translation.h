@@ -15,7 +15,7 @@
 #ifndef LIB_TRANSLATOR_TRANSLATION_H
 #define LIB_TRANSLATOR_TRANSLATION_H
 
-#include "absl/types/span.h"
+#include "third_party/spdk/nvme.h"
 
 #include "common.h"
 
@@ -37,12 +37,12 @@ class Translation {
         allocations_() {}
   // Translates from SCSI to NVMe. Translated commands available through
   // GetNvmeCmds()
-  BeginResponse Begin(absl::Span<const uint8_t> scsi_cmd, scsi::LunAddress lun);
+  BeginResponse Begin(Span<const uint8_t> scsi_cmd, scsi::LunAddress lun);
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
-  ApiStatus Complete(absl::Span<const nvme::GenericQueueEntryCpl> cpl_data,
-                     absl::Span<uint8_t> buffer);
+  ApiStatus Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
+                     Span<uint8_t> buffer);
   // Returns a span containing translated NVMe commands.
-  absl::Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
+  Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
@@ -52,7 +52,7 @@ class Translation {
 
  private:
   StatusCode pipeline_status_;
-  absl::Span<const uint8_t> scsi_cmd_;
+  Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
   nvme::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
   Allocation allocations_[kMaxCommandRatio];

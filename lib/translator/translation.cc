@@ -15,10 +15,21 @@
 #include "translation.h"
 
 #include "write.h"
+#include "inquiry.h"
+#include "read.h"
+#include "read_capacity_10.h"
+#include "report_luns.h"
+#include "request_sense.h"
+#include "verify.h"
 
 namespace translator {
 
-BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
+// TODO: Set up persistence structure to hold
+// actual page size and lba size queried from NVMe device
+constexpr uint32_t kPageSize = 4096;
+constexpr uint32_t kLbaSize = 512;
+
+BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
@@ -38,10 +49,55 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
 
-  absl::Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
+  uint32_t nsid = static_cast<uint32_t>(lun) + 1;
+  Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
   switch (opc) {
     case scsi::OpCode::kInquiry:
+      pipeline_status_ =
+          InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
+                        response.alloc_len, nsid, allocations_);
+      nvme_cmd_count_ = 2;
+      break;
+    case scsi::OpCode::kReportLuns:
+      pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
+                                          allocations_[0], response.alloc_len);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kReadCapacity10:
+      pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0],
+                                              nsid, allocations_[0]);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
+      break;
+    case scsi::OpCode::kRead6:
+      pipeline_status_ =
+          Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                      kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead10:
+      pipeline_status_ =
+          Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead12:
+      pipeline_status_ =
+          Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kRead16:
+      pipeline_status_ =
+          Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize);
+      break;
+    case scsi::OpCode::kVerify10:
+      pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite6:
       pipeline_status_ = Write6ToNvme(scsi_cmd, nvme_cmds_[0], allocations_[0]);
@@ -70,13 +126,13 @@ BeginResponse Translation::Begin(absl::Span<const uint8_t> scsi_cmd,
   return response;
 }
 
-ApiStatus Translation::Complete(
-    absl::Span<const nvme::GenericQueueEntryCpl> cpl_data,
-    absl::Span<uint8_t> buffer) {
+ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
+                                Span<uint8_t> buffer) {
   if (pipeline_status_ == StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Complete called before Begin");
     return ApiStatus::kFailure;
   }
+
   if (pipeline_status_ == StatusCode::kFailure) {
     // TODO fill buffer with SCSI CHECK CONDITION response
     AbortPipeline();
@@ -85,18 +141,47 @@ ApiStatus Translation::Complete(
 
   // Switch cases should not return
   ApiStatus ret;
+  Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
-    case scsi::OpCode::kInquiry:
+    case scsi::OpCode::kVerify10:
+      // TODO: translator should intercept and handle status code.
+      // a VerifyToScsi() is not needed
       ret = ApiStatus::kSuccess;
       break;
+    case scsi::OpCode::kInquiry:
+      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kReportLuns:
+      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kReadCapacity10:
+      pipeline_status_ = ReadCapacity10ToScsi(buffer, nvme_cmds_[0]);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kRequestSense:
+      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kRead6:
+    case scsi::OpCode::kRead10:
+    case scsi::OpCode::kRead12:
+    case scsi::OpCode::kRead16:
+      pipeline_status_ = ReadToScsi(buffer, nvme_cmds_[0], kLbaSize);
+      ret = ApiStatus::kSuccess;
+      break;
+  }
+  if (pipeline_status_ != StatusCode::kSuccess) {
+    // TODO fill buffer with SCSI CHECK CONDITION response
   }
   AbortPipeline();
   return ret;
 }
 
-absl::Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
-  return absl::MakeSpan(nvme_cmds_, nvme_cmd_count_);
+Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
+  return Span(nvme_cmds_, nvme_cmd_count_);
 }
 
 void Translation::AbortPipeline() {
@@ -118,5 +203,4 @@ void Translation::FlushMemory() {
     }
   }
 }
-
 };  // namespace translator

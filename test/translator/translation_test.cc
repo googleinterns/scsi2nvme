@@ -25,7 +25,7 @@ namespace {
 TEST(Translation, ShouldHandleUnknownOpcode) {
   translator::Translation translation = {};
   uint8_t opc = 233;
-  absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(&opc, 1);
+  translator::Span<const uint8_t> scsi_cmd = translator::Span(&opc, 1);
   translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
   EXPECT_EQ(translator::ApiStatus::kSuccess, resp.status);
 }
@@ -33,22 +33,23 @@ TEST(Translation, ShouldHandleUnknownOpcode) {
 TEST(Translation, ShouldReturnInquirySuccess) {
   translator::Translation translation = {};
   uint8_t opc = static_cast<uint8_t>(scsi::OpCode::kInquiry);
-  absl::Span<const uint8_t> scsi_cmd = absl::MakeSpan(&opc, 1);
+  translator::Span<const uint8_t> scsi_cmd = translator::Span(&opc, 1);
   translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
   EXPECT_EQ(translator::ApiStatus::kSuccess, resp.status);
 }
 
 TEST(Translation, ShouldFailInvalidPipeline) {
   translator::Translation translation = {};
-  absl::Span<const nvme::GenericQueueEntryCpl> cpl_data;
-  absl::Span<uint8_t> buffer;
+  translator::Span<const nvme::GenericQueueEntryCpl> cpl_data;
+  translator::Span<uint8_t> buffer;
   translator::ApiStatus status = translation.Complete(cpl_data, buffer);
   EXPECT_EQ(translator::ApiStatus::kFailure, status);
 }
 
 TEST(Translation, ShouldReturnEmptyCmdSpan) {
   translator::Translation translation = {};
-  absl::Span<const nvme::GenericQueueEntryCmd> cmds = translation.GetNvmeCmds();
+  translator::Span<const nvme::GenericQueueEntryCmd> cmds =
+      translation.GetNvmeCmds();
   EXPECT_EQ(0, cmds.size());
 }
 

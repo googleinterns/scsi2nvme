@@ -38,6 +38,9 @@ StatusCode Write16ToNvme(absl::Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation);
 
+
+// StatusCode WriteToScsi(Span<uint8_t> buffer, const nvme::GenericEntryCmd& nvme_cmd,uint32_t lba_size);                         
+
 }  // namespace translator
 
 #endif  // _WRITE_H_
