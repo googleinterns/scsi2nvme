@@ -47,7 +47,7 @@ struct request* nvme_alloc_request(struct request_queue* q,
   req->cmd_flags |= REQ_FAILFAST_DRIVER;
   nvme_req(req)->retries = 0;
   nvme_req(req)->flags = 0;
-  req->req_flags |= RQF_DONTPREP;
+  req->rq_flags |= RQF_DONTPREP;
   nvme_req(req)->cmd = cmd;
 
   return req;
