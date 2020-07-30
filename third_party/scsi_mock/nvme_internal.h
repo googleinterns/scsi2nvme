@@ -72,7 +72,7 @@ struct nvme_ctrl {
 	struct device *device;	/* char device */
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,15,0)
-	struct cdev cdev;
+	//struct cdev cdev;
 #else
 	struct list_head node;
 	struct ida ns_ida;
