@@ -104,7 +104,9 @@ out:
 int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
-  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  memcpy(&kernel_nvme_cmd->identify, nvme_cmd, sizeof(kernel_nvme_cmd));
+  kernel_nvme_cmd->common.opcode = nvme_admin_identify;
+  kernel_nvme_cmd->identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
   //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
   return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd, buffer,
                               bufflen, result, timeout);
@@ -113,7 +115,7 @@ int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
 int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
                       unsigned bufflen, u32* result, unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
-  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  memcpy(&kernel_nvme_cmd->rw, nvme_cmd, sizeof(kernel_nvme_cmd));
   //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
   return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer, bufflen,
                               result, timeout);
