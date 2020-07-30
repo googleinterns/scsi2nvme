@@ -15,6 +15,11 @@
 #include "inquiry.h"
 
 #include <cstring>
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
 
 namespace translator {
 
@@ -108,7 +113,7 @@ void TranslateUnitSerialNumberVpd(
       result.page_length = kEui64Len;
 
       // convert 64-bit number into hex string
-      sprintf(hex_string, "%08lx", identify_ns.eui64);
+      sprintf(hex_string, "%08lx", ltohll(identify_ns.eui64));
     }
 
     // insert _ and . in the correct positions
@@ -191,13 +196,14 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
 
       // The maximum transfer data size is reported as 2^(scsi MDTS)
       // 0 means no max limit
-      .max_transfer_length = max_transfer_length,
+      .max_transfer_length = htonl(max_transfer_length),
 
       // Shall be set to 0000_0000h if Dataset Management
       // command – Deallocate (AD) attribute is not supported.
       // Shall be set to non-zero value if Dataset Management
       // command – Deallocate (AD) attribute is supported.
-      .max_unmap_lba_count = identify_ctrl.oncs.dsm,
+      .max_unmap_lba_count =
+          htonl(static_cast<uint32_t>(identify_ctrl.oncs.dsm)),
 
       // Shall be set to 0000_0000h if Dataset Management
       // command – Deallocate (AD) attribute is not supported.
@@ -205,7 +211,8 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
       // command – Deallocate (AD) attribute is supported.
 
       // TODO: add named var for 0x0100
-      .max_unmap_block_descriptor_count = identify_ctrl.oncs.dsm ? 0x0100 : 0};
+      .max_unmap_block_descriptor_count =
+          htonl(identify_ctrl.oncs.dsm ? 0x0100 : 0)};
 
   WriteValue(result, buffer);
 }
@@ -217,7 +224,7 @@ void TranslateLogicalBlockProvisioningVpd(
 
   scsi::LogicalBlockProvisioningVpd result = {
       .page_code = scsi::PageCode::kLogicalBlockProvisioningVpd,
-      .page_length = 0x04,  // TODO: constant val in common.h
+      .page_length = htons(0x04),  // TODO: constant val in common.h
 
       // THRESHOLD_EXPONENT
       // Shall be set to 00h to indicate that there are no thin provisioning
@@ -295,7 +302,7 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return StatusCode::kInvalidInput;
   };
 
-  alloc_len = cmd.allocation_length;
+  alloc_len = static_cast<uint32_t>(ntohs(cmd.allocation_length));
 
   StatusCode status_alloc1 = allocations[0].SetPages(1, 0);
   if (status_alloc1 != StatusCode::kSuccess) {
@@ -319,8 +326,8 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
   };
   identify_ctrl.dptr.prp.prp1 = allocations[1].data_addr;
   identify_ctrl.cdw[0] =
-      0x1;  // Controller or Namespace Structure (CNS): This field specifies the
-            // information to be returned to the host.
+      htoll(0x1);  // Controller or Namespace Structure (CNS): This field
+                   // specifies the information to be returned to the host.
   return StatusCode::kSuccess;
 }
 
@@ -340,17 +347,19 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  nvme::IdentifyControllerData identify_ctrl = {};
-  if (!ReadValue(ctrl_span, identify_ctrl)) {
-    DebugLog("Malformed IdentifyController Data");
-    return StatusCode::kInvalidInput;
-  };
+  const nvme::IdentifyControllerData* identify_ctrl =
+      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
+  if (identify_ctrl == nullptr) {
+    DebugLog("Identify controller structure failed to cast");
+    return StatusCode::kFailure;
+  }
 
-  nvme::IdentifyNamespace identify_ns = {};
-  if (!ReadValue(ns_span, identify_ns)) {
-    DebugLog("Malformed IdentifyNamespace Data");
-    return StatusCode::kInvalidInput;
-  };
+  const nvme::IdentifyNamespace* identify_ns =
+      SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
+  if (identify_ns == nullptr) {
+    DebugLog("Identify namespace structure failed to cast");
+    return StatusCode::kFailure;
+  }
 
   // nsid should come from Namespace
   uint32_t nsid = nvme_cmds[1].nsid;
@@ -365,7 +374,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        TranslateUnitSerialNumberVpd(identify_ctrl, identify_ns, nsid, buffer);
+        TranslateUnitSerialNumberVpd(*identify_ctrl, *identify_ns, nsid,
+                                     buffer);
         break;
       case scsi::PageCode::kDeviceIdentification:
         // TODO: Return Device Identification data page toapplication client,
@@ -378,14 +388,14 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
-        TranslateBlockLimitsVpd(identify_ctrl, buffer);
+        TranslateBlockLimitsVpd(*identify_ctrl, buffer);
         break;
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
         // TODO: Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
         break;
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
-        TranslateLogicalBlockProvisioningVpd(identify_ctrl, identify_ns,
+        TranslateLogicalBlockProvisioningVpd(*identify_ctrl, *identify_ns,
                                              buffer);
         break;
       // May be supported by returning Logical Block Provisioning VPD Page to
@@ -398,7 +408,7 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    TranslateStandardInquiry(identify_ctrl, identify_ns, buffer);
+    TranslateStandardInquiry(*identify_ctrl, *identify_ns, buffer);
   }
   return StatusCode::kSuccess;
 }

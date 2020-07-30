@@ -16,9 +16,12 @@ cc_library(
     "//third_party/spdk:nvme_lib",
     ":common",
     ":inquiry_lib",
+    ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
     ":status_lib",
+    ":verify_lib",
+    ":report_luns_lib",
   ],
   visibility = ["//visibility:public"]
 )
@@ -46,6 +49,28 @@ cc_library(
 )
 
 cc_library(
+  name = "report_luns_lib",
+  hdrs = ["report_luns.h"],
+  srcs = ["report_luns.cc"],
+  deps = [
+    "//third_party/spdk:nvme_lib",
+    ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "status_lib",
+  hdrs = ["status.h"],
+  srcs = ["status.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
   name = "request_sense_lib",
   hdrs = ["request_sense.h"],
   srcs = ["request_sense.cc"],
@@ -57,9 +82,20 @@ cc_library(
 )
 
 cc_library(
-  name = "status_lib",
-  hdrs = ["status.h"],
-  srcs = ["status.cc"],
+  name = "read_lib",
+  hdrs = ["read.h"],
+  srcs = ["read.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "verify_lib",
+  hdrs = ["verify.h"],
+  srcs = ["verify.cc"],
   deps = [
       "//third_party/spdk:nvme_lib",
       ":common",

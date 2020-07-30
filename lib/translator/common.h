@@ -77,6 +77,20 @@ uint64_t htonll(uint64_t value);
 // No op if Host is big endian
 #define ntohll htonll
 
+// Host to little endian transformation for uint16_t, uint32_t, uint64_t
+// Converts value to little endian if Host is big endian
+// No op if Host is little endian
+uint16_t htols(uint16_t value);
+uint32_t htoll(uint32_t value);
+uint64_t htolll(uint64_t value);
+
+// Little endian to Host transformation for uint16_t, uint32_t, uint64_t
+// Converts value to Host endian if Host is big endian
+// No op if Host is little endian
+#define ltohs htols
+#define ltohl htoll
+#define ltohll htolll
+
 // does not return string_view for compatibility with DebugLog
 const char* ScsiOpcodeToString(scsi::OpCode opcode);
 
@@ -132,6 +146,42 @@ struct ScsiStatus {
 
 // Fills sense buffer with relevant data. Returns true on success.
 bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
+
+// Returns a pointer of type T pointing to buf.data().
+// This creates a new object of type T.
+// Trying to access an existing object will result in undefined behavior.
+// Uses placement new operator to guarantee memory safety.
+// Validates alignment and size of buffer.
+template <typename T>
+T* SafePointerCastWrite(Span<uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return new (buf.data()) T;
+}
+
+// Returns a pointer of type const T pointing to buf.data().
+// Validates alignment and size of buffer.
+// Does not use placement new.
+template <typename T>
+const T* SafePointerCastRead(Span<const uint8_t> buf) {
+  if (buf.size() < sizeof(T)) {
+    DebugLog("Pointer cast called on span of invalid size");
+    return nullptr;
+  }
+  if (reinterpret_cast<uintptr_t>(buf.data()) % std::alignment_of<T>::value !=
+      0) {
+    DebugLog("Pointer cast called on unaligned memory");
+    return nullptr;
+  }
+  return reinterpret_cast<const T*>(buf.data());
+}
 
 }  // namespace translator
 #endif
