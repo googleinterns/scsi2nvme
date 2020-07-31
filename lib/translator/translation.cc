@@ -56,21 +56,21 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       pipeline_status_ =
           InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd, nvme_cmds_[1].cmd,
                         response.alloc_len, nsid, allocations_);
-      nvme_cmd_count_ = 2;
       nvme_cmds_[0].is_admin = true;  // Identify namespace
       nvme_cmds_[1].is_admin = true;  // Identify controller
+      nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd,
                                           allocations_[0], response.alloc_len);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = true;  // Identify
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd,
                                               nsid, allocations_[0]);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = true;  // Identify
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
@@ -79,33 +79,34 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       pipeline_status_ =
           Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd, allocations_[0], nsid,
                       kPageSize, kLbaSize);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = false;  // Read
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead10:
       pipeline_status_ =
           Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd, allocations_[0], nsid,
                        kPageSize, kLbaSize);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = false;  // Read
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead12:
       pipeline_status_ =
           Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd, allocations_[0], nsid,
                        kPageSize, kLbaSize);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = false;  // Read
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead16:
       pipeline_status_ =
           Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd, allocations_[0], nsid,
                        kPageSize, kLbaSize);
       nvme_cmds_[0].is_admin = false;  // Read
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd);
-      nvme_cmd_count_ = 1;
       nvme_cmds_[0].is_admin = false;  // Compare
+      nvme_cmd_count_ = 1;
       break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));

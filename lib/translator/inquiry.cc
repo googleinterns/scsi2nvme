@@ -344,23 +344,23 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     return StatusCode::kInvalidInput;
   };
 
-  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(identify_ctrl.dptr.prp.prp1);
-  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
-
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(identify_ns.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  const nvme::IdentifyControllerData* identify_ctrl_data =
-      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
-  if (identify_ctrl_data == nullptr) {
-    DebugLog("Identify controller structure failed to cast");
-    return StatusCode::kFailure;
-  }
+  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(identify_ctrl.dptr.prp.prp1);
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
   const nvme::IdentifyNamespace* identify_ns_data =
       SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
   if (identify_ns_data == nullptr) {
     DebugLog("Identify namespace structure failed to cast");
+    return StatusCode::kFailure;
+  }
+
+  const nvme::IdentifyControllerData* identify_ctrl_data =
+      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
+  if (identify_ctrl_data == nullptr) {
+    DebugLog("Identify controller structure failed to cast");
     return StatusCode::kFailure;
   }
 
