@@ -17,8 +17,6 @@
 
 #include <cstdio>
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {
@@ -45,7 +43,8 @@ StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
 // Postconditions:
 // buffer contains SCSI response based on scsi_cmd parameters
 StatusCode InquiryToScsi(Span<const uint8_t> scsi_cmd, Span<uint8_t> buffer,
-                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds);
+                         const nvme::GenericQueueEntryCmd& identify_ns,
+                         const nvme::GenericQueueEntryCmd& identify_ctrl);
 
 };  // namespace translator
 #endif

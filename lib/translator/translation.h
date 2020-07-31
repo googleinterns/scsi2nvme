@@ -15,8 +15,6 @@
 #ifndef LIB_TRANSLATOR_TRANSLATION_H
 #define LIB_TRANSLATOR_TRANSLATION_H
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {
@@ -42,7 +40,7 @@ class Translation {
   ApiStatus Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
                      Span<uint8_t> buffer);
   // Returns a span containing translated NVMe commands.
-  Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
+  Span<const NvmeCmdWrapper> GetNvmeCmds();
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
@@ -54,7 +52,7 @@ class Translation {
   StatusCode pipeline_status_;
   Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
-  nvme::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
+  NvmeCmdWrapper nvme_cmds_[kMaxCommandRatio];
   Allocation allocations_[kMaxCommandRatio];
 };
 

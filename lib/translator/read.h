@@ -15,8 +15,6 @@
 #ifndef LIB_TRANSLATOR_READ_H
 #define LIB_TRANSLATOR_READ_H
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {

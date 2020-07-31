@@ -17,8 +17,6 @@
 
 #include "common.h"
 
-#include "third_party/spdk/nvme.h"
-
 namespace translator {
 
 StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,

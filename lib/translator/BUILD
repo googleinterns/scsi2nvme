@@ -3,6 +3,7 @@ cc_library(
   hdrs = ["common.h"],
   srcs = ["common.cc"],
   deps = [
+      "//third_party/spdk:nvme_lib",
     "//lib:scsi_lib",
   ],
   visibility = ["//visibility:public"],
@@ -13,7 +14,6 @@ cc_library(
   hdrs = ["translation.h"],
   srcs = ["translation.cc"],
   deps = [
-    "//third_party/spdk:nvme_lib",
     ":common",
     ":inquiry_lib",
     ":read_lib",
@@ -30,7 +30,6 @@ cc_library(
   srcs = ["inquiry.cc"],
   hdrs = ["inquiry.h"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
@@ -41,7 +40,6 @@ cc_library(
   srcs = ["read_capacity_10.cc"],
   hdrs = ["read_capacity_10.h"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
@@ -52,7 +50,6 @@ cc_library(
   hdrs = ["report_luns.h"],
   srcs = ["report_luns.cc"],
   deps = [
-    "//third_party/spdk:nvme_lib",
     ":common",
   ],
   visibility = ["//visibility:public"],
@@ -63,7 +60,6 @@ cc_library(
   hdrs = ["status.h"],
   srcs = ["status.cc"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
@@ -74,7 +70,6 @@ cc_library(
   hdrs = ["request_sense.h"],
   srcs = ["request_sense.cc"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
@@ -85,7 +80,6 @@ cc_library(
   hdrs = ["read.h"],
   srcs = ["read.cc"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],
@@ -96,7 +90,6 @@ cc_library(
   hdrs = ["verify.h"],
   srcs = ["verify.cc"],
   deps = [
-      "//third_party/spdk:nvme_lib",
       ":common",
   ],
   visibility = ["//visibility:public"],

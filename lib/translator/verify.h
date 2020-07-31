@@ -16,8 +16,6 @@
 #define LIB_TRANSLATOR_verify_H
 
 #include "common.h"
-#include "lib/scsi.h"
-#include "third_party/spdk/nvme.h"
 
 namespace translator {
 

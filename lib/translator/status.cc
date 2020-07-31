@@ -14,8 +14,6 @@
 
 #include "status.h"
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {
