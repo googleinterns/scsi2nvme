@@ -47,6 +47,7 @@ TEST(Verify, NoOp) {
   EXPECT_EQ(translator::VerifyToNvme(scsi_cmd, nvme_cmd),
             translator::StatusCode::kNoTranslation);
 }
+
 TEST(Verify, BadBuffer) {
   nvme::GenericQueueEntryCmd nvme_cmd;
   uint32_t lba = 0x12345;
@@ -87,6 +88,7 @@ TEST(Verify, Protect000) {
 
   uint8_t prchk = 0b111;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -112,6 +114,7 @@ TEST(Verify, Protect001) {
 
   uint8_t prchk = 0b111;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -137,6 +140,7 @@ TEST(Verify, Protect101) {
 
   uint8_t prchk = 0b111;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -162,6 +166,7 @@ TEST(Verify, Protect010) {
 
   uint8_t prchk = 0b011;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -187,6 +192,7 @@ TEST(Verify, Protect011) {
 
   uint8_t prchk = 0b000;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -212,6 +218,7 @@ TEST(Verify, Protect100) {
 
   uint8_t prchk = 0b100;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -237,6 +244,7 @@ TEST(Verify, Protect000Bytchk1) {
 
   uint8_t prchk = 0b111;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -261,6 +269,7 @@ TEST(Verify, Protect001Bytchk1) {
 
   uint8_t prchk = 0;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -286,6 +295,7 @@ TEST(Verify, Protect010Bytchk1) {
 
   uint8_t prchk = 0;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -311,6 +321,7 @@ TEST(Verify, Protect011Bytchk1) {
 
   uint8_t prchk = 0;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -336,6 +347,7 @@ TEST(Verify, Protect100Bytchk1) {
 
   uint8_t prchk = 0;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
@@ -361,6 +373,7 @@ TEST(Verify, Protect101Bytchk1) {
 
   uint8_t prchk = 0;
   uint8_t pr_info = 0b1000 | prchk;
+  EXPECT_EQ(nvme_cmd.opc, static_cast<uint8_t>(nvme::NvmOpcode::kCompare));
   EXPECT_EQ(nvme_cmd.cdw[0], translator::htoll(lba));
   EXPECT_EQ(nvme_cmd.cdw[1], 0);
   EXPECT_EQ(nvme_cmd.cdw[2],
