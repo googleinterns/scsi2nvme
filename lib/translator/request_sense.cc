@@ -84,7 +84,7 @@ StatusCode RequestSenseToScsi(Span<const uint8_t> scsi_cmd,
 
   if (request_sense_cmd.desc == 1) {
     TranslateDescriptorSenseData(buffer);
-  } else if (request_sense_cmd.desc == 0) {
+  } else {
     TranslateFixedSenseData(buffer);
   }
   return StatusCode::kSuccess;

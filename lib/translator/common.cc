@@ -19,6 +19,7 @@
 #else
 #include <netinet/in.h>
 #endif
+#include <byteswap.h>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -77,6 +78,30 @@ uint64_t htonll(uint64_t value) {
     return (static_cast<uint64_t>(low_bits) << 32) | high_bits;
   } else {  // big endian
     return value;
+  }
+}
+
+uint16_t htols(uint16_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_16(value);
+  }
+}
+
+uint32_t htoll(uint32_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_32(value);
+  }
+}
+
+uint64_t htolll(uint64_t value) {
+  if (IsLittleEndian()) {
+    return value;
+  } else {
+    return __bswap_64(value);
   }
 }
 

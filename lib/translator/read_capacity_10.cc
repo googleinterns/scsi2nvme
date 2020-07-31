@@ -14,6 +14,12 @@
 
 #include "read_capacity_10.h"
 
+#ifdef __KERNEL__
+#include <linux/byteorder/generic.h>
+#else
+#include <netinet/in.h>
+#endif
+
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
@@ -51,16 +57,20 @@ StatusCode ReadCapacity10ToScsi(
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(gen_identify_ns.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  nvme::IdentifyNamespace identify_ns = {};
-  if (!ReadValue(ns_span, identify_ns)) {
-    DebugLog("Malformed IdentifyNamespace Data");
-    return StatusCode::kInvalidInput;
-  };
+  const nvme::IdentifyNamespace* identify_ns =
+      SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
+  if (identify_ns == nullptr) {
+    DebugLog("Identify namespace structure failed to cast");
+    return StatusCode::kFailure;
+  }
 
   scsi::ReadCapacity10Data result = {
       .returned_logical_block_address =
-          identify_ns.nsze > 0xffffffff ? 0xffffffff : identify_ns.nsze,
-      .block_length = identify_ns.lbaf[identify_ns.flbas.format].lbads,
+          htonl(ltohll(identify_ns->nsze) > 0xffffffff
+                    ? 0xffffffff
+                    : static_cast<uint32_t>(ltohll(identify_ns->nsze))),
+      .block_length = htoll(static_cast<uint32_t>(
+          identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 
   WriteValue(result, buffer);
