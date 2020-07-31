@@ -55,10 +55,6 @@ struct Allocation {
 struct NvmeCmdWrapper {
   nvme::GenericQueueEntryCmd cmd;
   bool is_admin;
-
-  NvmeCmdWrapper() {}
-  NvmeCmdWrapper(nvme::GenericQueueEntryCmd cmd, bool is_admin)
-      : cmd{cmd}, is_admin{is_admin} {}
 };
 
 void DebugLog(const char* format, ...);
