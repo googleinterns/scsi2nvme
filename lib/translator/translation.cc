@@ -105,7 +105,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0].cmd);
       nvme_cmd_count_ = 1;
-      nvme_cmds_[0].is_admin = false;  // TODO find verify translation
+      nvme_cmds_[0].is_admin = false;  // Compare
       break;
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
