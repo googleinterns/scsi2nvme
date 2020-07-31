@@ -60,13 +60,13 @@ class InquiryTest : public ::testing::Test {
     scsi_cmd_ = translator::Span(cmd_ptr, sizeof(scsi::InquiryCommand));
   }
 
+  void SetNamespace(nvme::IdentifyNamespace* identify_ns_) {
+    identify_cmds_[0].dptr.prp.prp1 = reinterpret_cast<uint64_t>(identify_ns_);
+  }
+
   void SetController(nvme::IdentifyControllerData* identify_ctrl_) {
     identify_cmds_[1].dptr.prp.prp1 =
         reinterpret_cast<uint64_t>(identify_ctrl_);
-  }
-
-  void SetNamespace(nvme::IdentifyNamespace* identify_ns_) {
-    identify_cmds_[0].dptr.prp.prp1 = reinterpret_cast<uint64_t>(identify_ns_);
   }
 };
 
