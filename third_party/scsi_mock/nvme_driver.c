@@ -13,13 +13,12 @@
 #include <linux/module.h>
 #include <linux/nvme.h>
 #include <linux/nvme_ioctl.h>
-#include <linux/srcu.h>
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
-#define BITS_PER_SLICE 6
-#define BITS_PER_WU 7
-#define BITS_PER_DIE 6
+#define BITS_PER_SLICE 	6
+#define BITS_PER_WU 	7
+#define BITS_PER_DIE	6
 
 struct block_device* bdev;
 struct gendisk* bd_disk;
@@ -43,9 +42,9 @@ struct request* nvme_alloc_request(struct request_queue* q,
   struct request* req;
   unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
   req = blk_mq_alloc_request(q, op, 0);
-
+  
   if (IS_ERR(req)) return req;
-
+  
   req->cmd_flags |= REQ_FAILFAST_DRIVER;
   nvme_req(req)->retries = 0;
   nvme_req(req)->flags = 0;
@@ -54,6 +53,7 @@ struct request* nvme_alloc_request(struct request_queue* q,
 
   return req;
 }
+
 
 int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
                          struct nvme_command* cmd, void* buffer,
@@ -104,21 +104,19 @@ out:
 int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
                          unsigned bufflen, u32* result, unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
-  memcpy(&kernel_nvme_cmd.identify, nvme_cmd, sizeof(kernel_nvme_cmd));
-  kernel_nvme_cmd.common.opcode = nvme_admin_identify;
-  kernel_nvme_cmd.identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
-  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
-  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd,
-                              buffer, bufflen, result, timeout);
+  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd, buffer,
+                              bufflen, result, timeout);
 }
 
 int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
                       unsigned bufflen, u32* result, unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
-  memcpy(&kernel_nvme_cmd.rw, nvme_cmd, sizeof(kernel_nvme_cmd));
-  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
-  return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer,
-                              bufflen, result, timeout);
+  memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
+  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer, bufflen,
+                              result, timeout);
 }
 
 /*int send_sample_write_request() {
@@ -167,15 +165,8 @@ int nvme_driver_init(void) {
   }
 
   printk("Gendisk registered\n");
-  int srcu_index;
-  struct nvme_ns_head* head;
-  *head = disk->private_data;
-  srcu_idx = srcu_read_lock(&(*head)->srcu);
-  ns = nvme_find_path(*head);
-  if (!ns) {
-    srcu_read_unlock(&(*head)->srcu, *srcu_idx);
-    return ns;
-  }
+
+  ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns)) {
     printk("nvme_ns is null?.\n");
     return -1;
