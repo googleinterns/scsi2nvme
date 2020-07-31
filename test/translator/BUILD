@@ -54,7 +54,6 @@ cc_test(
 )
 
 cc_test(
-<<<<<<< HEAD
   name = "write_test",
   srcs = [ "write_test.cc" ],
   deps = [
@@ -63,7 +62,7 @@ cc_test(
     "@googletest//:gtest_main"
   ]
 )
-=======
+cc_test(
   name = "read_tests",
   srcs = [ "read_test.cc" ],
   deps = [
@@ -90,4 +89,3 @@ cc_test(
   ]
 )
 
->>>>>>> 9cd6a4ed77edc54786c3dd22aaa7edac449929fa

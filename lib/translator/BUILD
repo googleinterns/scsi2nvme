@@ -21,6 +21,7 @@ cc_library(
     ":request_sense_lib",
     ":verify_lib",
     ":report_luns_lib",
+    ":write_lib"
   ],
   visibility = ["//visibility:public"]
 )
