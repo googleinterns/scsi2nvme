@@ -37,6 +37,17 @@ static inline struct nvme_request* nvme_req(struct request* req) {
   return blk_mq_rq_to_pdu(req);
 }
 
+static void submit_req_done (struct request *rq) {
+	struct nvme_request* nvme_rq = nvme_req(rq); 
+  if (nvme_rq) {
+		kfree (nvme_rq->cmd);
+  }
+
+	if (rq) {
+		blk_mq_free_request (rq);
+  }
+}
+
 struct request* nvme_alloc_request(struct request_queue* q,
                                    struct nvme_command* cmd) {
   struct request* req;
@@ -91,13 +102,15 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
   blk_execute_rq(req->q, disk, req, 0);
   printk(KERN_INFO "status %d\n", nvme_req(req)->status);
   printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
+  goto out;
+
 
 out_unmap:
   if (bio) {
     if (disk && bdev) bdput(bdev);
   }
 out:
-  blk_mq_free_request(req);
+  submit_req_done(req);
   return ret;
 }
 
