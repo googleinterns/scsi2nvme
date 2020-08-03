@@ -72,6 +72,15 @@ cc_test(
 )
 
 cc_test(
+  name = "synchronize_cache_tests",
+  srcs = [ "synchronize_cache_test.cc" ],
+  deps = [
+    "//lib/translator:synchronize_cache_lib",
+    "@googletest//:gtest_main"
+  ]
+)
+
+cc_test(
   name = "verify_tests",
   srcs = [ "verify_test.cc"],
   deps = [
