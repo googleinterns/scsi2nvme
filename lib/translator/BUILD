@@ -108,7 +108,7 @@ cc_library(
   hdrs = ["write.h"],
   srcs = ["write.cc"],
   deps = [
-    "//lib/translator:common",
+    //:common",
     "//lib:scsi_lib",
     "//third_party/spdk:nvme_lib",
     "@com_google_absl//absl/base",

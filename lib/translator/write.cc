@@ -59,7 +59,7 @@ uint32_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
          ((transfer_length_bytes % page_size == 0) ? 0 : 1);
 }
 
-// This function is populates the nvme::GenericQueueEntryCmd object with fields
+// This function populates the nvme::GenericQueueEntryCmd object with fields
 // that are common to all Write Commands (6, 10, 12, 16) Refer to Section 5.7
 // (https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf)
 StatusCode LegacyWrite(nvme::GenericQueueEntryCmd& nvme_cmd,
