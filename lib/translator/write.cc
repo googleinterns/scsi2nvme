@@ -22,7 +22,11 @@ StatusCode BuildPRInfo(uint8_t wrprotect, uint8_t& pr_info) {
       pract = 1;
       prchk = 0b000;
       break;
-    case (0b001 || 0b101):
+    case 0b001: 
+      pract = 0;
+      prchk = 0b111;
+      break;
+    case 0b101:
       pract = 0;
       prchk = 0b111;
       break;
