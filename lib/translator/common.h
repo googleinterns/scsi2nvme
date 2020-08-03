@@ -130,7 +130,7 @@ bool ReadValue(Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out, uint8_t num_bytes) {
+bool WriteValue(const T& data, Span<uint8_t> out, size_t num_bytes) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
   if (num_bytes > out.size()) return false;
   memcpy(out.data(), &data, num_bytes);
