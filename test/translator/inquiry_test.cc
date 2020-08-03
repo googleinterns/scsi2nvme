@@ -26,7 +26,7 @@ class InquiryTest : public ::testing::Test {
   scsi::InquiryCommand inquiry_cmd_;
   nvme::GenericQueueEntryCmd identify_cmds_[2];
   translator::Span<const uint8_t> scsi_cmd_;
-  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds_;
+  translator::NvmeCmdWrapper nvme_wrappers_[2];
   nvme::IdentifyControllerData identify_ctrl_;
   nvme::IdentifyNamespace identify_ns_;
   uint8_t buffer_[200];
@@ -49,9 +49,9 @@ class InquiryTest : public ::testing::Test {
     SetController(&identify_ctrl_);
     SetNamespace(&identify_ns_);
 
-    inquiry_cmd_ = {};
     SetCommand();
-    nvme_cmds_ = identify_cmds_;
+    nvme_wrappers_[0].cmd = identify_cmds_[0];
+    nvme_wrappers_[1].cmd = identify_cmds_[1];
     memset(buffer_, 0, sizeof(buffer_));
   }
 
@@ -76,26 +76,29 @@ TEST_F(InquiryTest, InquiryToNvme) {
   uint32_t alloc_len;
   translator::Allocation allocations[2] = {{}};
 
-  translator::StatusCode status = translator::InquiryToNvme(
-      scsi_cmd_, nvme_cmds_[0], nvme_cmds_[1], alloc_len, nsid, allocations);
+  translator::StatusCode status =
+      translator::InquiryToNvme(scsi_cmd_, nvme_wrappers_[0], nvme_wrappers_[1],
+                                alloc_len, nsid, allocations);
 
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   EXPECT_EQ(alloc_len, 4096);
 
   // identify_ns
-  EXPECT_EQ(nvme_cmds_[0].opc,
+  EXPECT_EQ(nvme_wrappers_[0].cmd.opc,
             static_cast<uint8_t>(nvme::AdminOpcode::kIdentify));
-  EXPECT_EQ(nvme_cmds_[0].nsid, nsid);
-  EXPECT_NE(nvme_cmds_[0].dptr.prp.prp1, 0);
-  EXPECT_EQ(nvme_cmds_[0].cdw[0], 0);
+  EXPECT_EQ(nvme_wrappers_[0].cmd.nsid, nsid);
+  EXPECT_NE(nvme_wrappers_[0].cmd.dptr.prp.prp1, 0);
+  EXPECT_EQ(nvme_wrappers_[0].cmd.cdw[0], 0);
+  EXPECT_EQ(nvme_wrappers_[0].is_admin, true);
 
   // identify controller
-  EXPECT_EQ(nvme_cmds_[1].opc,
+  EXPECT_EQ(nvme_wrappers_[1].cmd.opc,
             static_cast<uint8_t>(nvme::AdminOpcode::kIdentify));
-  EXPECT_EQ(nvme_cmds_[1].nsid, 0);
-  EXPECT_NE(nvme_cmds_[1].dptr.prp.prp1, 0);
-  EXPECT_EQ(nvme_cmds_[1].cdw[0], 1);
+  EXPECT_EQ(nvme_wrappers_[1].cmd.nsid, 0);
+  EXPECT_NE(nvme_wrappers_[1].cmd.dptr.prp.prp1, 0);
+  EXPECT_EQ(nvme_wrappers_[1].cmd.cdw[0], 1);
+  EXPECT_EQ(nvme_wrappers_[1].is_admin, true);
 }
 
 TEST_F(InquiryTest, InquiryToNvmeFailRead) {
@@ -106,7 +109,8 @@ TEST_F(InquiryTest, InquiryToNvmeFailRead) {
 
   uint8_t bad_buffer[1] = {};
   translator::StatusCode status = translator::InquiryToNvme(
-      bad_buffer, nvme_cmds_[0], nvme_cmds_[1], alloc_len, nsid, allocations);
+      bad_buffer, nvme_wrappers_[0], nvme_wrappers_[1], alloc_len, nsid,
+      allocations);
 
   EXPECT_EQ(status, translator::StatusCode::kInvalidInput);
 }
@@ -125,7 +129,7 @@ TEST_F(InquiryTest, StandardInquiry) {
   identify_ctrl_.fr[7] = 'd';
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::InquiryData result{};
@@ -181,7 +185,7 @@ TEST_F(InquiryTest, SupportedVpdPages) {
       .evpd = 1, .page_code = scsi::PageCode::kSupportedVpd};
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
 
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
@@ -228,7 +232,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdEui64) {
   identify_ns_.nguid[1] = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
@@ -262,7 +266,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNguid) {
   identify_ns_.nguid[1] = 0x123456789abcdefa;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
@@ -295,7 +299,7 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdBoth) {
   identify_ns_.nguid[1] = 0x123456789abcdefa;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
@@ -327,10 +331,10 @@ TEST_F(InquiryTest, TranslateUnitSerialNumberVpdNone) {
   int8_t arr[20] = {'1', '2', '3', '4', '5', 'a', 'b', 'c', 'd', 'e',
                     '1', '2', '3', '4', '5', 'a', 'b', 'c', 'd', 'e'};
   memcpy(identify_ctrl_.sn, arr, 20);
-  nvme_cmds_[0].nsid = 0xaaaaaaaa;
+  nvme_wrappers_[0].cmd.nsid = 0xaaaaaaaa;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::UnitSerialNumber result{};
@@ -364,7 +368,7 @@ TEST_F(InquiryTest, BlockLimitsVpd) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -392,7 +396,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdts) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -418,7 +422,7 @@ TEST_F(InquiryTest, BlockLimitsVpdFuse) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -446,7 +450,7 @@ TEST_F(InquiryTest, BlockLimitsVpdDsm) {
   identify_ctrl_.oncs.dsm = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -473,7 +477,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuse) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -499,7 +503,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseLarge) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -528,7 +532,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseVeryLarge) {
   identify_ctrl_.oncs.dsm = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -556,7 +560,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsOncs) {
   identify_ctrl_.oncs.dsm = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -583,7 +587,7 @@ TEST_F(InquiryTest, BlockLimitsVpdFuseOncs) {
   identify_ctrl_.oncs.dsm = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -609,7 +613,7 @@ TEST_F(InquiryTest, BlockLimitsVpdMdtsFuseOncs) {
   identify_ctrl_.oncs.dsm = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::BlockLimitsVpd result{};
@@ -631,7 +635,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpd) {
   inquiry_cmd_.page_code = scsi::PageCode::kLogicalBlockProvisioningVpd;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
@@ -652,7 +656,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdDsm) {
 
   identify_ctrl_.oncs.dsm = 1;
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
@@ -674,7 +678,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdThinprov) {
   identify_ns_.nsfeat.thin_prov = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
@@ -697,7 +701,7 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
   identify_ns_.nsfeat.thin_prov = 1;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
   scsi::LogicalBlockProvisioningVpd result{};
@@ -713,18 +717,18 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
 }
 
 TEST_F(InquiryTest, FailsOnControllerNullPointer) {
-  nvme_cmds_[0].dptr.prp.prp1 = 0;
+  nvme_wrappers_[0].cmd.dptr.prp.prp1 = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   ASSERT_EQ(status, translator::StatusCode::kFailure);
 }
 
 TEST_F(InquiryTest, FailsOnNamespaceNullPointer) {
-  nvme_cmds_[1].dptr.prp.prp1 = 0;
+  nvme_wrappers_[1].cmd.dptr.prp.prp1 = 0;
 
   translator::StatusCode status = translator::InquiryToScsi(
-      scsi_cmd_, buffer_, nvme_cmds_[0], nvme_cmds_[1]);
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
   ASSERT_EQ(status, translator::StatusCode::kFailure);
 }
 

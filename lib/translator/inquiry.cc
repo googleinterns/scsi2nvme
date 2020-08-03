@@ -294,8 +294,8 @@ void TranslateLogicalBlockProvisioningVpd(
 }  // namespace
 
 StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
-                         nvme::GenericQueueEntryCmd& identify_ns,
-                         nvme::GenericQueueEntryCmd& identify_ctrl,
+                         NvmeCmdWrapper& identify_ns_wrapper,
+                         NvmeCmdWrapper& identify_ctrl_wrapper,
                          uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations) {
   scsi::InquiryCommand cmd = {};
@@ -311,10 +311,10 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc1;
   }
 
-  identify_ns = nvme::GenericQueueEntryCmd{
+  identify_ns_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = nsid};
-  identify_ns.dptr.prp.prp1 = allocations[0].data_addr;
-  identify_ns.cdw[0] =
+  identify_ns_wrapper.cmd.dptr.prp.prp1 = allocations[0].data_addr;
+  identify_ns_wrapper.cmd.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
 
@@ -323,13 +323,16 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc2;
   }
 
-  identify_ctrl = nvme::GenericQueueEntryCmd{
+  identify_ctrl_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
   };
-  identify_ctrl.dptr.prp.prp1 = allocations[1].data_addr;
-  identify_ctrl.cdw[0] =
+  identify_ctrl_wrapper.cmd.dptr.prp.prp1 = allocations[1].data_addr;
+  identify_ctrl_wrapper.cmd.cdw[0] =
       htoll(0x1);  // Controller or Namespace Structure (CNS): This field
                    // specifies the information to be returned to the host.
+
+  identify_ns_wrapper.is_admin = true;
+  identify_ctrl_wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
 

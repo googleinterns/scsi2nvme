@@ -126,9 +126,8 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
 }  // namespace
 
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid,
-                       uint32_t page_size, uint32_t lba_size) {
+                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                       uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
   scsi::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read6 command");
@@ -142,7 +141,7 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
           : static_cast<uint16_t>(read_cmd.transfer_length);
 
   StatusCode status = LegacyRead(
-      nvme_cmd, allocation, nsid,
+      nvme_wrapper.cmd, allocation, nsid,
       GetTransferLengthPages(updated_transfer_length, page_size, lba_size));
   if (status != StatusCode::kSuccess) {
     return status;
@@ -150,19 +149,20 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
   // cdw10 Starting lba bits 31:00
   uint32_t host_endian_lba = (read_cmd.logical_block_address_1 << 16) +
                              ntohs(read_cmd.logical_block_address_2);
-  nvme_cmd.cdw[0] = htoll(host_endian_lba);
+  nvme_wrapper.cmd.cdw[0] = htoll(host_endian_lba);
 
   // nlb is a zero-based field
   // cdw12 nlb bits 15:00
-  nvme_cmd.cdw[2] = htoll(static_cast<uint32_t>(updated_transfer_length) - 1);
+  nvme_wrapper.cmd.cdw[2] =
+      htoll(static_cast<uint32_t>(updated_transfer_length) - 1);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
   scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
@@ -172,21 +172,21 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohs(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size);
 
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
-  nvme_cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
   scsi::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read12 command");
@@ -196,20 +196,20 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size);
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
-  nvme_cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
   scsi::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read16 command");
@@ -219,15 +219,16 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address to network endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size);
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
   uint64_t host_endian_lba = ntohll(read_cmd.logical_block_address);
-  nvme_cmd.cdw[0] = htoll(static_cast<uint32_t>(host_endian_lba));
-  nvme_cmd.cdw[1] = htoll(static_cast<uint32_t>(host_endian_lba >> 32));
+  nvme_wrapper.cmd.cdw[0] = htoll(static_cast<uint32_t>(host_endian_lba));
+  nvme_wrapper.cmd.cdw[1] = htoll(static_cast<uint32_t>(host_endian_lba >> 32));
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 

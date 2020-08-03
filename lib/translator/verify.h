@@ -20,7 +20,7 @@
 namespace translator {
 
 StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& verify_cmd);
+                        NvmeCmdWrapper& nvme_wrapper);
 
 }  // namespace translator
 #endif

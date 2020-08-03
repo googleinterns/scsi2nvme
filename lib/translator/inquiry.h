@@ -30,8 +30,8 @@ namespace translator {
 // Fills out GenericQueueEntryCmd with appropriate Identify parameters and
 // allocates PRPs for responses
 StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
-                         nvme::GenericQueueEntryCmd& identify_ns,
-                         nvme::GenericQueueEntryCmd& identify_ctrl,
+                         NvmeCmdWrapper& identify_ns_wrapper,
+                         NvmeCmdWrapper& identify_ctrl_wrapper,
                          uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations);
 

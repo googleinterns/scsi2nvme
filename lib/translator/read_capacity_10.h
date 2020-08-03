@@ -20,8 +20,8 @@
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
-                                nvme::GenericQueueEntryCmd& identify_ns,
-                                uint32_t nsid, Allocation& allocation);
+                                NvmeCmdWrapper& wrapper, uint32_t nsid,
+                                Allocation& allocation);
 
 StatusCode ReadCapacity10ToScsi(
     Span<uint8_t> buffer, const nvme::GenericQueueEntryCmd& gen_identify_ns);
