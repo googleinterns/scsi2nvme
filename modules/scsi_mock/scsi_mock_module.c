@@ -72,7 +72,7 @@ static int bus_remove(struct device *dev) {
 }
 
 static struct bus_type pseudo_bus = {
-  .name = "scsi2nvme_pseudo_bus",
+  .name = "scsi2nvme_pseudo_bus_1",
   .match = bus_match,
   .probe = bus_driver_probe,
   .remove = bus_remove
@@ -90,7 +90,7 @@ static int scsi_mock_add_device(void) {
 static int __init scsi_mock_init(void) {
   int err;
   printk("HELLO!\n");
-  pseudo_root_dev = root_device_register("pseudo_scsi_root");
+  pseudo_root_dev = root_device_register("pseudo_scsi_root_1");
   if (IS_ERR(pseudo_root_dev)) {
     printk("Error registering root dev\n");
     return -EINVAL;
