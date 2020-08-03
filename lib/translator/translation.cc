@@ -164,15 +164,13 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kVerify10:
       // TODO: translator should intercept and handle status code.
       // a VerifyToScsi() is not needed
-      ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kInquiry:
       pipeline_status_ =
           InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
       break;
     case scsi::OpCode::kReportLuns:
-      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer_in);
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_cmds_[0]);
@@ -184,8 +182,7 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kRead10:
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
-      pipeline_status_ = ReadToScsi(buffer, nvme_cmds_[0], kLbaSize);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = ReadToScsi(buffer_in, nvme_cmds_[0], kLbaSize);
       break;
   }
   if (pipeline_status_ != StatusCode::kSuccess) {

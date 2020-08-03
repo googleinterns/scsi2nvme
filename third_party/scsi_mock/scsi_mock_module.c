@@ -34,6 +34,12 @@ static struct device pseudo_adapter;
 static struct device_driver scsi_mock_driverfs = {.name = kName,
                                                   .bus = &pseudo_bus};
 
+static int respond(struct scsi_cmnd* cmd, u32 resp_code) {
+  cmd->result = resp_code;
+  cmd->scsi_done(cmd);
+  return 0;
+}
+
 static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   u64 lun = cmd->device->lun;
   unsigned char* cmd_buf = cmd->cmnd;
@@ -54,7 +60,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - sdb_len);
   }
-  return resp.return_code;
+  return respond(cmd, resp.return_code);
 }
 
 static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }

@@ -41,6 +41,8 @@ struct request* nvme_alloc_request(struct request_queue* q,
                                    struct nvme_command* cmd) {
   struct request* req;
   unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
+
+  printk("Request queue addr: %p", q);
   req = blk_mq_alloc_request(q, op, 0);
   
   if (IS_ERR(req)) return req;
@@ -62,6 +64,14 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
   struct request* req;
   struct bio* bio = NULL;
   int ret;
+
+  if (!q) {
+    printk("Request q is nullptr");
+    printk("Identification status: %u", ns->ctrl->identified);
+    printk("Queue Count: %u", ns->ctrl->queue_count);
+    return ret;
+  }
+
   req = nvme_alloc_request(q, cmd);
   if (IS_ERR(req)) {
     printk("nvme_alloc_request failed?.\n");
@@ -106,6 +116,9 @@ int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
   struct nvme_command kernel_nvme_cmd;
   memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
   //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  //kernel_nvme_cmd.common.opcode = nvme_admin_identify;
+  //kernel_nvme_cmd.identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
+  printk("Queue Count: %u", ns->ctrl->queue_count);
   return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd, buffer,
                               bufflen, result, timeout);
 }
@@ -171,6 +184,13 @@ int nvme_driver_init(void) {
     printk("nvme_ns is null?.\n");
     return -1;
   }
+  printk("CTRL State: %u", ns->ctrl->state);
+  printk("Connects_q: %p", ns->ctrl->connect_q);
+  //nvme_get_ctrl(ns->ctrl);
+  printk("Admin_q address: %p", ns->ctrl->admin_q);
+
+  printk("CTRL POINTER %p, NS POINTER %p", ns->ctrl, ns);
+
   printk("NVMe device registered!\n");
   return 0;
 }
