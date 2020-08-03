@@ -15,14 +15,13 @@
 #ifndef LIB_TRANSLATOR_SYNCHRONIZE_CACHE_H
 #define LIB_TRANSLATOR_SYNCRHONIZE_CACHE_H
 
-#include "third_party/spdk/nvme.h"
+#include "common.h"
 
 namespace translator {
 
 // Builds an NVMe Flush command
 // NVMe Flush does not have command specific response data to translate
-void SynchronizeCache10ToNvme(nvme::GenericQueueEntryCmd& nvme_cmd,
-                              uint32_t nsid);
+void SynchronizeCache10ToNvme(NvmeCmdWrapper& nvme_wrapper, uint32_t nsid);
 
 };  // namespace translator
 #endif

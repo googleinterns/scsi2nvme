@@ -20,10 +20,10 @@ namespace translator {
 
 // Section 5.5
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
-void SynchronizeCache10ToNvme(nvme::GenericQueueEntryCmd& nvme_cmd,
-                              uint32_t nsid) {
-  nvme_cmd = {.opc = static_cast<uint8_t>(nvme::NvmOpcode::kFlush),
-              .nsid = nsid};
+void SynchronizeCache10ToNvme(NvmeCmdWrapper& nvme_wrapper, uint32_t nsid) {
+  nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::NvmOpcode::kFlush),
+                      .nsid = nsid};
+  nvme_wrapper.is_admin = false;
 }
 
 };  // namespace translator

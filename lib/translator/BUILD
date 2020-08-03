@@ -91,7 +91,7 @@ cc_library(
   hdrs = ["synchronize_cache.h"],
   srcs = ["synchronize_cache.cc"],
   deps = [
-      "//third_party/spdk:nvme_lib",
+      ":common",
   ],
   visibility = ["//visibility:public"],
 )

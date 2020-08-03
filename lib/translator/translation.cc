@@ -97,7 +97,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kSync10:
-      SynchronizeCache10ToNvme(nvme_cmds_[0], nsid);
+      SynchronizeCache10ToNvme(nvme_wrappers_[0], nsid);
       pipeline_status_ = StatusCode::kSuccess;
       nvme_cmd_count_ = 1;
       break;
