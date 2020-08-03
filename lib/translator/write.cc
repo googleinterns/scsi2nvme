@@ -142,7 +142,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
                              ntohs(write_cmd.logical_block_address);
 
   nvme_cmd.cdw[0] = htoll(host_endian_lba);
-  nvme_cmd.cdw[2] = updated_transfer_length;
+  nvme_cmd.cdw[2] = htoll(static_cast<uint32_t>(updated_transfer_length - 1));
   return status_code;
 }
 
@@ -210,7 +210,7 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
   uint64_t updated_lba = ntohll(write_cmd.logical_block_address);
   nvme_cmd.cdw[0] = htoll(write_cmd.logical_block_address);
   nvme_cmd.cdw[1] = htoll(write_cmd.logical_block_address >> 32);
-  
+
   return status_code;
 }
 }  // namespace translator
