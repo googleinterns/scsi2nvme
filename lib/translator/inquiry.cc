@@ -61,7 +61,7 @@ StatusCode TranslateStandardInquiry(
       if (idx-- == 0) break;
     }
   }
-  // SCSI specs only require first 36 bytes to be copied to buffer
+  // SCSI specs only require first 36 bytes to be written to the buffer
   if (!WriteValue(result, buffer, 36)) {
     DebugLog("Error writing 36 bytes of Inquiry Data to buffer");
     return StatusCode::kFailure;
@@ -85,8 +85,7 @@ StatusCode TranslateSupportedVpdPages(Span<uint8_t> buffer) {
 
   if (!WriteValue(result, buffer) ||
       !WriteValue(supported_page_list, buffer.subspan(sizeof(result)))) {
-    DebugLog(
-        "Error writing Supported Vital Product Data or Page List to buffer");
+    DebugLog("Error writing Supported VPD pages or Page List to buffer");
     return StatusCode::kFailure;
   }
   return StatusCode::kSuccess;
@@ -232,7 +231,7 @@ StatusCode TranslateBlockLimitsVpd(
           htonl(identify_ctrl.oncs.dsm ? 0x0100 : 0)};
 
   if (!WriteValue(result, buffer)) {
-    DebugLog("Error writing Block Limits Vpd to the buffer");
+    DebugLog("Error writing Block Limits VPD to the buffer");
     return StatusCode::kFailure;
   }
   return StatusCode::kSuccess;
@@ -308,7 +307,7 @@ StatusCode TranslateLogicalBlockProvisioningVpd(
   }
 
   if (!WriteValue(result, buffer)) {
-    DebugLog("Error writing Logical Block Provisioning Vpd to buffer");
+    DebugLog("Error writing Logical Block Provisioning VPD to buffer");
     return StatusCode::kFailure;
   }
   return StatusCode::kSuccess;
