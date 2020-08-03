@@ -119,7 +119,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
                         nvme::GenericQueueEntryCmd& nvme_cmd,
                         Allocation& allocation, uint32_t nsid,
                         uint32_t page_size, uint32_t lba_size) {
-  scsi::Write6Command write_cmd;
+  scsi::Write6Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
     DebugLog("Malformed Write6 Command");
     return StatusCode::kInvalidInput;
@@ -154,7 +154,7 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation, uint32_t nsid,
                          uint32_t page_size, uint32_t lba_size) {
-  scsi::Write10Command write_cmd;
+  scsi::Write10Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
     DebugLog("Malformed Write10 Command");
     return StatusCode::kInvalidInput;
@@ -176,7 +176,7 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation, uint32_t nsid,
                          uint32_t page_size, uint32_t lba_size) {
-  scsi::Write12Command write_cmd;
+  scsi::Write12Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
     DebugLog("Malformed Write12 Command");
     return StatusCode::kInvalidInput;
@@ -199,7 +199,7 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
                          nvme::GenericQueueEntryCmd& nvme_cmd,
                          Allocation& allocation, uint32_t nsid,
                          uint32_t page_size, uint32_t lba_size) {
-  scsi::Write16Command write_cmd;
+  scsi::Write16Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
     DebugLog("Malformed Write16 Command");
     return StatusCode::kInvalidInput;
