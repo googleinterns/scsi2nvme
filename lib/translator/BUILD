@@ -19,6 +19,7 @@ cc_library(
     ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":synchronize_cache_lib",
     ":verify_lib",
     ":report_luns_lib",
   ],
@@ -87,6 +88,16 @@ cc_library(
   deps = [
       "//third_party/spdk:nvme_lib",
       ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "synchronize_cache_lib",
+  hdrs = ["synchronize_cache.h"],
+  srcs = ["synchronize_cache.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
   ],
   visibility = ["//visibility:public"],
 )
