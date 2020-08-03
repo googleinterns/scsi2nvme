@@ -51,12 +51,12 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
     void* buffer = reinterpret_cast<void*>(nvme_cmds[i].dptr.prp.prp1);
     unsigned bufflen = 4096;
     uint32_t result = 0;
-    submit_io_command(&tmp_cmd, buffer, bufflen, &result, 60);
+    submit_admin_command(&tmp_cmd, buffer, bufflen, &result, 60);
     cpl_buf[i].cdw0 = result;
   }
   
   // Use NVMe completion responses to Complete translation
-  translator::Span<nvme::GenericQueueEntryCpl> nvme_cpl;
+  translator::Span<nvme::GenericQueueEntryCpl> nvme_cpl(cpl_buf, nvme_cmds.size());
   translator::Span<uint8_t> buffer_in;
   if (is_data_in)
     buffer_in = translator::Span(data_buf, begin_resp.alloc_len);

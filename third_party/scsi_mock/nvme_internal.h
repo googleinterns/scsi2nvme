@@ -31,9 +31,9 @@ struct nvme_ctrl {
 
 	spinlock_t lock;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0)
+//#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,0,0)
 	struct mutex scan_lock;
-#endif
+//#endif
 
 	const struct nvme_ctrl_ops *ops;
 	struct request_queue *admin_q;
@@ -230,5 +230,10 @@ struct nvme_ns {
 	u64 mode_select_num_blocks;
 	u32 mode_select_block_len;
 };
+
+static inline void nvme_get_ctrl(struct nvme_ctrl *ctrl)
+{
+	get_device(ctrl->device);
+}
 
 #endif /* _NVME_H */
