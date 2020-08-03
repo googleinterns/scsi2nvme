@@ -94,6 +94,7 @@ StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
 
   // Group Number -- support unspecified
   nvme_cmd = nvme::GenericQueueEntryCmd{
+      .opc = static_cast<uint8_t>(nvme::NvmOpcode::kCompare),
       .cdw = {
           // Support requires translation to Starting LBA field of NVM Express
           // command.

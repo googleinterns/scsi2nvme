@@ -20,6 +20,7 @@
 #include "report_luns.h"
 #include "request_sense.h"
 #include "status.h"
+#include "synchronize_cache.h"
 #include "verify.h"
 
 namespace translator {
@@ -95,6 +96,11 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       pipeline_status_ =
           Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
                        kPageSize, kLbaSize);
+      break;
+    case scsi::OpCode::kSync10:
+      SynchronizeCache10ToNvme(nvme_cmds_[0], nsid);
+      pipeline_status_ = StatusCode::kSuccess;
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
@@ -184,6 +190,10 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
       pipeline_status_ = ReadToScsi(buffer_in, nvme_cmds_[0], kLbaSize);
+      break;
+    case scsi::OpCode::kSync10:
+      // No command specific response data to translate
+      ret = ApiStatus::kSuccess;
       break;
   }
   if (pipeline_status_ != StatusCode::kSuccess) {

@@ -129,10 +129,10 @@ bool ReadValue(Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out) {
+bool WriteValue(const T& data, Span<uint8_t> out, size_t num_bytes) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
-  if (sizeof(T) > out.size()) return false;
-  memcpy(out.data(), &data, sizeof(T));
+  if (num_bytes > out.size()) return false;
+  memcpy(out.data(), &data, num_bytes);
   return true;
 }
 
@@ -146,6 +146,11 @@ struct ScsiStatus {
 
 // Fills sense buffer with relevant data. Returns true on success.
 bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
+
+template <typename T>
+bool WriteValue(const T& data, Span<uint8_t> out) {
+  return WriteValue(data, out, sizeof(T));
+}
 
 // Returns a pointer of type T pointing to buf.data().
 // This creates a new object of type T.
