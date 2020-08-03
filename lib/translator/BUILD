@@ -16,6 +16,7 @@ cc_library(
     "//third_party/spdk:nvme_lib",
     ":common",
     ":inquiry_lib",
+    ":maintenance_in_lib",
     ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
@@ -32,6 +33,16 @@ cc_library(
   hdrs = ["inquiry.h"],
   deps = [
       "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "maintenance_in_lib",
+  hdrs = ["maintenance_in.h"],
+  srcs = ["maintenance_in.cc"],
+  deps = [
       ":common",
   ],
   visibility = ["//visibility:public"],

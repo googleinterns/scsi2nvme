@@ -15,6 +15,7 @@
 #include "translation.h"
 
 #include "inquiry.h"
+#include "maintenance_in.h"
 #include "read.h"
 #include "read_capacity_10.h"
 #include "report_luns.h"
@@ -59,6 +60,10 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      pipeline_status_ = ValidateReportSupportedOpCodes(scsi_cmd_no_op);
+      nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
                                           allocations_[0], response.alloc_len);
@@ -141,6 +146,11 @@ ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
       break;
     case scsi::OpCode::kInquiry:
       pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      WriteReportSupportedOpCodesResult(buffer);
       ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kReportLuns:

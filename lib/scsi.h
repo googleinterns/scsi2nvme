@@ -177,6 +177,7 @@ enum class OpCode : uint8_t {
   kWrite16 = 0x8a,
   kVerify16 = 0x8f,
   kSync16 = 0x91,
+  kWriteSame16 = 0x93,
   kServiceActionIn = 0x9e,
   kReportLuns = 0xa0,
   kMaintenanceIn = 0xa3,
