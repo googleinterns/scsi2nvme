@@ -39,6 +39,15 @@ struct NvmeCommand {
   u32 cdw3[6];
 };
 
+struct NvmeCompletion {
+  u32 result;
+  u32 rsvd;
+  u16 sq_head;
+  u16 sq_id;
+  u16 command_id;
+  u16 status;
+};
+
 // TODO:basimsahaf - Need a mapping for multiple NVME devices but for now one
 // fixed device is enough for an MVP
 #define NVME_DEVICE_PATH "/dev/nvme0n1"
@@ -46,9 +55,9 @@ struct NvmeCommand {
 int nvme_driver_init(void);
 
 int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                         unsigned bufflen, u32* result, unsigned timeout);
+                         unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout);
 int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                      unsigned bufflen, u32* result, unsigned timeout);
+                      unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout);
                       
 int send_sample_write_request(void);
 

@@ -46,13 +46,14 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   nvme::GenericQueueEntryCpl cpl_buf[nvme_cmds.size()] = {};
   for (uint32_t i = 0; i < nvme_cmds.size(); ++i) {
     NvmeCommand tmp_cmd;
+    NvmeCompletion tmp_cpl;
     memcpy(&tmp_cmd, &nvme_cmds[i], sizeof(tmp_cmd));
     static_assert(sizeof(tmp_cmd) == sizeof(nvme_cmds[i]));
     void* buffer = reinterpret_cast<void*>(nvme_cmds[i].dptr.prp.prp1);
     unsigned bufflen = 4096;
-    uint32_t result = 0;
-    submit_admin_command(&tmp_cmd, buffer, bufflen, &result, 60);
-    cpl_buf[i].cdw0 = result;
+    submit_admin_command(&tmp_cmd, buffer, bufflen, &tmp_cpl, 60);
+    memcpy(&cpl_buf[i], &tmp_cpl, sizeof(cpl_buf[i]));
+    static_assert(sizeof(cpl_buf[i]) == sizeof(tmp_cpl));
   }
   
   // Use NVMe completion responses to Complete translation

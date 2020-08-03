@@ -56,6 +56,9 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
     sense_len, data_buf, data_len, is_data_in);
   // Copy response to SGL buffer
   if (is_data_in) {
+    printk("ALLOC_LEN %u", resp.alloc_len);
+    printk("ADDITIONAL DATA %u", data_buf[5]);
+    printk("PRODUCT ID: %.6s\n", &data_buf[12]);
     struct scsi_data_buffer* sdb = &cmd->sdb;
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - sdb_len);
@@ -88,6 +91,11 @@ static int bus_match(struct device* dev, struct device_driver* driver) {
 static int bus_driver_probe(struct device* dev) {
   int err;
   struct Scsi_Host* scsi_host;
+
+  printk("REGISTERING NEW DEVICE!");
+  if (dev != &pseudo_adapter)
+    return -1;
+
   scsi_host = scsi_host_alloc(&scsi_mock_template, 0);
   if (!scsi_host) {
     printk("SCSI Host failed to allocate");
