@@ -22,7 +22,7 @@ StatusCode BuildPRInfo(uint8_t wrprotect, uint8_t& pr_info) {
       pract = 1;
       prchk = 0b000;
       break;
-    case 0b001: 
+    case 0b001:
       pract = 0;
       prchk = 0b111;
       break;
@@ -84,10 +84,9 @@ StatusCode LegacyWrite(nvme::GenericQueueEntryCmd& nvme_cmd,
   return status_code;
 }
 
-StatusCode Write(bool fua, uint8_t wrprotect,
-                 uint32_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
-                 Allocation& allocation, uint32_t nsid, uint32_t page_size,
-                 uint32_t lba_size) {
+StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
+                 nvme::GenericQueueEntryCmd& nvme_cmd, Allocation& allocation,
+                 uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
   if (transfer_length == 0) {
     DebugLog("NVMe read command does not support transfering zero blocks\n");
     return StatusCode::kNoTranslation;
@@ -130,9 +129,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
   // shall be written (Section 3.59) of
   // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   uint16_t updated_transfer_length =
-      (write_cmd.transfer_length == 0)
-          ? 256
-          : write_cmd.transfer_length;
+      (write_cmd.transfer_length == 0) ? 256 : write_cmd.transfer_length;
   StatusCode status_code = LegacyWrite(
       nvme_cmd, allocation, nsid,
       GetTransferLengthPages(updated_transfer_length, page_size, lba_size));
