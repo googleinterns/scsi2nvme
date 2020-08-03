@@ -341,7 +341,7 @@ TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
 TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
   uint8_t network_endian_lba_1 = 0x1;
   uint8_t network_endian_lba_2 = htons(0x1234);
-  uint8_t transfer_length = 0;
+  uint16_t transfer_length = 0;
   scsi::Write6Command cmd = {.logical_block_address_1 = network_endian_lba_1,
                              .logical_block_address = network_endian_lba_2,
                              .transfer_length = transfer_length};
@@ -354,7 +354,7 @@ TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
   translator::StatusCode status_code = translator::Write6ToNvme(
       scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
 
-  uint8_t expected_transfer_length = 256;
+  uint16_t expected_transfer_length = 256;
   uint32_t expected_cdw12 = translator::htoll(expected_transfer_length - 1);
 
   EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);

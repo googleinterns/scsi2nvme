@@ -84,7 +84,7 @@ StatusCode LegacyWrite(nvme::GenericQueueEntryCmd& nvme_cmd,
   return status_code;
 }
 
-StatusCode Write(bool fua, uint8_t wrprotect, uint64_t lba,
+StatusCode Write(bool fua, uint8_t wrprotect,
                  uint32_t transfer_length, nvme::GenericQueueEntryCmd& nvme_cmd,
                  Allocation& allocation, uint32_t nsid, uint32_t page_size,
                  uint32_t lba_size) {
@@ -129,10 +129,10 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
   // be written. Any other value specifies the number of logical blocks that
   // shall be written (Section 3.59) of
   // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
-  uint8_t updated_transfer_length =
+  uint16_t updated_transfer_length =
       (write_cmd.transfer_length == 0)
           ? 256
-          : static_cast<uint8_t>(write_cmd.transfer_length);
+          : write_cmd.transfer_length;
   StatusCode status_code = LegacyWrite(
       nvme_cmd, allocation, nsid,
       GetTransferLengthPages(updated_transfer_length, page_size, lba_size));
@@ -161,8 +161,7 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect,
-            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
             nvme_cmd, allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
@@ -183,8 +182,7 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect,
-            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
             nvme_cmd, allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
@@ -206,8 +204,7 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect,
-            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
             nvme_cmd, allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
