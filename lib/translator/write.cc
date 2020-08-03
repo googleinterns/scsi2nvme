@@ -137,7 +137,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
     return status_code;
   }
 
-    // cdw10 Starting lba bits 31:00
+  // cdw10 Starting lba bits 31:00
   uint32_t host_endian_lba = (write_cmd.logical_block_address_1 << 16) +
                              ntohs(write_cmd.logical_block_address);
 
@@ -156,11 +156,12 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.logical_block_address),
-      write_cmd.transfer_length, nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code =
+      Write(write_cmd.fua, write_cmd.wr_protect,
+            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+            nvme_cmd, allocation, nsid, page_size, lba_size);
 
-  if(status_code != StatusCode::kSuccess) {
+  if (status_code != StatusCode::kSuccess) {
     return status_code;
   }
 
@@ -177,11 +178,12 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.logical_block_address),
-      write_cmd.transfer_length, nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code =
+      Write(write_cmd.fua, write_cmd.wr_protect,
+            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+            nvme_cmd, allocation, nsid, page_size, lba_size);
 
-  if(status_code != StatusCode::kSuccess) {
+  if (status_code != StatusCode::kSuccess) {
     return status_code;
   }
 
@@ -199,11 +201,12 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.logical_block_address),
-      write_cmd.transfer_length, nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code =
+      Write(write_cmd.fua, write_cmd.wr_protect,
+            ntohs(write_cmd.logical_block_address), write_cmd.transfer_length,
+            nvme_cmd, allocation, nsid, page_size, lba_size);
 
-  if(status_code != StatusCode::kSuccess) {
+  if (status_code != StatusCode::kSuccess) {
     return status_code;
   }
 

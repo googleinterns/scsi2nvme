@@ -118,10 +118,13 @@ TEST_F(WriteTest, Write6ShouldReturnValidStatusCode) {
 }
 
 TEST_F(WriteTest, Write10ShouldReturnValidStatusCode) {
+  uint32_t network_lba = htonl(kLba);
+  uint16_t network_transfer_length = htons(kTransferLength);
+
   scsi::Write10Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
-                              .logical_block_address = htonl(kLba),
-                              .transfer_length = htons(kTransferLength)};
+                              .logical_block_address = network_lba,
+                              .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -135,10 +138,13 @@ TEST_F(WriteTest, Write10ShouldReturnValidStatusCode) {
 }
 
 TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
+  uint32_t network_lba = htonl(kLba);
+  uint16_t network_transfer_length = htons(kTransferLength);
+
   scsi::Write12Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
-                              .logical_block_address = htonl(kLba),
-                              .transfer_length = htons(kTransferLength)};
+                              .logical_block_address = network_lba,
+                              .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -151,11 +157,13 @@ TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
 }
 
 TEST_F(WriteTest, Write16ShouldReturnValidStatusCode) {
-  scsi::Write16Command cmd = {
-      .fua = kFua,
-      .wr_protect = kValidWriteProtect,
-      .logical_block_address = translator::htonll(kWrite16Lba),
-      .transfer_length = htons(kTransferLength)};
+  uint64_t network_lba = translator::htonll(kWrite16Lba);
+  uint16_t network_transfer_length = htons(kTransferLength);
+
+  scsi::Write16Command cmd = {.fua = kFua,
+                              .wr_protect = kValidWriteProtect,
+                              .logical_block_address = network_lba,
+                              .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
   translator::WriteValue(cmd, scsi_cmd);
@@ -330,4 +338,83 @@ TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
   EXPECT_EQ(status_code, translator::StatusCode::kFailure);
 }
 
+TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
+  uint8_t network_endian_lba_1 = 0x1;
+  uint8_t network_endian_lba_2 = htons(0x1234);
+  uint8_t transfer_length = 0;
+  scsi::Write6Command cmd = {.logical_block_address_1 = network_endian_lba_1,
+                             .logical_block_address = network_endian_lba_2,
+                             .transfer_length = transfer_length};
+
+  uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+  translator::StatusCode status_code = translator::Write6ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+
+  uint8_t expected_transfer_length = 256;
+  uint32_t expected_cdw12 = translator::htoll(expected_transfer_length - 1);
+
+  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+}
+
+TEST_F(WriteTest, Write10ShouldWriteFailOnZeroTransferLength) {
+  uint32_t network_lba = htonl(kLba);
+  uint16_t transfer_length = 0;
+  scsi::Write10Command cmd = {.fua = kFua,
+                              .wr_protect = kValidWriteProtect,
+                              .logical_block_address = network_lba,
+                              .transfer_length = transfer_length};
+
+  uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+  translator::StatusCode status_code = translator::Write10ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+
+  EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
+}
+
+TEST_F(WriteTest, Write12ShouldWriteFailOnZeroTransferLength) {
+  uint32_t network_lba = htonl(kLba);
+  uint16_t transfer_length = 0;
+  scsi::Write12Command cmd = {.fua = kFua,
+                              .wr_protect = kValidWriteProtect,
+                              .logical_block_address = network_lba,
+                              .transfer_length = transfer_length};
+
+  uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+  translator::StatusCode status_code = translator::Write12ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+
+  EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
+}
+
+TEST_F(WriteTest, Write16ShouldWriteFailOnZeroTransferLength) {
+  uint64_t network_lba = translator::htolll(kWrite16Lba);
+  uint16_t transfer_length = 0;
+
+  scsi::Write16Command cmd = {.fua = kFua,
+                              .wr_protect = kValidWriteProtect,
+                              .logical_block_address = network_lba,
+                              .transfer_length = transfer_length};
+
+  uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
+  translator::WriteValue(cmd, scsi_cmd);
+
+  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::Allocation allocation = {};
+  translator::StatusCode status_code = translator::Write16ToNvme(
+      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
+
+  EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
+}
 }  // namespace
