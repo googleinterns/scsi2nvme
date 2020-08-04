@@ -8,6 +8,15 @@ cc_test(
 )
 
 cc_test(
+  name = "maintenance_in_tests",
+  srcs = [ "maintenance_in_test.cc" ],
+  deps = [
+    "//lib/translator:maintenance_in_lib",
+    "@googletest//:gtest_main"
+  ]
+)
+
+cc_test(
     name = "inquiry_tests",
     srcs = ["inquiry_test.cc"],
     deps = [
@@ -54,6 +63,15 @@ cc_test(
 )
 
 cc_test(
+  name = "mode_sense_test",
+  srcs = [ "mode_sense_test.cc"],
+  deps = [
+    "//lib/translator:mode_sense_lib",
+    "@googletest//:gtest_main",
+  ]
+)
+
+cc_test(
   name = "read_tests",
   srcs = [ "read_test.cc" ],
   deps = [
@@ -67,7 +85,7 @@ cc_test(
   srcs = [ "request_sense_test.cc" ],
   deps = [
     "//lib/translator:request_sense_lib",
-    "@googletest//:gtest_main"
+    "@googletest//:gtest_main",
   ]
 )
 

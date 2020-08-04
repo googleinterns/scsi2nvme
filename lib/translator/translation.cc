@@ -15,6 +15,8 @@
 #include "translation.h"
 
 #include "inquiry.h"
+#include "maintenance_in.h"
+#include "mode_sense.h"
 #include "read.h"
 #include "read_capacity_10.h"
 #include "report_luns.h"
@@ -61,6 +63,19 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
+    case scsi::OpCode::kModeSense6:
+      pipeline_status_ =
+          ModeSense6ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
+                           nvme_cmd_count_, response.alloc_len);
+      break;
+    case scsi::OpCode::kModeSense10:
+      pipeline_status_ =
+          ModeSense10ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
+                            nvme_cmd_count_, response.alloc_len);
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      pipeline_status_ = ValidateReportSupportedOpCodes(scsi_cmd_no_op);
+      nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
                                           allocations_[0], response.alloc_len);
@@ -113,6 +128,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   }
 
   if (pipeline_status_ != StatusCode::kSuccess) {
+    FlushMemory();
     nvme_cmd_count_ = 0;
   }
   return response;
@@ -173,8 +189,23 @@ CompleteResponse Translation::Complete(
       // a VerifyToScsi() is not needed
       break;
     case scsi::OpCode::kInquiry:
-      pipeline_status_ =
-          InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
+      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
+      break;
+    case scsi::OpCode::kModeSense6:
+      // TODO: Update this when the cpl_data interface is finalized
+      ModeSense6ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0, buffer);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kModeSense10:
+      // TODO: Update this when the cpl_data interface is finalized
+      ModeSense10ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+                        buffer);
+      ret = ApiStatus::kSuccess;
+      break;
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      WriteReportSupportedOpCodesResult(buffer);
+      ret = ApiStatus::kSuccess;
       break;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer_in);
