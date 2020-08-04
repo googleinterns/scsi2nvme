@@ -158,7 +158,7 @@ TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
 
 TEST_F(WriteTest, Write16ShouldReturnValidStatusCode) {
   uint64_t network_lba = translator::htonll(kWrite16Lba);
-  uint16_t network_transfer_length = htons(kTransferLength);
+  uint32_t network_transfer_length = 0x2b1a0000;
 
   scsi::Write16Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
@@ -217,7 +217,8 @@ TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
   translator::StatusCode status_code = translator::Write10ToNvme(
       scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
 
-  uint32_t expected_cdw12 = BuildCdw12(kTransferLength, kPrInfo, kFua);
+  uint32_t expected_cdw12 =
+      translator::htoll(BuildCdw12(kTransferLength, kPrInfo, kFua));
   uint32_t expected_cdw10 = translator::htoll(kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
@@ -229,7 +230,7 @@ TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
 
 TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
   uint32_t network_lba = htonl(kLba);
-  uint16_t network_transfer_length = htons(kTransferLength);
+  uint32_t network_transfer_length = 0x2b1a0000;
   scsi::Write12Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
                               .logical_block_address = network_lba,
@@ -243,7 +244,8 @@ TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
   translator::StatusCode status_code = translator::Write12ToNvme(
       scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
 
-  uint32_t expected_cdw12 = BuildCdw12(kTransferLength, kPrInfo, kFua);
+  uint32_t expected_cdw12 = translator::htoll(
+      BuildCdw12(ntohl(network_transfer_length), kPrInfo, kFua));
   uint32_t expected_cdw10 = translator::htoll(kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
@@ -255,7 +257,7 @@ TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
 
 TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
   uint64_t network_lba = translator::htolll(kWrite16Lba);
-  uint16_t network_transfer_length = htons(kTransferLength);
+  uint32_t network_transfer_length = 0x2b1a0000;
 
   scsi::Write16Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
@@ -272,7 +274,8 @@ TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
 
   uint32_t expected_cdw10 = translator::htoll(kWrite16Lba);
   uint32_t expected_cdw11 = translator::htoll(kWrite16Lba >> 32);
-  uint32_t expected_cdw12 = BuildCdw12(kTransferLength, kPrInfo, kFua);
+  uint32_t expected_cdw12 = translator::htoll(
+      BuildCdw12(ntohl(network_transfer_length), kPrInfo, kFua));
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
   EXPECT_EQ(nvme_cmd.cdw[0], expected_cdw10);
@@ -301,7 +304,7 @@ TEST_F(WriteTest, Write10ShoudlFailOnWrongProtectBit) {
 
 TEST_F(WriteTest, Write12ShoudlFailOnWrongProtectBit) {
   uint32_t network_lba = htonl(kLba);
-  uint16_t network_transfer_length = htons(kTransferLength);
+  uint32_t network_transfer_length = 0x2b1a0000;
   scsi::Write12Command cmd = {.fua = kFua,
                               .wr_protect = kInvalidWriteProtect,
                               .logical_block_address = network_lba,
@@ -320,7 +323,7 @@ TEST_F(WriteTest, Write12ShoudlFailOnWrongProtectBit) {
 
 TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
   uint64_t network_lba = translator::htolll(kWrite16Lba);
-  uint16_t network_transfer_length = htons(kTransferLength);
+  uint32_t network_transfer_length = 0x2b1a0000;
 
   scsi::Write16Command cmd = {.fua = kFua,
                               .wr_protect = kInvalidWriteProtect,
@@ -381,7 +384,7 @@ TEST_F(WriteTest, Write10ShouldWriteFailOnZeroTransferLength) {
 
 TEST_F(WriteTest, Write12ShouldWriteFailOnZeroTransferLength) {
   uint32_t network_lba = htonl(kLba);
-  uint16_t transfer_length = 0;
+  uint32_t transfer_length = 0;
   scsi::Write12Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,
                               .logical_block_address = network_lba,
@@ -400,7 +403,7 @@ TEST_F(WriteTest, Write12ShouldWriteFailOnZeroTransferLength) {
 
 TEST_F(WriteTest, Write16ShouldWriteFailOnZeroTransferLength) {
   uint64_t network_lba = translator::htolll(kWrite16Lba);
-  uint16_t transfer_length = 0;
+  uint32_t transfer_length = 0;
 
   scsi::Write16Command cmd = {.fua = kFua,
                               .wr_protect = kValidWriteProtect,

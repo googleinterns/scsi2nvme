@@ -84,6 +84,13 @@ StatusCode LegacyWrite(nvme::GenericQueueEntryCmd& nvme_cmd,
   return status_code;
 }
 
+// Builds NVMe cdw 12 for Write10, Write12, Write16 translations
+uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
+  // cdw12 nlb bits 15:00 (zero based field), prinfo bits 29:26, fua bit 30
+  return (static_cast<uint32_t>(fua) << 30) |
+         (static_cast<uint32_t>(prinfo) << 26) | (transfer_length - 1);
+}
+
 StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
                  nvme::GenericQueueEntryCmd& nvme_cmd, Allocation& allocation,
                  uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
@@ -107,7 +114,7 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
   if (status_code != StatusCode::kSuccess) {
     return status_code;
   }
-  nvme_cmd.cdw[2] = (transfer_length - 1 | pr_info << 26 | fua << 30);
+  nvme_cmd.cdw[2] = htoll(BuildCdw12(transfer_length, pr_info, fua));
 
   return status_code;
 }
@@ -157,9 +164,9 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
-            nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohs(write_cmd.transfer_length), nvme_cmd,
+                                 allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -178,9 +185,9 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
-            nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohl(write_cmd.transfer_length), nvme_cmd,
+                                 allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -200,9 +207,9 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code =
-      Write(write_cmd.fua, write_cmd.wr_protect, write_cmd.transfer_length,
-            nvme_cmd, allocation, nsid, page_size, lba_size);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohl(write_cmd.transfer_length), nvme_cmd,
+                                 allocation, nsid, page_size, lba_size);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
