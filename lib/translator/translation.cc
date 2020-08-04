@@ -81,8 +81,9 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kReadCapacity10:
-      pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0],
-                                              nsid, allocations_[0]);
+      pipeline_status_ =
+          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], nsid,
+                               allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:
