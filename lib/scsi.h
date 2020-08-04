@@ -186,6 +186,16 @@ enum class OpCode : uint8_t {
   kVerify12 = 0xaf,
 };
 
+// SCSI Reference Manual Table 359
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ModePageCode : uint8_t {
+  kNull = 0x00,
+  kCacheMode = 0x08,
+  kControlMode = 0x0a,
+  kPowerConditionMode = 0x1a,
+  kAllSupportedModes = 0x3f
+};
+
 enum class PageCode : uint8_t {
   kSupportedVpd = 0x00,
   kUnitSerialNumber = 0x80,
@@ -271,6 +281,18 @@ enum class ResponseDataFormat : uint8_t {
   kCompliant = 0x2,
 };
 
+// Table 74
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class PageControl : uint8_t {
+  kCurrent = 0b00,
+  kChangeable = 0b01,
+  kDefault = 0b10,
+  kSaved = 0b11
+};
+
+// Refer to
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+// , Section 3.6.2 Table 59
 // Based on internal documentation SPC-4 Revision 37 Table 176
 struct InquiryData {
   PeripheralDeviceType peripheral_device_type : 5;
@@ -596,8 +618,8 @@ struct ModeSense6Command {
   uint8_t reserved_1 : 3;
   bool dbd : 1;  // Disable block descriptors
   uint8_t reserved_2 : 4;
-  uint8_t page_code : 6;
-  uint8_t pc : 2;  // Page control
+  ModePageCode page_code : 6;
+  PageControl pc : 2;  // Page control
   uint8_t sub_page_code : 8;
   uint8_t alloc_length : 8;
   ControlByte control_byte;
@@ -611,8 +633,8 @@ struct ModeSense10Command {
   bool dbd : 1;    // Disable block descriptors
   bool llbaa : 1;  // Long LBA accepted
   uint8_t reserved_2 : 3;
-  uint8_t page_code : 6;
-  uint8_t pc : 2;  // Page control
+  ModePageCode page_code : 6;
+  PageControl pc : 2;  // Page control
   uint8_t sub_page_code : 8;
   uint32_t reserved_3 : 24;
   uint16_t alloc_length : 16;
@@ -817,6 +839,144 @@ struct UnmapBlockDescriptor {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(UnmapBlockDescriptor) == 16);
 
+// SCSI Reference Manual Table 372
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct CachingModePage {
+  ModePageCode page_code : 6;
+  bool spf : 1;  // Sub-page format
+  bool ps : 1;   // Parameter saveable
+  uint8_t page_length : 8;
+  bool rcd : 1;        // Read cache disable
+  bool mf : 1;         // Multiplication factor
+  bool wce : 1;        // Write cache enabled
+  bool size : 1;       // Size enable
+  bool disc : 1;       // Disconinuity
+  bool cap : 1;        // Caching analysis permitted
+  bool abpf : 1;       // Abort prefetch
+  bool ic : 1;         // Initiator control
+  uint8_t wrp : 4;     // Write retention priority
+  uint8_t drrp : 4;    // Demand read retention priority
+  uint16_t dptl : 16;  // Disable prefetch transfer length
+  uint16_t min_prefetch : 16;
+  uint16_t max_prefetch : 16;
+  uint16_t max_prefetch_ceil : 16;
+  bool nv_dis : 1;  // Non-volatile cache disabled
+  uint8_t sync_prog : 2;
+  uint8_t vs : 2;    // Vendor specific
+  bool dra : 1;      // Disable read ahead
+  bool lbcss : 1;    //  Logical block cache segment size bit
+  bool fsw : 1;      // Force sequential write
+  uint8_t nocs : 8;  // Number of cache segments
+  uint16_t cache_segment_time : 16;
+  uint8_t reserved : 8;
+  uint32_t obsolete : 24;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(CachingModePage) == 20);
+
+// SCSI Reference Manual Table 377
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ControlModePage {
+  ModePageCode page_code : 6;
+  bool spf : 1;  // Sub-page format
+  bool ps : 1;   // Parameter saveable
+  uint8_t page_length : 8;
+  bool rlec : 1;     // Report log exception condition
+  bool gltsd : 1;    // Global logging target solve disable
+  bool d_sense : 1;  // Descriptor format sense data bit
+  bool dpicz : 1;  // Disable protection information check if protect field zero
+  bool tmf_only : 1;  // Allow task managment functions only
+  uint8_t tst : 3;    // Task set type
+  bool dque : 1;      // Disable queueing
+  uint8_t qerr : 2;   // Queue error mangment
+  bool nuar : 1;      // No unit attention on release
+  uint8_t qam : 4;    // Queue algorithm modifier
+  uint8_t obsolete_1 : 3;
+  bool swp : 1;                // Software write protect
+  uint8_t ua_intlck_ctrl : 2;  // Unit attention interlocks control
+  bool rac : 1;                // Report a check
+  bool vs : 1;                 // Vendor specific
+  uint8_t autoload_mode : 3;
+  bool reserved : 1;
+  bool rwwp : 1;   // Reject write without protection
+  bool atmpe : 1;  // Application tag mode page enabled
+  bool tas : 1;    // Task aborted status
+  bool ato : 1;    // Application tag owner
+  uint16_t obsolete_2 : 16;
+  uint16_t busy_timeout_period : 16;
+  uint16_t estct : 16;  // Extended self-test completion time
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ControlModePage) == 12);
+
+// SCSI Reference Manual Table 397
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct PowerConditionModePage {
+  ModePageCode page_code : 6;
+  bool spf : 1;  // Sub-page format
+  bool ps : 1;   // Parameter saveable
+  uint8_t page_length : 8;
+  bool standby_y : 1;
+  uint8_t reserved_1 : 5;
+  uint8_t pm_bg_precedence : 2;
+  bool standby_z : 1;
+  bool idle_a : 1;
+  bool idle_b : 1;
+  bool idle_c : 1;
+  uint8_t reserved_2 : 4;
+  uint32_t idle_a_ct : 32;     // Idle A condition timer
+  uint32_t standby_z_ct : 32;  // Standby Z condition timer
+  uint32_t idle_b_ct : 32;     // Idle B condition timer
+  uint32_t idle_c_ct : 32;     // Idle C condition timer
+  uint32_t standby_y_ct : 32;  // Standby Y condition timer
+  uint8_t reserved_3[15];
+  uint8_t reserved_4 : 2;
+  int8_t ccf_stopped : 2;   // Check condition from stopped
+  uint8_t ccf_standby : 2;  // Check condition from standby
+  uint8_t ccf_idle : 2;     // Check condition from idle
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(PowerConditionModePage) == 40);
+
+// SCSI Reference Manual Table 361
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ModeParameter6Header {
+  uint8_t mode_data_length : 8;
+  uint8_t medium_type : 8;
+  uint8_t reserved_2 : 4;
+  bool dpofua : 1;  // DPO and FUA support
+  uint8_t reserved_1 : 2;
+  bool wp : 1;      // Write protect
+  uint8_t bdl : 8;  // Block descriptor length
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ModeParameter6Header) == 4);
+
+// SCSI Reference Manual Table 362
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ModeParameter10Header {
+  uint16_t mode_data_length : 16;
+  uint8_t medium_type : 8;
+  uint8_t reserved_1 : 4;
+  bool dpofua : 1;  // DPO and FUA support
+  uint16_t reserved_2 : 2;
+  bool wp : 1;  // Write protect
+  bool longlba : 1;
+  uint16_t reserved_3 : 15;
+  uint16_t bdl : 16;  // Block descriptor length
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ModeParameter10Header) == 8);
+
+struct ShortLbaBlockDescriptor {
+  uint32_t number_of_blocks : 32;
+  uint8_t reserved : 8;
+  uint32_t logical_block_length : 24;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ShortLbaBlockDescriptor) == 8);
+
+struct LongLbaBlockDescriptor {
+  uint64_t number_of_blocks : 64;
+  uint32_t reserved : 32;
+  uint32_t logical_block_length : 32;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(LongLbaBlockDescriptor) == 16);
+
 // SCSI Reference Manual Table 164
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct RequestSenseCommand {
@@ -864,6 +1024,7 @@ struct DescriptorFormatSenseData {
   uint8_t additional_sense_length : 8;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DescriptorFormatSenseData) == 8);
+
 // SCSI Reference Manual Table 483
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct SupportedVitalProductData {
