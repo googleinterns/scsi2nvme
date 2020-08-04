@@ -109,7 +109,6 @@ cc_library(
   srcs = ["write.cc"],
   deps = [
     ":common",
-    "//lib:scsi_lib",
     "//third_party/spdk:nvme_lib",
     "@com_google_absl//absl/base",
   ],

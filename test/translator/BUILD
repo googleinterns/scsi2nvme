@@ -58,7 +58,6 @@ cc_test(
   srcs = [ "write_test.cc" ],
   deps = [
     "//lib/translator:write_lib",
-    "//lib/translator:common",
     "@googletest//:gtest_main"
   ]
 )
