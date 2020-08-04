@@ -20,6 +20,7 @@ cc_library(
     ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":status_lib",
     ":mode_sense_lib",
     ":synchronize_cache_lib",
     ":verify_lib",
