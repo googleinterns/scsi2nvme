@@ -136,6 +136,11 @@ bool WriteValue(const T& data, Span<uint8_t> out, size_t num_bytes) {
   return true;
 }
 
+template <typename T>
+bool WriteValue(const T& data, Span<uint8_t> out) {
+  return WriteValue(data, out, sizeof(T));
+}
+
 // Scsi status bundle
 struct ScsiStatus {
   scsi::Status status;
@@ -145,12 +150,7 @@ struct ScsiStatus {
 };
 
 // Fills sense buffer with relevant data. Returns true on success.
-bool FillSenseBuffer(Span<uint8_t> sense_buffer, ScsiStatus& scsi_status);
-
-template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out) {
-  return WriteValue(data, out, sizeof(T));
-}
+bool FillSenseBuffer(Span<uint8_t> sense_buffer, const ScsiStatus& scsi_status);
 
 // Returns a pointer of type T pointing to buf.data().
 // This creates a new object of type T.

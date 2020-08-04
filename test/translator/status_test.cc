@@ -20,8 +20,8 @@
 namespace {
 
 TEST(TranslateGenericCommandStatus, ShouldReturnCorrectStatus) {
-  uint8_t status_code_type = 0x0;  // kGeneric
-  uint8_t status_code = 0x0;       // kSuccess;
+  nvme::StatusCodeType status_code_type = nvme::StatusCodeType::kGeneric;
+  uint8_t status_code = 0x0;  // kSuccess
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -33,8 +33,8 @@ TEST(TranslateGenericCommandStatus, ShouldReturnCorrectStatus) {
 }
 
 TEST(TranslateUnsupportedGenericCommandStatus, ShouldReturnNullptr) {
-  uint8_t status_code_type = 0x0;  // kGeneric
-  uint8_t status_code = 0x03;      // kCommandIdConflict
+  nvme::StatusCodeType status_code_type = nvme::StatusCodeType::kGeneric;
+  uint8_t status_code = 0x03;  // kCommandIdConflict
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -46,8 +46,9 @@ TEST(TranslateUnsupportedGenericCommandStatus, ShouldReturnNullptr) {
 }
 
 TEST(TranslateCommandSpecificStatus, ShouldReturnCorrectStatus) {
-  uint8_t status_code_type = 0x1;  // kCommandSpecific
-  uint8_t status_code = 0x0a;      // kInvalidFormat;
+  nvme::StatusCodeType status_code_type =
+      nvme::StatusCodeType::kCommandSpecific;
+  uint8_t status_code = 0x0a;  // kInvalidFormat
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -59,8 +60,8 @@ TEST(TranslateCommandSpecificStatus, ShouldReturnCorrectStatus) {
 }
 
 TEST(TranslateUnsupportedCommandSpecificStatus, ShouldReturnNullptr) {
-  uint8_t status_code_type = 0x01;  // kGeneric
-  uint8_t status_code = 0x0d;       // kFeatureIdNotSaveable;
+  nvme::StatusCodeType status_code_type = nvme::StatusCodeType::kGeneric;
+  uint8_t status_code = 0x0d;  // kFeatureIdNotSaveable
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -72,8 +73,8 @@ TEST(TranslateUnsupportedCommandSpecificStatus, ShouldReturnNullptr) {
 }
 
 TEST(TranslateMediaErrorStatus, ShouldReturnCorrectStatus) {
-  uint8_t status_code_type = 0x2;  // kCommandSpecific
-  uint8_t status_code = 0x81;      // kInvalidFormat;
+  nvme::StatusCodeType status_code_type = nvme::StatusCodeType::kMediaError;
+  uint8_t status_code = 0x81;  // kInvalidFormat
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -85,8 +86,8 @@ TEST(TranslateMediaErrorStatus, ShouldReturnCorrectStatus) {
 }
 
 TEST(TranslateUnsupportedMediaErrorStatus, ShouldReturnNullptr) {
-  uint8_t status_code_type = 0x02;  // kMediaError
-  uint8_t status_code = 0x87;       // kDeallocatedOrUnwrittenBlock
+  nvme::StatusCodeType status_code_type = nvme::StatusCodeType::kMediaError;
+  uint8_t status_code = 0x87;  // kDeallocatedOrUnwrittenBlock
   translator::ScsiStatus result =
       translator::StatusToScsi(status_code_type, status_code);
 
@@ -98,7 +99,10 @@ TEST(TranslateUnsupportedMediaErrorStatus, ShouldReturnNullptr) {
 }
 
 TEST(TranslateUnsupportedStatusCodeType, ShouldReturnNullptr) {
-  translator::ScsiStatus result = translator::StatusToScsi(6, 0);
+  nvme::StatusCodeType status_code_type = static_cast<nvme::StatusCodeType>(6);
+  uint8_t status_code = 0;
+  translator::ScsiStatus result =
+      translator::StatusToScsi(status_code_type, status_code);
 
   EXPECT_EQ(result.status, scsi::Status::kCheckCondition);
   EXPECT_EQ(result.sense_key, scsi::SenseKey::kNoSense);

@@ -17,6 +17,8 @@
 
 #include "common.h"
 
+#include "third_party/spdk/nvme.h"
+
 namespace translator {
 
 /**
@@ -28,7 +30,8 @@ namespace translator {
  * Translates to corresponding SCSI status, sense key, additional sense code,
  * and additional sense qualifier code
  */
-ScsiStatus StatusToScsi(uint8_t status_code_type, uint8_t status_code);
+ScsiStatus StatusToScsi(nvme::StatusCodeType status_code_type,
+                        uint8_t status_code);
 
 }  // namespace translator
 #endif

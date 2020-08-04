@@ -156,7 +156,7 @@ CompleteResponse Translation::Complete(
     return resp;
   }
 
-  if (pipeline_status_ == StatusCode::kFailure) {
+  if (pipeline_status_ != StatusCode::kSuccess) {
     ScsiStatus scsi_status = {
         .status = scsi::Status::kCheckCondition,
         .sense_key = scsi::SenseKey::kIllegalRequest,
@@ -176,6 +176,7 @@ CompleteResponse Translation::Complete(
     ScsiStatus scsi_status = StatusToScsi(cpl_status.sct, cpl_status.sc);
     if (scsi_status.status != scsi::Status::kGood) {
       FillSenseBuffer(sense_buffer, scsi_status);
+      AbortPipeline();
       resp.status = ApiStatus::kSuccess;
       resp.scsi_status = scsi_status.status;
       return resp;
@@ -188,15 +189,16 @@ CompleteResponse Translation::Complete(
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi::OpCode::kVerify10:
-      // TODO: translator should intercept and handle status code.
-      // a VerifyToScsi() is not needed
+      // VerifyToScsi() is not needed
       break;
     case scsi::OpCode::kInquiry:
-      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
+      pipeline_status_ =
+          InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
       break;
     case scsi::OpCode::kModeSense6:
       // TODO: Update this when the cpl_data interface is finalized
-      ModeSense6ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0, buffer_in);
+      ModeSense6ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+                       buffer_in);
       break;
     case scsi::OpCode::kModeSense10:
       // TODO: Update this when the cpl_data interface is finalized
@@ -227,9 +229,15 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kTestUnitReady:
       break;
+    default:
+      DebugLog(
+          "Invalid opcode case reached: %u. Please contact SCSI2NVMe devs.",
+          scsi_cmd_[0]);
+      break;
   }
   if (pipeline_status_ != StatusCode::kSuccess) {
     // TODO fill buffer with SCSI CHECK CONDITION response
+    DebugLog("Failed to translate back to SCSI");
   }
   AbortPipeline();
   return resp;
