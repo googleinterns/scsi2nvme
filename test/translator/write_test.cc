@@ -103,7 +103,7 @@ TEST_F(WriteTest, Write6ShouldReturnValidStatusCode) {
   uint8_t network_endian_lba_1 = 0x1;
   uint8_t network_endian_lba_2 = htons(0x1234);
   scsi::Write6Command cmd = {.logical_block_address_1 = network_endian_lba_1,
-                             .logical_block_address = network_endian_lba_2,
+                             .logical_block_address_2 = network_endian_lba_2,
                              .transfer_length = kWrite6TransferLength};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
@@ -179,7 +179,7 @@ TEST_F(WriteTest, Write6ShouldBuildCorrectNvmeCommandStruct) {
   uint8_t network_endian_lba_1 = 0x1;
   uint8_t network_endian_lba_2 = htons(0x1234);
   scsi::Write6Command cmd = {.logical_block_address_1 = network_endian_lba_1,
-                             .logical_block_address = network_endian_lba_2,
+                             .logical_block_address_2 = network_endian_lba_2,
                              .transfer_length = kWrite6TransferLength};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
@@ -346,7 +346,7 @@ TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
   uint8_t network_endian_lba_2 = htons(0x1234);
   uint16_t transfer_length = 0;
   scsi::Write6Command cmd = {.logical_block_address_1 = network_endian_lba_1,
-                             .logical_block_address = network_endian_lba_2,
+                             .logical_block_address_2 = network_endian_lba_2,
                              .transfer_length = transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];

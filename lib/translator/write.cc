@@ -147,7 +147,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
 
   // cdw10 Starting lba bits 31:00
   uint32_t host_endian_lba = (write_cmd.logical_block_address_1 << 16) +
-                             ntohs(write_cmd.logical_block_address);
+                             ntohs(write_cmd.logical_block_address_2);
 
   nvme_cmd.cdw[0] = htoll(host_endian_lba);
   nvme_cmd.cdw[2] = htoll(static_cast<uint32_t>(updated_transfer_length - 1));
