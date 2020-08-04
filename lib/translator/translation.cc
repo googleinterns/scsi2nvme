@@ -193,7 +193,6 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
-      ret = ApiStatus::kSuccess;
       break;
   }
   if (pipeline_status_ != StatusCode::kSuccess) {

@@ -20,6 +20,7 @@ OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
 	$(TRANSLATION_SRC_DIR)/report_luns.cc.o \
 	$(TRANSLATION_SRC_DIR)/verify.cc.o \
 	$(TRANSLATION_SRC_DIR)/read.cc.o \
+	$(TRANSLATION_SRC_DIR)/synchronize_cache.cc.o \
 	$(TRANSLATION_SRC_DIR)/translation.cc.o
 
 INC := -I$(PWD)/third_party -I$(PWD)
