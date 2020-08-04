@@ -67,24 +67,28 @@ class ReadCapacity10Test : public ::testing::Test {
 
 TEST_F(ReadCapacity10Test, ToNvmeSuccess) {
   translator::Allocation allocation{};
+  uint32_t alloc_len = 0;
   EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, identify_cmds_[0], 1,
-                                             allocation),
+                                             allocation, alloc_len),
             translator::StatusCode::kSuccess);
+  EXPECT_EQ(alloc_len, 8);
 }
 
 TEST_F(ReadCapacity10Test, ToNvmeBadBuffer) {
   uint8_t bad_buffer[1];
   translator::Allocation allocation{};
+  uint32_t alloc_len = 0;
   EXPECT_EQ(translator::ReadCapacity10ToNvme(bad_buffer, identify_cmds_[0], 1,
-                                             allocation),
+                                             allocation, alloc_len),
             translator::StatusCode::kInvalidInput);
 }
 
 TEST_F(ReadCapacity10Test, ToNvmeBadControlByteNaca) {
   read_capacity_10_cmd_.control_byte.naca = 1;
   translator::Allocation allocation{};
+  uint32_t alloc_len = 0;
   EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, identify_cmds_[0], 1,
-                                             allocation),
+                                             allocation, alloc_len),
             translator::StatusCode::kInvalidInput);
 }
 
