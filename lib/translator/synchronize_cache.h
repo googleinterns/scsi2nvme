@@ -12,26 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_TRANSLATOR_STATUS_H
-#define LIB_TRANSLATOR_STATUS_H
-
-#include "common.h"
+#ifndef LIB_TRANSLATOR_SYNCHRONIZE_CACHE_H
+#define LIB_TRANSLATOR_SYNCRHONIZE_CACHE_H
 
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
 
-/**
- * Takes in a raw NVMe status code type and status code
- *
- * Parses them into nvme::StatusCodeType
- * and nvme::[GenericCommand/CommandSpecific/MediaError]StatusCode
- *
- * Translates to corresponding SCSI status, sense key, additional sense code,
- * and additional sense qualifier code
- */
-ScsiStatus StatusToScsi(nvme::StatusCodeType status_code_type,
-                        uint8_t status_code);
+// Builds an NVMe Flush command
+// NVMe Flush does not have command specific response data to translate
+void SynchronizeCache10ToNvme(nvme::GenericQueueEntryCmd& nvme_cmd,
+                              uint32_t nsid);
 
-}  // namespace translator
+};  // namespace translator
 #endif

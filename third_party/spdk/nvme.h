@@ -192,15 +192,23 @@ enum class NvmOpcode : uint8_t {
   kSctVendorSpecific = 0x7,
 };
 
+// NVMe Base Specification Figure 182
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+enum class FeatureSelect : uint8_t {
+  kCurrent = 0b00,
+  kDefault = 0b01,
+  kSaved = 0b10
+};
+
 // NVMe Base Specification Figure 124
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 struct CplStatus {
-  uint16_t p : 1;      // phase tag
-  uint16_t sc : 8;     // status code
-  uint16_t sct : 3;    // status code type
-  uint16_t rsvd2 : 2;  // command retry delay in 1_4 spec
-  uint16_t m : 1;      // more
-  uint16_t dnr : 1;    // do not retry
+  uint16_t p : 1;          // phase tag
+  uint8_t sc : 8;          // status code
+  StatusCodeType sct : 3;  // status code type
+  uint16_t rsvd2 : 2;      // command retry delay in 1_4 spec
+  uint16_t m : 1;          // more
+  uint16_t dnr : 1;        // do not retry
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(CplStatus) == 2);
 
@@ -329,6 +337,38 @@ struct GenericQueueEntryCmd {
   uint32_t cdw[6];  // command-specific
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(GenericQueueEntryCmd) == 64);
+
+// NVMe Base Specification Section 5.13
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct GetFeaturesCmd {
+  // dword 0
+  uint16_t opc : 8;   // opcode
+  uint16_t fuse : 2;  // fused operation
+  uint16_t rsvd1 : 4;
+  uint16_t psdt : 2;
+  uint16_t cid : 16;  // command identifier
+  // dword 1
+  uint32_t nsid : 32;  // namespace identifier
+  // dword 2-3
+  uint32_t rsvd2 : 32;
+  uint32_t rsvd3 : 32;
+  // dword 4-5
+  uint64_t mptr : 64;  // metadata pointer
+  // dword 6-9: data pointer
+  union {
+    struct {
+      uint64_t prp1 : 64;  // prp entry 1
+      uint64_t prp2 : 64;  // prp entry 2
+    } prp;
+    SglDescriptor sgl_descriptor;
+  } dptr;
+  // dword 10-15
+  FeatureType fid : 8;    // feature identifier
+  FeatureSelect sel : 2;  // select
+  uint32_t rsvd4 : 22;
+  uint32_t cdw[5];  // reserved
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(GetFeaturesCmd) == 64);
 
 // NVMe Base Specification Figure 70 to Figure 75
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf

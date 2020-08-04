@@ -12,26 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_TRANSLATOR_STATUS_H
-#define LIB_TRANSLATOR_STATUS_H
-
-#include "common.h"
+#include "synchronize_cache.h"
 
 #include "third_party/spdk/nvme.h"
 
 namespace translator {
 
-/**
- * Takes in a raw NVMe status code type and status code
- *
- * Parses them into nvme::StatusCodeType
- * and nvme::[GenericCommand/CommandSpecific/MediaError]StatusCode
- *
- * Translates to corresponding SCSI status, sense key, additional sense code,
- * and additional sense qualifier code
- */
-ScsiStatus StatusToScsi(nvme::StatusCodeType status_code_type,
-                        uint8_t status_code);
+// Section 5.5
+// https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
+void SynchronizeCache10ToNvme(nvme::GenericQueueEntryCmd& nvme_cmd,
+                              uint32_t nsid) {
+  nvme_cmd = {.opc = static_cast<uint8_t>(nvme::NvmOpcode::kFlush),
+              .nsid = nsid};
+}
 
-}  // namespace translator
-#endif
+};  // namespace translator

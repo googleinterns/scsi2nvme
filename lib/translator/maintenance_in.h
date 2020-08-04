@@ -12,26 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIB_TRANSLATOR_STATUS_H
-#define LIB_TRANSLATOR_STATUS_H
+#ifndef LIB_TRANSLATOR_MAINTENANCE_IN_H
+#define LIB_TRANSLATOR_MAINTENANCE_IN_H
 
 #include "common.h"
 
-#include "third_party/spdk/nvme.h"
-
 namespace translator {
 
-/**
- * Takes in a raw NVMe status code type and status code
- *
- * Parses them into nvme::StatusCodeType
- * and nvme::[GenericCommand/CommandSpecific/MediaError]StatusCode
- *
- * Translates to corresponding SCSI status, sense key, additional sense code,
- * and additional sense qualifier code
- */
-ScsiStatus StatusToScsi(nvme::StatusCodeType status_code_type,
-                        uint8_t status_code);
+// Translation library only supports ReportSupportedOpCodes for WriteSame16
+// We always report that we do not support WriteSame16
+// This command does not require call to NVMe so it doesn't require translation
+
+// Validates command to ensure it is a well-formatted ReportSupportedOpCodes cmd
+// and that the requested OpCode is scsi::OpCode::WriteSame16
+StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd);
+
+// Writes to the buffer that we do not support the command
+void WriteReportSupportedOpCodesResult(Span<uint8_t> buffer);
 
 }  // namespace translator
+
 #endif

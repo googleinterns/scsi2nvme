@@ -15,10 +15,14 @@
 #include "translation.h"
 
 #include "inquiry.h"
+#include "maintenance_in.h"
+#include "mode_sense.h"
 #include "read.h"
 #include "read_capacity_10.h"
 #include "report_luns.h"
 #include "request_sense.h"
+#include "status.h"
+#include "synchronize_cache.h"
 #include "verify.h"
 #include "write.h"
 
@@ -59,14 +63,28 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
+    case scsi::OpCode::kModeSense6:
+      pipeline_status_ =
+          ModeSense6ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
+                           nvme_cmd_count_, response.alloc_len);
+      break;
+    case scsi::OpCode::kModeSense10:
+      pipeline_status_ =
+          ModeSense10ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
+                            nvme_cmd_count_, response.alloc_len);
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      pipeline_status_ = ValidateReportSupportedOpCodes(scsi_cmd_no_op);
+      nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
                                           allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kReadCapacity10:
-      pipeline_status_ = ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0],
-                                              nsid, allocations_[0]);
+      pipeline_status_ =
+          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], nsid,
+                               allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:
@@ -94,6 +112,11 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       pipeline_status_ =
           Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
                        kPageSize, kLbaSize);
+      break;
+    case scsi::OpCode::kSync10:
+      SynchronizeCache10ToNvme(nvme_cmds_[0], nsid);
+      pipeline_status_ = StatusCode::kSuccess;
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
@@ -125,63 +148,114 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   }
 
   if (pipeline_status_ != StatusCode::kSuccess) {
+    FlushMemory();
     nvme_cmd_count_ = 0;
   }
   return response;
 }
 
-ApiStatus Translation::Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,
-                                Span<uint8_t> buffer) {
+CompleteResponse Translation::Complete(
+    Span<const nvme::GenericQueueEntryCpl> cpl_data, Span<uint8_t> buffer_in,
+    Span<uint8_t> sense_buffer) {
+  CompleteResponse resp = {};
   if (pipeline_status_ == StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Complete called before Begin");
-    return ApiStatus::kFailure;
+    resp.status = ApiStatus::kFailure;
+    return resp;
   }
 
-  if (pipeline_status_ == StatusCode::kFailure) {
-    // TODO fill buffer with SCSI CHECK CONDITION response
+  if (cpl_data.size() != nvme_cmd_count_) {
+    DebugLog(
+        "Invalid use of API, completion count %u does not equal command count "
+        "%u",
+        cpl_data.size(), nvme_cmd_count_);
+    resp.status = ApiStatus::kFailure;
+    return resp;
+  }
+
+  if (pipeline_status_ != StatusCode::kSuccess) {
+    ScsiStatus scsi_status = {
+        .status = scsi::Status::kCheckCondition,
+        .sense_key = scsi::SenseKey::kIllegalRequest,
+        .asc = scsi::AdditionalSenseCode::kInvalidFieldInCdb,
+        .ascq = scsi::AdditionalSenseCodeQualifier::kNoAdditionalSenseInfo};
+    FillSenseBuffer(sense_buffer, scsi_status);
     AbortPipeline();
-    return ApiStatus::kSuccess;
+    resp.status = ApiStatus::kSuccess;
+    resp.scsi_status = scsi_status.status;
+    return resp;
+  }
+
+  // Verify NVMe commands completed successfully. If not translate error.
+  for (uint32_t i = 0; i < cpl_data.size(); ++i) {
+    const nvme::GenericQueueEntryCpl& cpl_entry = cpl_data[i];
+    const nvme::CplStatus& cpl_status = cpl_entry.cpl_status;
+    ScsiStatus scsi_status = StatusToScsi(cpl_status.sct, cpl_status.sc);
+    if (scsi_status.status != scsi::Status::kGood) {
+      FillSenseBuffer(sense_buffer, scsi_status);
+      AbortPipeline();
+      resp.status = ApiStatus::kSuccess;
+      resp.scsi_status = scsi_status.status;
+      return resp;
+    }
   }
 
   // Switch cases should not return
-  ApiStatus ret;
+  resp.status = ApiStatus::kSuccess;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd_.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd_[0]);
   switch (opc) {
     case scsi::OpCode::kVerify10:
-      // TODO: translator should intercept and handle status code.
-      // a VerifyToScsi() is not needed
-      ret = ApiStatus::kSuccess;
+      // VerifyToScsi() is not needed
       break;
     case scsi::OpCode::kInquiry:
-      pipeline_status_ = InquiryToScsi(scsi_cmd_no_op, buffer, GetNvmeCmds());
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ =
+          InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
+      break;
+    case scsi::OpCode::kModeSense6:
+      // TODO: Update this when the cpl_data interface is finalized
+      ModeSense6ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+                       buffer_in);
+      break;
+    case scsi::OpCode::kModeSense10:
+      // TODO: Update this when the cpl_data interface is finalized
+      ModeSense10ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+                        buffer_in);
+      break;
+    case scsi::OpCode::kMaintenanceIn:
+      // ReportSupportedOpCodes is the only supported MaintenanceIn command
+      WriteReportSupportedOpCodesResult(buffer_in);
       break;
     case scsi::OpCode::kReportLuns:
-      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer_in);
       break;
     case scsi::OpCode::kReadCapacity10:
-      pipeline_status_ = ReadCapacity10ToScsi(buffer, nvme_cmds_[0]);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_cmds_[0]);
       break;
     case scsi::OpCode::kRequestSense:
-      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer_in);
       break;
     case scsi::OpCode::kRead6:
     case scsi::OpCode::kRead10:
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
-      pipeline_status_ = ReadToScsi(buffer, nvme_cmds_[0], kLbaSize);
-      ret = ApiStatus::kSuccess;
+      pipeline_status_ = ReadToScsi(buffer_in, nvme_cmds_[0], kLbaSize);
+      break;
+    case scsi::OpCode::kSync10:
+      // No command specific response data to translate
+      break;
+    default:
+      DebugLog(
+          "Invalid opcode case reached: %u. Please contact SCSI2NVMe devs.",
+          scsi_cmd_[0]);
       break;
   }
   if (pipeline_status_ != StatusCode::kSuccess) {
     // TODO fill buffer with SCSI CHECK CONDITION response
+    DebugLog("Failed to translate back to SCSI");
   }
   AbortPipeline();
-  return ret;
+  return resp;
 }
 
 Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {

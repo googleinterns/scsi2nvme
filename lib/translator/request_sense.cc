@@ -20,7 +20,7 @@ namespace {  // anonymous namespace for helper functions
 void TranslateDescriptorSenseData(Span<uint8_t> buffer) {
   scsi::DescriptorFormatSenseData result = {
       // Shall be set to 72h indicating current errors are returned.
-      .response_code = 0x72,
+      .response_code = scsi::SenseResponse::kCurrentDescriptorError,
 
       // Shall be set to NO ADDITIONAL SENSE INFORMATION (0) if device is in
       // power state 00h,
@@ -34,7 +34,7 @@ void TranslateDescriptorSenseData(Span<uint8_t> buffer) {
 void TranslateFixedSenseData(Span<uint8_t> buffer) {
   scsi::FixedFormatSenseData result = {
       // Shall be set to 70h indicating current errors are returned.
-      .response_code = 0x70,
+      .response_code = scsi::SenseResponse::kCurrentFixedError,
 
       // Shall indicate the number of bytes of additional sense data.
       // There is no additional sense data.
