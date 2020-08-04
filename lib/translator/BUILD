@@ -16,20 +16,32 @@ cc_library(
   deps = [
     ":common",
     ":inquiry_lib",
+    ":maintenance_in_lib",
     ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":mode_sense_lib",
     ":synchronize_cache_lib",
     ":verify_lib",
     ":report_luns_lib",
   ],
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
 )
 
 cc_library(
   name = "inquiry_lib",
   srcs = ["inquiry.cc"],
   hdrs = ["inquiry.h"],
+  deps = [
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "maintenance_in_lib",
+  hdrs = ["maintenance_in.h"],
+  srcs = ["maintenance_in.cc"],
   deps = [
       ":common",
   ],
@@ -102,6 +114,17 @@ cc_library(
   srcs = ["verify.cc"],
   deps = [
       ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
+cc_library(
+  name = "mode_sense_lib",
+  hdrs = ["mode_sense.h"],
+  srcs = ["mode_sense.cc"],
+  deps = [
+    "//third_party/spdk:nvme_lib",
+    ":common"
   ],
   visibility = ["//visibility:public"],
 )
