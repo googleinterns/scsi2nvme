@@ -25,7 +25,7 @@
 
 static const char kName[] = "SCSI2NVMe SCSI Mock";
 static const int kQueueCount = 1;
-static const int kCanQueue = 64;
+static const int kCanQueue = 1;
 static const int kCmdPerLun = 1;
 
 static struct bus_type pseudo_bus;
@@ -57,8 +57,6 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   // Copy response to SGL buffer
   if (is_data_in) {
     printk("ALLOC_LEN %u", resp.alloc_len);
-    printk("ADDITIONAL DATA %u", data_buf[5]);
-    printk("PRODUCT ID: %.6s\n", &data_buf[12]);
     struct scsi_data_buffer* sdb = &cmd->sdb;
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - sdb_len);
