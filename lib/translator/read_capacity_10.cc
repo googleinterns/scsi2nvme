@@ -75,9 +75,19 @@ StatusCode ReadCapacity10ToScsi(
           htonl(ltohll(identify_ns->nsze) > 0xffffffff
                     ? 0xffffffff
                     : static_cast<uint32_t>(ltohll(identify_ns->nsze))),
-      .block_length = htoll(static_cast<uint32_t>(
-          identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
+
+  uint8_t lbads = identify_ns->lbaf[identify_ns->flbas.format].lbads;
+  if (lbads < 9) {
+    DebugLog("lbads value smaller than 9 is not supported");
+    return StatusCode::kFailure;
+  } else if (lbads > 31) {
+    DebugLog(
+        "lbads exceeds type limit of "
+        "scsi::ReadCapacity10Data.block_length");
+    return StatusCode::kFailure;
+  }
+  result.block_length = htonl(static_cast<uint32_t>(1 << lbads));
 
   if (!WriteValue(result, buffer)) {
     DebugLog("Error writing Read Capacity 10 Data to buffer");
