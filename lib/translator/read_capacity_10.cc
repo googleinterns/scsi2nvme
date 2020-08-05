@@ -79,7 +79,10 @@ StatusCode ReadCapacity10ToScsi(
           identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Read Capacity 10 Data to buffer");
+    return StatusCode::kFailure;
+  }
   return StatusCode::kSuccess;
 }
 
