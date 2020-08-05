@@ -96,12 +96,16 @@ static int bus_driver_probe(struct device* dev) {
   if (dev != &pseudo_adapter || registered > 0)
     return -1;
 
+  printk("REGISTER CONTINUE!");
+
   scsi_host = scsi_host_alloc(&scsi_mock_template, 0);
   if (!scsi_host) {
     printk("SCSI Host failed to allocate");
     return -ENODEV;
   }
   scsi_host->nr_hw_queues = kQueueCount;
+  scsi_host->max_id = 1;
+  scsi_host->max_lun = 1;
   err = scsi_add_host(scsi_host, NULL);
   if (err) {
     scsi_host_put(scsi_host);
