@@ -24,14 +24,14 @@ namespace translator {
 // Mode sense 6 translates to any superset of [Identify, GetFeatures]
 // Identify always comes first in the nvme_cmds span
 StatusCode ModeSense6ToNvme(Span<const uint8_t> scsi_cmd,
-                            Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                            Span<NvmeCmdWrapper> nvme_wrappers,
                             Allocation& allocation, uint32_t nsid,
                             uint32_t& cmd_count, uint32_t& alloc_len);
 
 // Mode sense 10 translates to any superset of [Identify, GetFeatures]
 // Identify always comes first in the nvme_cmds span
 StatusCode ModeSense10ToNvme(Span<const uint8_t> scsi_cmd,
-                             Span<nvme::GenericQueueEntryCmd> nvme_cmds,
+                             Span<NvmeCmdWrapper> nvme_wrappers,
                              Allocation& allocation, uint32_t nsid,
                              uint32_t& cmd_count, uint32_t& alloc_len);
 

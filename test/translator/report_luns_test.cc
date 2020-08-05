@@ -26,7 +26,7 @@
 namespace {
 
 TEST(reportLunsToNvme, shouldReturnCorrectCommand) {
-  nvme::GenericQueueEntryCmd nvme_cmd = {};
+  translator::NvmeCmdWrapper nvme_wrapper;
   scsi::ReportLunsCommand scsi_cmd = {};
   uint64_t expected_prp = 2323;
   uint32_t expected_alloc_len = 344;
@@ -43,17 +43,19 @@ TEST(reportLunsToNvme, shouldReturnCorrectCommand) {
   translator::Allocation allocation = {};
   uint32_t actual_alloc_len;
   translator::StatusCode actual_status = translator::ReportLunsToNvme(
-      scsi_cmd_span, nvme_cmd, allocation, actual_alloc_len);
+      scsi_cmd_span, nvme_wrapper, allocation, actual_alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, actual_status);
 
-  EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), nvme_cmd.opc);
-  EXPECT_EQ(expected_prp, nvme_cmd.dptr.prp.prp1);
-  EXPECT_EQ(0x2, nvme_cmd.cdw[0]);
+  EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
+            nvme_wrapper.cmd.opc);
+  EXPECT_EQ(expected_prp, nvme_wrapper.cmd.dptr.prp.prp1);
+  EXPECT_EQ(0x2, nvme_wrapper.cmd.cdw[0]);
 
   EXPECT_EQ(2323, allocation.data_addr);
   EXPECT_EQ(1, allocation.data_page_count);
   EXPECT_EQ(expected_alloc_len, actual_alloc_len);
+  EXPECT_EQ(true, nvme_wrapper.is_admin);
 }
 
 TEST(reportLunsToScsi, shouldFillBufferCorrectly) {

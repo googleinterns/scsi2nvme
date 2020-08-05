@@ -47,7 +47,7 @@ class Translation {
                             Span<uint8_t> buffer_in,
                             Span<uint8_t> sense_buffer);
   // Returns a span containing translated NVMe commands.
-  Span<const nvme::GenericQueueEntryCmd> GetNvmeCmds();
+  Span<const NvmeCmdWrapper> GetNvmeWrappers();
   // Aborts a given pipeline sequence and cleans up memory
   void AbortPipeline();
 
@@ -59,7 +59,7 @@ class Translation {
   StatusCode pipeline_status_;
   Span<const uint8_t> scsi_cmd_;
   uint32_t nvme_cmd_count_;
-  nvme::GenericQueueEntryCmd nvme_cmds_[kMaxCommandRatio];
+  NvmeCmdWrapper nvme_wrappers_[kMaxCommandRatio];
   Allocation allocations_[kMaxCommandRatio];
 };
 

@@ -17,8 +17,6 @@
 
 #include <cstdio>
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {
@@ -32,8 +30,8 @@ namespace translator {
 // Fills out GenericQueueEntryCmd with appropriate Identify parameters and
 // allocates PRPs for responses
 StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
-                         nvme::GenericQueueEntryCmd& identify_ns,
-                         nvme::GenericQueueEntryCmd& identify_ctrl,
+                         NvmeCmdWrapper& identify_ns_wrapper,
+                         NvmeCmdWrapper& identify_ctrl_wrapper,
                          uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations);
 
@@ -45,7 +43,8 @@ StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
 // Postconditions:
 // buffer contains SCSI response based on scsi_cmd parameters
 StatusCode InquiryToScsi(Span<const uint8_t> scsi_cmd, Span<uint8_t> buffer,
-                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds);
+                         const nvme::GenericQueueEntryCmd& identify_ns,
+                         const nvme::GenericQueueEntryCmd& identify_ctrl);
 
 };  // namespace translator
 #endif

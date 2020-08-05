@@ -19,13 +19,15 @@
 namespace {
 
 TEST(SynchronizeCache10Test, ShouldBuildNvmeFlushCommand) {
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   uint32_t nsid = 0x12345;
 
-  translator::SynchronizeCache10ToNvme(nvme_cmd, nsid);
+  translator::SynchronizeCache10ToNvme(nvme_wrapper, nsid);
 
-  EXPECT_EQ(static_cast<uint8_t>(nvme::NvmOpcode::kFlush), nvme_cmd.opc);
-  EXPECT_EQ(nsid, nvme_cmd.nsid);
+  EXPECT_EQ(static_cast<uint8_t>(nvme::NvmOpcode::kFlush),
+            nvme_wrapper.cmd.opc);
+  EXPECT_EQ(nsid, nvme_wrapper.cmd.nsid);
+  EXPECT_EQ(false, nvme_wrapper.is_admin);
 }
 
 }  // namespace

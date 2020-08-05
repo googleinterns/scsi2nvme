@@ -60,31 +60,31 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   switch (opc) {
     case scsi::OpCode::kInquiry:
       pipeline_status_ =
-          InquiryToNvme(scsi_cmd_no_op, nvme_cmds_[0], nvme_cmds_[1],
+          InquiryToNvme(scsi_cmd_no_op, nvme_wrappers_[0], nvme_wrappers_[1],
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kModeSense6:
       pipeline_status_ =
-          ModeSense6ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
-                           nvme_cmd_count_, response.alloc_len);
+          ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
+                           nsid, nvme_cmd_count_, response.alloc_len);
       break;
     case scsi::OpCode::kModeSense10:
       pipeline_status_ =
-          ModeSense10ToNvme(scsi_cmd_no_op, nvme_cmds_, allocations_[0], nsid,
-                            nvme_cmd_count_, response.alloc_len);
+          ModeSense10ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
+                            nsid, nvme_cmd_count_, response.alloc_len);
     case scsi::OpCode::kMaintenanceIn:
       // ReportSupportedOpCodes is the only supported MaintenanceIn command
       pipeline_status_ = ValidateReportSupportedOpCodes(scsi_cmd_no_op);
       nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
-      pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
+      pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_wrappers_[0],
                                           allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ =
-          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], nsid,
+          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], nsid,
                                allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
@@ -93,34 +93,36 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       break;
     case scsi::OpCode::kRead6:
       pipeline_status_ =
-          Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+          Read6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                       kPageSize, kLbaSize);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead10:
       pipeline_status_ =
-          Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+          Read10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                        kPageSize, kLbaSize);
+      response.alloc_len = 4096;
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead12:
       pipeline_status_ =
-          Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+          Read12ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                        kPageSize, kLbaSize);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead16:
       pipeline_status_ =
-          Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
+          Read16ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                        kPageSize, kLbaSize);
+      nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kSync10:
-      SynchronizeCache10ToNvme(nvme_cmds_[0], nsid);
+      SynchronizeCache10ToNvme(nvme_wrappers_[0], nsid);
       pipeline_status_ = StatusCode::kSuccess;
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kVerify10:
-      pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_cmds_[0]);
+      pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_wrappers_[0]);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kTestUnitReady:
@@ -195,16 +197,17 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kInquiry:
       pipeline_status_ =
-          InquiryToScsi(scsi_cmd_no_op, buffer_in, GetNvmeCmds());
+          InquiryToScsi(scsi_cmd_no_op, buffer_in, nvme_wrappers_[0].cmd,
+                        nvme_wrappers_[1].cmd);
       break;
     case scsi::OpCode::kModeSense6:
       // TODO: Update this when the cpl_data interface is finalized
-      ModeSense6ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+      ModeSense6ToScsi(scsi_cmd_no_op, nvme_wrappers_[0].cmd, cpl_data[0].cdw0,
                        buffer_in);
       break;
     case scsi::OpCode::kModeSense10:
       // TODO: Update this when the cpl_data interface is finalized
-      ModeSense10ToScsi(scsi_cmd_no_op, nvme_cmds_[0], cpl_data[0].cdw0,
+      ModeSense10ToScsi(scsi_cmd_no_op, nvme_wrappers_[0].cmd, cpl_data[0].cdw0,
                         buffer_in);
       break;
     case scsi::OpCode::kMaintenanceIn:
@@ -212,10 +215,10 @@ CompleteResponse Translation::Complete(
       WriteReportSupportedOpCodesResult(buffer_in);
       break;
     case scsi::OpCode::kReportLuns:
-      pipeline_status_ = ReportLunsToScsi(nvme_cmds_[0], buffer_in);
+      pipeline_status_ = ReportLunsToScsi(nvme_wrappers_[0].cmd, buffer_in);
       break;
     case scsi::OpCode::kReadCapacity10:
-      pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_cmds_[0]);
+      pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_wrappers_[0].cmd);
       break;
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToScsi(scsi_cmd_no_op, buffer_in);
@@ -224,7 +227,7 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kRead10:
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
-      pipeline_status_ = ReadToScsi(buffer_in, nvme_cmds_[0], kLbaSize);
+      pipeline_status_ = ReadToScsi(buffer_in, nvme_wrappers_[0].cmd, kLbaSize);
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
@@ -245,8 +248,8 @@ CompleteResponse Translation::Complete(
   return resp;
 }
 
-Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
-  return Span(nvme_cmds_, nvme_cmd_count_);
+Span<const NvmeCmdWrapper> Translation::GetNvmeWrappers() {
+  return Span<NvmeCmdWrapper>(nvme_wrappers_, nvme_cmd_count_);
 }
 
 void Translation::AbortPipeline() {
@@ -268,4 +271,5 @@ void Translation::FlushMemory() {
     }
   }
 }
+
 };  // namespace translator

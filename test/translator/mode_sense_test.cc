@@ -23,7 +23,7 @@ namespace {
 // Tests mode sense to nvme translation
 
 TEST(TranslateModeSenseToNvme, ShouldReturnNoCommands) {
-  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds;
+  translator::Span<translator::NvmeCmdWrapper> nvme_wrappers;
   translator::Allocation allocation = {};
   uint32_t nsid = 1;
   uint32_t cmd_count = 0;
@@ -37,7 +37,7 @@ TEST(TranslateModeSenseToNvme, ShouldReturnNoCommands) {
                                      sizeof(ms6_cmd));
 
   translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_cmds, allocation, nsid, cmd_count, alloc_len);
+      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 0);
@@ -45,10 +45,8 @@ TEST(TranslateModeSenseToNvme, ShouldReturnNoCommands) {
 }
 
 TEST(TranslateModeSenseToNvme, ShouldReturnGetFeatures) {
-  nvme::GetFeaturesCmd nvme_cmd;
-  nvme::GenericQueueEntryCmd* nvme_ptr =
-      reinterpret_cast<nvme::GenericQueueEntryCmd*>(&nvme_cmd);
-  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds(nvme_ptr, 1);
+  translator::NvmeCmdWrapper nvme_wrapper;
+  translator::Span<translator::NvmeCmdWrapper> nvme_wrappers(&nvme_wrapper, 1);
   translator::Allocation allocation = {};
   uint32_t nsid = 32;
   uint32_t cmd_count = 0;
@@ -62,17 +60,21 @@ TEST(TranslateModeSenseToNvme, ShouldReturnGetFeatures) {
                                      sizeof(ms6_cmd));
 
   translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_cmds, allocation, nsid, cmd_count, alloc_len);
+      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 1);
   EXPECT_EQ(alloc_len, 25);
+  EXPECT_EQ(true, nvme_wrappers[0].is_admin);
+
+  nvme::GetFeaturesCmd* nvme_cmd_ptr =
+      reinterpret_cast<nvme::GetFeaturesCmd*>(&(nvme_wrapper.cmd));
 
   EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kGetFeatures),
-            nvme_cmd.opc);
-  EXPECT_EQ(nsid, nvme_cmd.nsid);
-  EXPECT_EQ(nvme::FeatureSelect::kDefault, nvme_cmd.sel);
-  EXPECT_EQ(nvme::FeatureType::kVolatileWriteCache, nvme_cmd.fid);
+            nvme_cmd_ptr->opc);
+  EXPECT_EQ(nsid, nvme_cmd_ptr->nsid);
+  EXPECT_EQ(nvme::FeatureSelect::kDefault, nvme_cmd_ptr->sel);
+  EXPECT_EQ(nvme::FeatureType::kVolatileWriteCache, nvme_cmd_ptr->fid);
 }
 
 TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
@@ -80,8 +82,7 @@ TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
-  nvme::GenericQueueEntryCmd nvme_cmds_buf[2];
-  translator::Span<nvme::GenericQueueEntryCmd> nvme_cmds = nvme_cmds_buf;
+  translator::NvmeCmdWrapper nvme_wrappers[2];
   translator::Allocation allocation = {};
   uint32_t nsid = 32;
   uint32_t cmd_count = 0;
@@ -94,7 +95,7 @@ TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
                                      sizeof(ms6_cmd));
 
   translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_cmds, allocation, nsid, cmd_count, alloc_len);
+      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 2);
@@ -104,13 +105,15 @@ TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
   EXPECT_EQ(1, allocation.data_page_count);
 
   EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
-            nvme_cmds_buf[0].opc);
-  EXPECT_EQ(nsid, nvme_cmds_buf[0].nsid);
-  EXPECT_EQ(2323, nvme_cmds_buf[0].dptr.prp.prp1);
-  EXPECT_EQ(0x0, nvme_cmds_buf[0].cdw[0]);
+            nvme_wrappers[0].cmd.opc);
+  EXPECT_EQ(nsid, nvme_wrappers[0].cmd.nsid);
+  EXPECT_EQ(2323, nvme_wrappers[0].cmd.dptr.prp.prp1);
+  EXPECT_EQ(0x0, nvme_wrappers[0].cmd.cdw[0]);
+  EXPECT_EQ(true, nvme_wrappers[0].is_admin);
 
   EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kGetFeatures),
-            nvme_cmds_buf[1].opc);
+            nvme_wrappers[1].cmd.opc);
+  EXPECT_EQ(true, nvme_wrappers[1].is_admin);
 }
 
 // Tests mode sense 6 to scsi translation

@@ -49,6 +49,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
   bool is_data_in = cmd->sc_data_direction == DMA_FROM_DEVICE;
   unsigned char data_buf[data_len];
+  printk("Data Length of SCSI Buffer: %u", data_len);
   
   scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
   printk("RECIEVED COMMAND");
