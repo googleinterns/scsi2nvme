@@ -17,10 +17,10 @@
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions
-void TranslateDescriptorSenseData(Span<uint8_t> buffer) {
+StatusCode TranslateDescriptorSenseData(Span<uint8_t> buffer) {
   scsi::DescriptorFormatSenseData result = {
       // Shall be set to 72h indicating current errors are returned.
-      .response_code = 0x72,
+      .response_code = scsi::SenseResponse::kCurrentDescriptorError,
 
       // Shall be set to NO ADDITIONAL SENSE INFORMATION (0) if device is in
       // power state 00h,
@@ -28,13 +28,17 @@ void TranslateDescriptorSenseData(Span<uint8_t> buffer) {
       .additional_sense_code =
           scsi::AdditionalSenseCode::kNoAdditionalSenseInfo,
   };
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Descriptor Format Sense Data to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
-void TranslateFixedSenseData(Span<uint8_t> buffer) {
+StatusCode TranslateFixedSenseData(Span<uint8_t> buffer) {
   scsi::FixedFormatSenseData result = {
       // Shall be set to 70h indicating current errors are returned.
-      .response_code = 0x70,
+      .response_code = scsi::SenseResponse::kCurrentFixedError,
 
       // Shall indicate the number of bytes of additional sense data.
       // There is no additional sense data.
@@ -53,7 +57,11 @@ void TranslateFixedSenseData(Span<uint8_t> buffer) {
       .additional_sense_code =
           scsi::AdditionalSenseCode::kNoAdditionalSenseInfo,
   };
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Fixed Format Sense Data to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
 }  // namespace
@@ -83,11 +91,10 @@ StatusCode RequestSenseToScsi(Span<const uint8_t> scsi_cmd,
   }
 
   if (request_sense_cmd.desc == 1) {
-    TranslateDescriptorSenseData(buffer);
+    return TranslateDescriptorSenseData(buffer);
   } else {
-    TranslateFixedSenseData(buffer);
+    return TranslateFixedSenseData(buffer);
   }
-  return StatusCode::kSuccess;
 }
 
 }  // namespace translator

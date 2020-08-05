@@ -25,7 +25,7 @@ namespace translator {
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
 
                                 NvmeCmdWrapper& wrapper, uint32_t nsid,
-                                Allocation& allocation) {
+                                Allocation& allocation, uint32_t& alloc_len) {
   scsi::ReadCapacity10Command cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed ReadCapacity10 Command - Error in reading to buffer");
@@ -36,6 +36,11 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
     DebugLog("Malformed ReadCapacity10 Command - Invalid NACA bit");
     return StatusCode::kInvalidInput;
   }
+
+  // READ CAPACITY (10) requests that the device
+  // server transfer 8 bytes of parameter data describing the capacity
+  // and medium format of the direct-access block device to the data-in buffer.
+  alloc_len = 8;
 
   // Allocate prp & assign to command
   auto read_status = allocation.SetPages(1, 0);
@@ -75,7 +80,10 @@ StatusCode ReadCapacity10ToScsi(
           identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Read Capacity 10 Data to buffer");
+    return StatusCode::kFailure;
+  }
   return StatusCode::kSuccess;
 }
 

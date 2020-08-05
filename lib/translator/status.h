@@ -15,16 +15,11 @@
 #ifndef LIB_TRANSLATOR_STATUS_H
 #define LIB_TRANSLATOR_STATUS_H
 
-#include "lib/scsi.h"
+#include "common.h"
+
+#include "third_party/spdk/nvme.h"
 
 namespace translator {
-
-struct ScsiStatus {
-  scsi::Status status;
-  scsi::SenseKey sense_key;
-  scsi::AdditionalSenseCode asc;
-  scsi::AdditionalSenseCodeQualifier ascq;
-};
 
 /**
  * Takes in a raw NVMe status code type and status code
@@ -35,7 +30,8 @@ struct ScsiStatus {
  * Translates to corresponding SCSI status, sense key, additional sense code,
  * and additional sense qualifier code
  */
-ScsiStatus StatusToScsi(uint8_t status_code_type, uint8_t status_code);
+ScsiStatus StatusToScsi(nvme::StatusCodeType status_code_type,
+                        uint8_t status_code);
 
 }  // namespace translator
 #endif

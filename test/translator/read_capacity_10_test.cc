@@ -67,26 +67,30 @@ class ReadCapacity10Test : public ::testing::Test {
 
 TEST_F(ReadCapacity10Test, ToNvmeSuccess) {
   translator::Allocation allocation{};
-  EXPECT_EQ(
-      translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1, allocation),
-      translator::StatusCode::kSuccess);
+  uint32_t alloc_len = 0;
+  EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1,
+                                             allocation, alloc_len),
+            translator::StatusCode::kSuccess);
   EXPECT_EQ(nvme_wrapper_.is_admin, true);
+  EXPECT_EQ(alloc_len, 8);
 }
 
 TEST_F(ReadCapacity10Test, ToNvmeBadBuffer) {
   uint8_t bad_buffer[1];
   translator::Allocation allocation{};
+  uint32_t alloc_len = 0;
   EXPECT_EQ(translator::ReadCapacity10ToNvme(bad_buffer, nvme_wrapper_, 1,
-                                             allocation),
+                                             allocation, alloc_len),
             translator::StatusCode::kInvalidInput);
 }
 
 TEST_F(ReadCapacity10Test, ToNvmeBadControlByteNaca) {
   read_capacity_10_cmd_.control_byte.naca = 1;
   translator::Allocation allocation{};
-  EXPECT_EQ(
-      translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1, allocation),
-      translator::StatusCode::kInvalidInput);
+  uint32_t alloc_len = 0;
+  EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1,
+                                             allocation, alloc_len),
+            translator::StatusCode::kInvalidInput);
 }
 
 TEST_F(ReadCapacity10Test, Success) {

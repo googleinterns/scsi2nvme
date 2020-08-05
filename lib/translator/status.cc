@@ -14,8 +14,6 @@
 
 #include "status.h"
 
-#include "common.h"
-
 namespace translator {
 
 namespace {  // anonymous namespace for helper functions
@@ -204,10 +202,7 @@ ScsiStatus StatusToScsi(nvme::MediaErrorStatusCode status_code) {
 
 }  // namespace
 
-ScsiStatus StatusToScsi(uint8_t status_code_type, uint8_t status_code) {
-  nvme::StatusCodeType type =
-      static_cast<nvme::StatusCodeType>(status_code_type);
-
+ScsiStatus StatusToScsi(nvme::StatusCodeType type, uint8_t status_code) {
   switch (type) {
     case nvme::StatusCodeType::kGeneric:
       return StatusToScsi(
@@ -223,7 +218,7 @@ ScsiStatus StatusToScsi(uint8_t status_code_type, uint8_t status_code) {
       DebugLog(
           "No SCSI translation for nvme status code type %#x"
           "and status code %#x",
-          status_code_type, status_code);
+          static_cast<uint8_t>(type), status_code);
       return kDefaultScsiStatus;
   }
 }
