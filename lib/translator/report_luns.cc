@@ -63,7 +63,7 @@ StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
   // Assign generic params to NVMe command
   identify_cmd = {};
   identify_cmd.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify);
-  identify_cmd.cdw[0] = 0x2;  // Set CNS to return namespace ID list
+  identify_cmd.cdw[0] = 0x10;  // Set CNS to return namespace ID list
 
   // Allocate prp & assign to command
   if (allocation.SetPages(1, 0) == StatusCode::kFailure)
@@ -90,14 +90,17 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     DebugLog("Namespace pointer was null");
     return StatusCode::kFailure;
   }
-  uint32_t lun_count = GetNsListLength(*ns_list);
+
+  // TODO: TEMP TESTING.
+  //uint32_t lun_count = GetNsListLength(*ns_list);
+  uint32_t lun_count = 1;
 
   // Define scsi response structure and determine attributes
   uint32_t allocated_list_bytes =
       buffer.size() - sizeof(scsi::ReportLunsParamData);
   scsi::ReportLunsParamData rlpd = {};
   rlpd.list_byte_length = htonl(lun_count * sizeof(scsi::LunAddress));
-  if (rlpd.list_byte_length > allocated_list_bytes) {
+  if (ntohl(rlpd.list_byte_length) > allocated_list_bytes) {
     uint32_t lbl = allocated_list_bytes -
                    (allocated_list_bytes % sizeof(scsi::LunAddress));
     rlpd.list_byte_length = htonl(lbl);
@@ -111,7 +114,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     DebugLog("Buffer not large enough for report luns response header");
     return StatusCode::kSuccess;
   }
-  uint32_t lun_offset = sizeof(scsi::ReportLunsParamData);
+  /*uint32_t lun_offset = sizeof(scsi::ReportLunsParamData);
   for (uint32_t i = 0; i < lun_count; ++i) {
     scsi::LunAddress lun = htonll(static_cast<scsi::LunAddress>(
         ltohl(ns_list->ids[i]) - 1));  // LUN must start @ 0 via SAM spec
@@ -121,7 +124,12 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
       DebugLog("Truncating report luns response at position %u", i);
       return StatusCode::kSuccess;
     }
-  }
+  }*/
+  // TODO: TEMP TESTING
+  scsi::LunAddress lun = htonll(0);
+  WriteValue(lun, buffer);
+
+  DebugLog("Lun List Length: %u", ntohl(rlpd.list_byte_length));
 
   return StatusCode::kSuccess;
 }

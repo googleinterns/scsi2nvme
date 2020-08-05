@@ -75,7 +75,7 @@ StatusCode ReadCapacity10ToScsi(
           htonl(ltohll(identify_ns->nsze) > 0xffffffff
                     ? 0xffffffff
                     : static_cast<uint32_t>(ltohll(identify_ns->nsze))),
-      .block_length = htoll(static_cast<uint32_t>(
+      .block_length = htonl(static_cast<uint32_t>(
           identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 

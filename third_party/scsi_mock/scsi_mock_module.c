@@ -86,12 +86,14 @@ static int bus_match(struct device* dev, struct device_driver* driver) {
   return 1;
 }
 
+int registered = 0;
+
 static int bus_driver_probe(struct device* dev) {
   int err;
   struct Scsi_Host* scsi_host;
 
   printk("REGISTERING NEW DEVICE!");
-  if (dev != &pseudo_adapter)
+  if (dev != &pseudo_adapter || registered > 0)
     return -1;
 
   scsi_host = scsi_host_alloc(&scsi_mock_template, 0);
@@ -107,6 +109,7 @@ static int bus_driver_probe(struct device* dev) {
   }
   dev_set_drvdata(dev, scsi_host);
   scsi_scan_host(scsi_host);
+  registered = 1;
   return 0;
 }
 
