@@ -27,7 +27,7 @@ cc_library(
     ":report_luns_lib",
     ":write_lib"
   ],
-  visibility = ["//visibility:public"]
+  visibility = ["//visibility:public"],
 )
 
 cc_library(

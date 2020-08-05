@@ -145,6 +145,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     default:
       DebugLog("Bad OpCode: %#x", static_cast<uint8_t>(opc));
       pipeline_status_ = StatusCode::kFailure;
+      break;
   }
 
   if (pipeline_status_ != StatusCode::kSuccess) {
