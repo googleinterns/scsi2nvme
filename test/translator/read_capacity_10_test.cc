@@ -95,19 +95,21 @@ TEST_F(ReadCapacity10Test, ToNvmeBadControlByteNaca) {
 TEST_F(ReadCapacity10Test, Success) {
   identify_ns_.nsze = 0;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 10;
+  uint32_t scsi_block_length = htonl(1 << 10);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
   ASSERT_TRUE(translator::ReadValue(buffer_, result));
   EXPECT_EQ(result.returned_logical_block_address, 0);
-  EXPECT_EQ(result.block_length, 0);
+  EXPECT_EQ(result.block_length, scsi_block_length);
 }
 
 TEST_F(ReadCapacity10Test, NszeNonzero) {
   identify_ns_.nsze = 1;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 10;
+  uint32_t scsi_block_length = htonl(1 << 10);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
@@ -115,59 +117,75 @@ TEST_F(ReadCapacity10Test, NszeNonzero) {
   EXPECT_EQ(
       result.returned_logical_block_address,
       htonl(static_cast<uint32_t>(translator::ltohll(identify_ns_.nsze))));
-  EXPECT_EQ(result.block_length,
-            identify_ns_.lbaf[identify_ns_.flbas.format].lbads);
+  EXPECT_EQ(result.block_length, scsi_block_length);
 }
 
 TEST_F(ReadCapacity10Test, NszeLarge) {
   identify_ns_.nsze = 0xffffffffffff;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 10;
+  uint32_t scsi_block_length = htonl(1 << 10);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
   ASSERT_TRUE(translator::ReadValue(buffer_, result));
   EXPECT_EQ(result.returned_logical_block_address, 0xffffffff);
-  EXPECT_EQ(result.block_length,
-            identify_ns_.lbaf[identify_ns_.flbas.format].lbads);
+  EXPECT_EQ(result.block_length, scsi_block_length);
 }
 
 TEST_F(ReadCapacity10Test, NszeLimit) {
   identify_ns_.nsze = 0xffffffff;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 10;
+  uint32_t scsi_block_length = htonl(1 << 10);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
   ASSERT_TRUE(translator::ReadValue(buffer_, result));
   EXPECT_EQ(result.returned_logical_block_address, 0xffffffff);
-  EXPECT_EQ(result.block_length,
-            identify_ns_.lbaf[identify_ns_.flbas.format].lbads);
+  EXPECT_EQ(result.block_length, scsi_block_length);
 }
 
 TEST_F(ReadCapacity10Test, BlocklengthNonzeo) {
   identify_ns_.nsze = 0;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 1;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 10;
+  uint32_t scsi_block_length = htonl(1 << 10);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
   ASSERT_TRUE(translator::ReadValue(buffer_, result));
   EXPECT_EQ(result.returned_logical_block_address, 0);
-  EXPECT_EQ(result.block_length, translator::htoll(static_cast<uint32_t>(1)));
+  EXPECT_EQ(result.block_length, scsi_block_length);
+}
+
+TEST_F(ReadCapacity10Test, BlocklengthTooSmall) {
+  identify_ns_.nsze = 0;
+  identify_ns_.flbas.format = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 8;
+  EXPECT_EQ(translator::StatusCode::kFailure,
+            translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
+}
+
+TEST_F(ReadCapacity10Test, BlocklengthTooBig) {
+  identify_ns_.nsze = 0;
+  identify_ns_.flbas.format = 0;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 32;
+  EXPECT_EQ(translator::StatusCode::kFailure,
+            translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
 }
 
 TEST_F(ReadCapacity10Test, BlocklengthLimit) {
   identify_ns_.nsze = 0;
   identify_ns_.flbas.format = 0;
-  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 0xff;
+  identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 31;
+  uint32_t scsi_block_length = htonl(1 << 31);
   EXPECT_EQ(translator::StatusCode::kSuccess,
             translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
   scsi::ReadCapacity10Data result = {};
   ASSERT_TRUE(translator::ReadValue(buffer_, result));
   EXPECT_EQ(result.returned_logical_block_address, 0);
-  EXPECT_EQ(result.block_length,
-            translator::htoll(static_cast<uint32_t>(0xff)));
+  EXPECT_EQ(result.block_length, scsi_block_length);
 }
 
 TEST_F(ReadCapacity10Test, FailsOnNullptr) {
