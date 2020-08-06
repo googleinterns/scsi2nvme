@@ -46,7 +46,6 @@ StatusCode BuildPRInfo(uint8_t wrprotect, uint8_t& pr_info) {
       // additional sense code.
       DebugLog("Invalid WriteProtect Code for PRInfo.");
       return StatusCode::kFailure;
-      break;
   }
 
   pr_info = prchk | (pract << 3);
