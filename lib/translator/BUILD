@@ -134,7 +134,6 @@ cc_library(
   deps = [
     ":common",
     "//third_party/spdk:nvme_lib",
-    "@com_google_absl//absl/base",
   ],
   visibility = ["//visibility:public"],
 )

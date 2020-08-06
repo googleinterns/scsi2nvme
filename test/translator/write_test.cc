@@ -13,9 +13,9 @@
 // limitations under the License.
 
 #include "lib/translator/write.h"
+
 #include <byteswap.h>
 #include <netinet/in.h>
-#include "lib/translator/common.h"
 
 #include "gtest/gtest.h"
 

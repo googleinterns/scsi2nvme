@@ -18,7 +18,6 @@
 #include "third_party/spdk/nvme.h"
 
 #include "common.h"
-#include "lib/scsi.h"
 
 namespace translator {
 

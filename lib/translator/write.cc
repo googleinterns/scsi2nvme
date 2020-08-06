@@ -1,7 +1,5 @@
 #include "write.h"
 
-#include "common.h"
-
 #ifdef __KERNEL__
 #include <linux/byteorder/generic.h>
 #else
