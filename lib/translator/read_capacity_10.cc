@@ -23,9 +23,9 @@
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
-                                nvme::GenericQueueEntryCmd& identify_ns,
-                                uint32_t nsid, Allocation& allocation,
-                                uint32_t& alloc_len) {
+
+                                NvmeCmdWrapper& wrapper, uint32_t nsid,
+                                Allocation& allocation, uint32_t& alloc_len) {
   scsi::ReadCapacity10Command cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed ReadCapacity10 Command - Error in reading to buffer");
@@ -48,13 +48,14 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
     return read_status;
   }
 
-  identify_ns = nvme::GenericQueueEntryCmd{
+  wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = nsid};
-  identify_ns.dptr.prp.prp1 = allocation.data_addr;
-  identify_ns.cdw[0] =
+  wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
+  wrapper.cmd.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
 
+  wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
 
@@ -75,11 +76,24 @@ StatusCode ReadCapacity10ToScsi(
           htonl(ltohll(identify_ns->nsze) > 0xffffffff
                     ? 0xffffffff
                     : static_cast<uint32_t>(ltohll(identify_ns->nsze))),
-      .block_length = htoll(static_cast<uint32_t>(
-          identify_ns->lbaf[identify_ns->flbas.format].lbads)),
   };
 
-  WriteValue(result, buffer);
+  uint8_t lbads = identify_ns->lbaf[identify_ns->flbas.format].lbads;
+  if (lbads < 9) {
+    DebugLog("lbads value smaller than 9 is not supported");
+    return StatusCode::kFailure;
+  } else if (lbads > 31) {
+    DebugLog(
+        "lbads exceeds type limit of "
+        "scsi::ReadCapacity10Data.block_length");
+    return StatusCode::kFailure;
+  }
+  result.block_length = htonl(static_cast<uint32_t>(1 << lbads));
+
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Read Capacity 10 Data to buffer");
+    return StatusCode::kFailure;
+  }
   return StatusCode::kSuccess;
 }
 

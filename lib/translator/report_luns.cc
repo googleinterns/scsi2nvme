@@ -41,7 +41,7 @@ uint32_t GetNsListLength(const nvme::IdentifyNamespaceList& ns_list) {
 // Section 4.5
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
-                            nvme::GenericQueueEntryCmd& identify_cmd,
+                            NvmeCmdWrapper& nvme_wrapper,
                             Allocation& allocation, uint32_t& alloc_len) {
   // Cast scsi_cmd to ReportLunsCommand
   scsi::ReportLunsCommand rl_cmd;
@@ -60,14 +60,16 @@ StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
   alloc_len = ntohl(rl_cmd.alloc_length);
 
   // Assign generic params to NVMe command
-  identify_cmd = {};
-  identify_cmd.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify);
-  identify_cmd.cdw[0] = 0x2;  // Set CNS to return namespace ID list
+  nvme_wrapper.cmd = {};
+  nvme_wrapper.cmd.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify);
+  nvme_wrapper.cmd.cdw[0] = 0x2;  // Set CNS to return namespace ID list
 
   // Allocate prp & assign to command
   if (allocation.SetPages(1, 0) == StatusCode::kFailure)
     return StatusCode::kFailure;
-  identify_cmd.dptr.prp.prp1 = allocation.data_addr;
+  nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
+
+  nvme_wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
 

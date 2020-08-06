@@ -60,7 +60,7 @@ uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
 }
 
 // Converts transfer_length in units of logical blocks to units of pages
-uint32_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
+uint16_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
                                 uint32_t lba_size) {
   uint64_t transfer_length_bytes = transfer_length * lba_size;
   return transfer_length_bytes / page_size +
@@ -72,8 +72,10 @@ uint32_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
 // lacking fields common to other Read commands
 StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation, uint32_t nsid,
-                      uint32_t transfer_length_pages) {
-  StatusCode status = allocation.SetPages(transfer_length_pages, 0);
+                      uint16_t transfer_length, uint32_t page_size,
+                      uint32_t lba_size, uint32_t& alloc_len) {
+  StatusCode status = allocation.SetPages(
+      GetTransferLengthPages(transfer_length, page_size, lba_size), 0);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -85,13 +87,16 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
 
   nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
 
+  alloc_len = transfer_length * lba_size;
+
   return StatusCode::kSuccess;
 }
 
 // Translates fields common to Read10, Read12, Read16
 StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
                 nvme::GenericQueueEntryCmd& nvme_cmd, Allocation& allocation,
-                uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
+                uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                uint32_t& alloc_len) {
   if (transfer_length == 0) {
     DebugLog("NVMe read command does not support transfering zero blocks");
     return StatusCode::kNoTranslation;
@@ -105,9 +110,8 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
   }
   transfer_length &= 0xffff;  // truncate to 16 bits
 
-  StatusCode status =
-      LegacyRead(nvme_cmd, allocation, nsid,
-                 GetTransferLengthPages(transfer_length, page_size, lba_size));
+  StatusCode status = LegacyRead(nvme_cmd, allocation, nsid, transfer_length,
+                                 page_size, lba_size, alloc_len);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -126,9 +130,9 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
 }  // namespace
 
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid,
-                       uint32_t page_size, uint32_t lba_size) {
+                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                       uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                       uint32_t& alloc_len) {
   scsi::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read6 command");
@@ -141,28 +145,30 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
           ? 256
           : static_cast<uint16_t>(read_cmd.transfer_length);
 
-  StatusCode status = LegacyRead(
-      nvme_cmd, allocation, nsid,
-      GetTransferLengthPages(updated_transfer_length, page_size, lba_size));
+  StatusCode status =
+      LegacyRead(nvme_wrapper.cmd, allocation, nsid, updated_transfer_length,
+                 page_size, lba_size, alloc_len);
   if (status != StatusCode::kSuccess) {
     return status;
   }
   // cdw10 Starting lba bits 31:00
   uint32_t host_endian_lba = (read_cmd.logical_block_address_1 << 16) +
                              ntohs(read_cmd.logical_block_address_2);
-  nvme_cmd.cdw[0] = htoll(host_endian_lba);
+  nvme_wrapper.cmd.cdw[0] = htoll(host_endian_lba);
 
   // nlb is a zero-based field
   // cdw12 nlb bits 15:00
-  nvme_cmd.cdw[2] = htoll(static_cast<uint32_t>(updated_transfer_length) - 1);
+  nvme_wrapper.cmd.cdw[2] =
+      htoll(static_cast<uint32_t>(updated_transfer_length) - 1);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                        uint32_t& alloc_len) {
   scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
@@ -172,21 +178,22 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohs(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
 
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
-  nvme_cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                        uint32_t& alloc_len) {
   scsi::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read12 command");
@@ -196,20 +203,21 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
-  nvme_cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size) {
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                        uint32_t& alloc_len) {
   scsi::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read16 command");
@@ -219,15 +227,16 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address to network endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_cmd, allocation, nsid, page_size, lba_size);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
   if (status != StatusCode::kSuccess) {
     return status;
   }
 
   uint64_t host_endian_lba = ntohll(read_cmd.logical_block_address);
-  nvme_cmd.cdw[0] = htoll(static_cast<uint32_t>(host_endian_lba));
-  nvme_cmd.cdw[1] = htoll(static_cast<uint32_t>(host_endian_lba >> 32));
+  nvme_wrapper.cmd.cdw[0] = htoll(static_cast<uint32_t>(host_endian_lba));
+  nvme_wrapper.cmd.cdw[1] = htoll(static_cast<uint32_t>(host_endian_lba >> 32));
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 

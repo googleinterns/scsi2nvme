@@ -25,7 +25,8 @@ namespace translator {
 
 // Validates command to ensure it is a well-formatted ReportSupportedOpCodes cmd
 // and that the requested OpCode is scsi::OpCode::WriteSame16
-StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd);
+StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd,
+                                          uint32_t& alloc_len);
 
 // Writes to the buffer that we do not support the command
 void WriteReportSupportedOpCodesResult(Span<uint8_t> buffer);

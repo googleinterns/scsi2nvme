@@ -25,9 +25,84 @@ namespace translator {
 
 // command specific helpers
 namespace {
-void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
-                              const nvme::IdentifyNamespace& identify_ns,
-                              Span<uint8_t> buffer) {
+
+constexpr uint8_t kIdentifierLengthNguid = 0x10;
+constexpr uint8_t kIdentifierLengthEui64 = 0x8;
+
+// Builds the IdentificationDescriptor according to 6.1.4.5 of the translation
+// spec:
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+// This only builds the constant part of the Identification Descriptor. The
+// caller is responsible for building the identifier.
+StatusCode BuildIdentificationDescriptor(
+    const nvme::IdentifyNamespace& identify_namespace_data,
+    Span<uint8_t> buffer, uint8_t& identifier_length) {
+  // check if nonzero
+  bool nguid_nz =
+      identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
+  bool eui64_nz = identify_namespace_data.eui64;
+
+  // Writes the value of the identification at the end of the buffer. This data
+  // comes after the DeviceIdentificationVPD and IdentificationDescriptor
+  // struct. Hence, the data is written at index +
+  // sizeof(IdentificationDescriptor), where index is the size of the
+  // DeviceIdentificationVPD struct.
+  if (nguid_nz) {
+    // Shall be set to 08h if the EUI-64 field is populated from the NVMe EUI64
+    // field.
+    identifier_length = kIdentifierLengthNguid;
+    if (!WriteValue(identify_namespace_data.nguid,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+  } else if (eui64_nz) {
+    // Shall be set to 10h if the EUI-64 field is populated from the NVMe NGUID
+    // field.
+    identifier_length = kIdentifierLengthEui64;
+    if (!WriteValue(identify_namespace_data.eui64,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+
+  } else {
+    // function not supported as both NGUID and EUI64 fields are zero
+    DebugLog("Both NGUID and EUI-64 fields are zero in IdentityNamespaceData");
+    return StatusCode::kFailure;
+  }
+
+  scsi::IdentificationDescriptor identification_descriptor = {
+
+      // Shall be set to 1h indicating associated fields are in binary format.
+      .code_set = scsi::CodeSet::kBinary,
+
+      // Shall be set to 0h. PIV field shall indicate this field is reserved as
+      // no
+      // specific protocol to be identified. This field will be ignored!
+      .protocol_identifier = scsi::ProtocolIdentifier::kFibreChannel,
+
+      // Shall be set to 2h indicating EUI-64 based identifier.
+      .identifier_type = scsi::IdentifierType::kEUI64,
+
+      // Shall be set to 00b indicating DESIGNATOR field is associated with
+      // logical unit.
+      .association = scsi::Association::kPhysicalDevice,
+
+      // Shall be set to 0b indicating PROTOCOL IDENTIFIER field is reserved.
+      .protocol_identifier_valid = 0,
+
+      .identifier_length = identifier_length};
+  if (!WriteValue(identification_descriptor, buffer)) {
+    DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+    return StatusCode::kFailure;
+  };
+  return StatusCode::kSuccess;
+}
+
+StatusCode TranslateStandardInquiry(
+    const nvme::IdentifyControllerData& identify_ctrl,
+    const nvme::IdentifyNamespace& identify_ns, Span<uint8_t> buffer) {
   scsi::InquiryData result = {
       .version = scsi::Version::kSpc4,
       .response_data_format = scsi::ResponseDataFormat::kCompliant,
@@ -61,10 +136,15 @@ void TranslateStandardInquiry(const nvme::IdentifyControllerData& identify_ctrl,
       if (idx-- == 0) break;
     }
   }
-  WriteValue(result, buffer);
+  // SCSI specs only require first 36 bytes to be written to the buffer
+  if (!WriteValue(result, buffer, 36)) {
+    DebugLog("Error writing 36 bytes of Inquiry Data to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
-void TranslateSupportedVpdPages(Span<uint8_t> buffer) {
+StatusCode TranslateSupportedVpdPages(Span<uint8_t> buffer) {
   scsi::PageCode supported_page_list[7] = {
       scsi::PageCode::kSupportedVpd,
       scsi::PageCode::kUnitSerialNumber,
@@ -78,11 +158,15 @@ void TranslateSupportedVpdPages(Span<uint8_t> buffer) {
       .page_length = sizeof(supported_page_list),
   };
 
-  WriteValue(result, buffer);
-  WriteValue(supported_page_list, buffer.subspan(sizeof(result)));
+  if (!WriteValue(result, buffer) ||
+      !WriteValue(supported_page_list, buffer.subspan(sizeof(result)))) {
+    DebugLog("Error writing Supported VPD pages or Page List to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
-void TranslateUnitSerialNumberVpd(
+StatusCode TranslateUnitSerialNumberVpd(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, uint32_t nsid,
     Span<uint8_t> buffer) {
@@ -154,12 +238,80 @@ void TranslateUnitSerialNumberVpd(
     product_serial_number[kV1SerialLen - 1] = '.';
   }
 
-  WriteValue(result, buffer);
-  WriteValue(product_serial_number, buffer.subspan(sizeof(result)));
+  if (!WriteValue(result, buffer) ||
+      !WriteValue(product_serial_number, buffer.subspan(sizeof(result)))) {
+    DebugLog(
+        "Error writing Unit Serial Number or Product Serial Number to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
-void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
-                             Span<uint8_t> buffer) {
+// Refer to section 6.1.2 on
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+StatusCode TranslateDeviceIdentificationVpd(
+    const nvme::IdentifyNamespace& identify_namespace, Span<uint8_t> buffer) {
+  uint8_t identification_descriptor_length = 0;
+  StatusCode status = translator::BuildIdentificationDescriptor(
+      identify_namespace, buffer.subspan(sizeof(scsi::DeviceIdentificationVpd)),
+      identification_descriptor_length);
+
+  if (status != StatusCode::kSuccess) {
+    return status;
+  }
+
+  uint8_t page_length =
+      sizeof(scsi::DeviceIdentificationVpd) + identification_descriptor_length;
+
+  scsi::DeviceIdentificationVpd result = {
+
+      // Shall be set to 00h indicating direct access block device
+      .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
+
+      // Shall be set to 000b indicating device for PERIPHERAL DEVICE TYPE
+      // connected to logical unit
+      .peripheral_qualifier =
+          scsi::PeripheralQualifier::kPeripheralDeviceConnected,
+
+      // Shall be set to 83h indicating Device Identification VPD Page, refer
+      // to 6.1.4
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to the size of the remaining bytes of Device
+      // Identification
+      // VPD Page.
+      .page_length = page_length,
+  };
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error! Cannot write DeviceIdentificationVPD to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return status;
+}
+
+StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
+  scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
+      // Shall be set to B1h indicating Device Identification VPD Page
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to 3Ch.
+      .page_length = scsi::PageLength::kBlockDeviceCharacteristicsVpd,
+
+      // Shall be set to 0001h indicating a non-rotating device(SSD)
+      .medium_rotation_rate = scsi::MediumRotationRate::kNonRotatingMedium,
+
+      // Shall be set to 0h indicating form factor not reported
+      .nominal_form_factor = scsi::NominalFormFactor::kNotReported};
+
+  if (!WriteValue(block_device_characteristics_vpd, buffer)) {
+    DebugLog("Couldn't write BlockDeviceCharacteristicsVpd to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
+}
+
+StatusCode TranslateBlockLimitsVpd(
+    const nvme::IdentifyControllerData& identify_ctrl, Span<uint8_t> buffer) {
   // The value is in units of the minimum memory
   // page size (CAP.MPSMIN) and is reported as a power of two (2^n).
   // A value of 0h indicates that there is no maximum data transfer size
@@ -216,10 +368,14 @@ void TranslateBlockLimitsVpd(const nvme::IdentifyControllerData& identify_ctrl,
       .max_unmap_block_descriptor_count =
           htonl(identify_ctrl.oncs.dsm ? 0x0100 : 0)};
 
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Block Limits VPD to the buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
-void TranslateLogicalBlockProvisioningVpd(
+StatusCode TranslateLogicalBlockProvisioningVpd(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, Span<uint8_t> buffer) {
   bool ad = identify_ctrl.oncs.dsm;
@@ -288,14 +444,18 @@ void TranslateLogicalBlockProvisioningVpd(
     result.lbpu = 0;
   }
 
-  WriteValue(result, buffer);
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error writing Logical Block Provisioning VPD to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
 }
 
 }  // namespace
 
 StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
-                         nvme::GenericQueueEntryCmd& identify_ns,
-                         nvme::GenericQueueEntryCmd& identify_ctrl,
+                         NvmeCmdWrapper& identify_ns_wrapper,
+                         NvmeCmdWrapper& identify_ctrl_wrapper,
                          uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations) {
   scsi::InquiryCommand cmd = {};
@@ -311,10 +471,10 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc1;
   }
 
-  identify_ns = nvme::GenericQueueEntryCmd{
+  identify_ns_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = nsid};
-  identify_ns.dptr.prp.prp1 = allocations[0].data_addr;
-  identify_ns.cdw[0] =
+  identify_ns_wrapper.cmd.dptr.prp.prp1 = allocations[0].data_addr;
+  identify_ns_wrapper.cmd.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
 
@@ -323,19 +483,23 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc2;
   }
 
-  identify_ctrl = nvme::GenericQueueEntryCmd{
+  identify_ctrl_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
   };
-  identify_ctrl.dptr.prp.prp1 = allocations[1].data_addr;
-  identify_ctrl.cdw[0] =
+  identify_ctrl_wrapper.cmd.dptr.prp.prp1 = allocations[1].data_addr;
+  identify_ctrl_wrapper.cmd.cdw[0] =
       htoll(0x1);  // Controller or Namespace Structure (CNS): This field
                    // specifies the information to be returned to the host.
+
+  identify_ns_wrapper.is_admin = true;
+  identify_ctrl_wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
 
 // Main logic engine for the Inquiry command
 StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
-                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds) {
+                         const nvme::GenericQueueEntryCmd& identify_ns,
+                         const nvme::GenericQueueEntryCmd& identify_ctrl) {
   scsi::InquiryCommand inquiry_cmd = {};
 
   if (!ReadValue(raw_scsi, inquiry_cmd)) {
@@ -343,46 +507,42 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     return StatusCode::kInvalidInput;
   };
 
-  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[0].dptr.prp.prp1);
-  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
-
-  uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
+  uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(identify_ns.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  const nvme::IdentifyControllerData* identify_ctrl =
-      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
-  if (identify_ctrl == nullptr) {
-    DebugLog("Identify controller structure failed to cast");
-    return StatusCode::kFailure;
-  }
+  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(identify_ctrl.dptr.prp.prp1);
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
-  const nvme::IdentifyNamespace* identify_ns =
+  const nvme::IdentifyNamespace* identify_ns_data =
       SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
-  if (identify_ns == nullptr) {
+  if (identify_ns_data == nullptr) {
     DebugLog("Identify namespace structure failed to cast");
     return StatusCode::kFailure;
   }
 
+  const nvme::IdentifyControllerData* identify_ctrl_data =
+      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
+  if (identify_ctrl_data == nullptr) {
+    DebugLog("Identify controller structure failed to cast");
+    return StatusCode::kFailure;
+  }
+
   // nsid should come from Namespace
-  uint32_t nsid = nvme_cmds[1].nsid;
+  uint32_t nsid = identify_ns.nsid;
 
   if (inquiry_cmd.evpd) {
     switch (inquiry_cmd.page_code) {
       case scsi::PageCode::kSupportedVpd:
         // Return Supported Vpd Pages data page to application client, refer
         // to 6.1.2.
-        TranslateSupportedVpdPages(buffer);
-        break;
+        return TranslateSupportedVpdPages(buffer);
       case scsi::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        TranslateUnitSerialNumberVpd(*identify_ctrl, *identify_ns, nsid,
-                                     buffer);
-        break;
+        return TranslateUnitSerialNumberVpd(*identify_ctrl_data,
+                                            *identify_ns_data, nsid, buffer);
       case scsi::PageCode::kDeviceIdentification:
-        // TODO: Return Device Identification data page toapplication client,
-        // refer to 6.1.4
-        break;
+        return TranslateDeviceIdentificationVpd(*identify_ns_data, buffer);
       case scsi::PageCode::kExtended:
         // TODO: May optionally be supported by returning Extended INQUIRY data
         // page toapplication client, refer to 6.1.5.
@@ -390,16 +550,14 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
-        TranslateBlockLimitsVpd(*identify_ctrl, buffer);
-        break;
+        return TranslateBlockLimitsVpd(*identify_ctrl_data, buffer);
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
-        // TODO: Return Block Device Characteristics Vpd Page to application
+        // Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
-        break;
+        return TranslateBlockDeviceCharacteristicsVpd(buffer);
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
-        TranslateLogicalBlockProvisioningVpd(*identify_ctrl, *identify_ns,
-                                             buffer);
-        break;
+        return TranslateLogicalBlockProvisioningVpd(*identify_ctrl_data,
+                                                    *identify_ns_data, buffer);
       // May be supported by returning Logical Block Provisioning VPD Page to
       // application client, refer to 6.1.8.
       default:
@@ -410,7 +568,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    TranslateStandardInquiry(*identify_ctrl, *identify_ns, buffer);
+    return TranslateStandardInquiry(*identify_ctrl_data, *identify_ns_data,
+                                    buffer);
   }
   return StatusCode::kSuccess;
 }

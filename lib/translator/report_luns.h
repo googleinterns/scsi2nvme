@@ -17,12 +17,10 @@
 
 #include "common.h"
 
-#include "third_party/spdk/nvme.h"
-
 namespace translator {
 
 StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
-                            nvme::GenericQueueEntryCmd& nvme_cmd,
+                            NvmeCmdWrapper& nvme_wrapper,
                             Allocation& allocation, uint32_t& alloc_len);
 
 StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,

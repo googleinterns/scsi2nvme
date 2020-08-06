@@ -18,6 +18,8 @@
 #include <cstring>
 #include <type_traits>
 
+#include "third_party/spdk/nvme.h"
+
 #include "lib/scsi.h"
 
 namespace translator {
@@ -48,6 +50,11 @@ struct Allocation {
   // Sets [m]data_page_count, calls AllocPages([m]data_page_count),
   // and returns StatusCode based on whether AllocPages was successful
   StatusCode SetPages(uint16_t data_page_count, uint16_t mdata_page_count);
+};
+
+struct NvmeCmdWrapper {
+  nvme::GenericQueueEntryCmd cmd;
+  bool is_admin;
 };
 
 void DebugLog(const char* format, ...);
@@ -130,11 +137,16 @@ bool ReadValue(Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out) {
+bool WriteValue(const T& data, Span<uint8_t> out, size_t num_bytes) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
-  if (sizeof(T) > out.size()) return false;
-  memcpy(out.data(), &data, sizeof(T));
+  if (num_bytes > out.size()) return false;
+  memcpy(out.data(), &data, num_bytes);
   return true;
+}
+
+template <typename T>
+bool WriteValue(const T& data, Span<uint8_t> out) {
+  return WriteValue(data, out, sizeof(T));
 }
 
 // Scsi status bundle

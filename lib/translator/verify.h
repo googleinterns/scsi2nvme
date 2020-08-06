@@ -16,13 +16,11 @@
 #define LIB_TRANSLATOR_verify_H
 
 #include "common.h"
-#include "lib/scsi.h"
-#include "third_party/spdk/nvme.h"
 
 namespace translator {
 
 StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& verify_cmd);
+                        NvmeCmdWrapper& nvme_wrapper);
 
 }  // namespace translator
 #endif
