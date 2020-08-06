@@ -54,7 +54,6 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
     if (nvme_wrappers[i].is_admin) {
       submit_admin_command(&tmp_cmd, buffer, bufflen, &tmp_cpl, 60);
     } else {
-      Print("Submitting IO Command");
       submit_io_command(&tmp_cmd, buffer, bufflen, &tmp_cpl, 60);
     }
     memcpy(&cpl_buf[i], &tmp_cpl, sizeof(cpl_buf[i]));

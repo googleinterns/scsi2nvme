@@ -100,8 +100,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kRead10:
       pipeline_status_ =
           Read10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize);
-      response.alloc_len = 4096;
+                       kPageSize, kLbaSize, response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead12:
@@ -254,8 +253,8 @@ Span<const NvmeCmdWrapper> Translation::GetNvmeWrappers() {
 
 void Translation::AbortPipeline() {
   pipeline_status_ = StatusCode::kUninitialized;
-  nvme_cmd_count_ = 0;
   FlushMemory();
+  nvme_cmd_count_ = 0;
 }
 
 void Translation::FlushMemory() {

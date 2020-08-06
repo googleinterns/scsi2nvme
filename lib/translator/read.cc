@@ -120,6 +120,8 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
 
   nvme_cmd.cdw[2] = htoll(BuildCdw12(transfer_length, prinfo, fua));
 
+  DebugLog("Reading %u blocks", (nvme_cmd.cdw[2] & 0xffff) + 1);
+
   return StatusCode::kSuccess;
 }
 
@@ -162,7 +164,8 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                        uint32_t nsid, uint32_t page_size, uint32_t lba_size) {
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+			uint32_t& alloc_len) {
   scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
@@ -179,6 +182,10 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+
+  DebugLog("Reading LBA %u", nvme_wrapper.cmd.cdw[0]);
+
+  alloc_len = ntohs(read_cmd.transfer_length) * page_size;
 
   nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;

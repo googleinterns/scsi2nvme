@@ -48,20 +48,28 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   unsigned char* sense_buf = cmd->sense_buffer;
   unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
   bool is_data_in = cmd->sc_data_direction == DMA_FROM_DEVICE;
-  unsigned char data_buf[data_len];
-  printk("Data Length of SCSI Buffer: %u", data_len);
-  
-  scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
+  unsigned char* data_buf;
   printk("RECIEVED COMMAND");
+  if (data_len > 0) {
+    data_buf = kzalloc(data_len, GFP_ATOMIC | GFP_KERNEL);
+    if (data_buf == 0) {
+      printk("OUT OF MEMORY!!");
+      return respond(cmd, 23);
+    }
+    printk("Data Length of SCSI Buffer: %u", data_len);
+    scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
+  }
   struct ScsiToNvmeResponse resp = ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, 
     sense_len, data_buf, data_len, is_data_in);
   // Copy response to SGL buffer
-  if (is_data_in) {
+  if (is_data_in && data_len > 0) {
     printk("ALLOC_LEN %u", resp.alloc_len);
     struct scsi_data_buffer* sdb = &cmd->sdb;
     int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - sdb_len);
   }
+  if (data_len > 0)
+    kfree(data_buf);
   return respond(cmd, resp.return_code);
 }
 

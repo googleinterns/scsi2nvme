@@ -20,9 +20,15 @@ void Print(const char* msg) {
 }
 
 unsigned long long AllocPages(unsigned short count) {
-  return (unsigned long long) kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_KERNEL);
+  if (count == 0)
+    return 0;
+  void* addr = kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_ATOMIC | GFP_KERNEL);
+  if (addr == 0)
+    printk("NULLPTR ALLOC PAGES!!!!");
+  return (unsigned long long) addr;
 }
 
 void DeallocPages(unsigned long long addr, unsigned short count) {
-  kfree((void*)addr);
+  if (addr != 0)
+    kfree((void*)addr);
 }
