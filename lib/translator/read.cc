@@ -62,9 +62,10 @@ uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
 // Converts transfer_length in units of logical blocks to units of pages
 uint32_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
                                 uint32_t lba_size) {
-  uint64_t transfer_length_bytes = transfer_length * lba_size;
+  /*uint64_t transfer_length_bytes = transfer_length * lba_size;
   return transfer_length_bytes / page_size +
-         ((transfer_length_bytes % page_size == 0) ? 0 : 1);
+         ((transfer_length_bytes % page_size == 0) ? 0 : 1);*/
+  return transfer_length;
 }
 
 // Translates fields common to all Read commands
@@ -182,10 +183,11 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
-
+  
   DebugLog("Reading LBA %u", nvme_wrapper.cmd.cdw[0]);
 
-  alloc_len = ntohs(read_cmd.transfer_length) * page_size;
+  //alloc_len = ntohs(read_cmd.transfer_length) * lba_size;
+  alloc_len = page_size * GetTransferLengthPages(ntohs(read_cmd.transfer_length), page_size, lba_size);
 
   nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
@@ -247,13 +249,14 @@ StatusCode ReadToScsi(Span<uint8_t> buffer,
   // cdw 12 nlb bits 15:00 (zero based field)
   uint16_t transfer_length = static_cast<uint16_t>(ltohl(nvme_cmd.cdw[2]) + 1);
 
-  uint32_t bytes_transferred = transfer_length * lba_size;
+  uint32_t bytes_transferred = transfer_length * 4096;
 
   if (buffer.size() < bytes_transferred) {
     DebugLog("Insufficient buffer size");
     return StatusCode::kFailure;
   }
-
+  
+  DebugLog("Copying %u bytes to the read buffer", bytes_transferred);
   memcpy(buffer.data(), reinterpret_cast<uint8_t*>(data_ptr),
          bytes_transferred);
   return StatusCode::kSuccess;

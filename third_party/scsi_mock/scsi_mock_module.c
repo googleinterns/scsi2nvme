@@ -52,12 +52,13 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   printk("RECIEVED COMMAND");
   if (data_len > 0) {
     data_buf = kzalloc(data_len, GFP_ATOMIC | GFP_KERNEL);
-    if (data_buf == 0) {
+    if (data_buf == NULL) {
       printk("OUT OF MEMORY!!");
       return respond(cmd, 23);
     }
     printk("Data Length of SCSI Buffer: %u", data_len);
-    scsi_sg_copy_to_buffer(cmd, data_buf, scsi_bufflen(cmd));
+    if (!is_data_in)
+      scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
   }
   struct ScsiToNvmeResponse resp = ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, 
     sense_len, data_buf, data_len, is_data_in);

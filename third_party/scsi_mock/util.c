@@ -22,8 +22,9 @@ void Print(const char* msg) {
 unsigned long long AllocPages(unsigned short count) {
   if (count == 0)
     return 0;
+  printk("Allocating %u bytes", NVME_MIN_PAGE_SIZE * count);
   void* addr = kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_ATOMIC | GFP_KERNEL);
-  if (addr == 0)
+  if (addr == NULL)
     printk("NULLPTR ALLOC PAGES!!!!");
   return (unsigned long long) addr;
 }
