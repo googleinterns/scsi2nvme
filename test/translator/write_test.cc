@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "lib/translator/write.h"
-
 #include <byteswap.h>
 #include <netinet/in.h>
 
@@ -61,41 +60,41 @@ uint32_t BuildCdw12(uint16_t tl, uint8_t prinfo, bool fua) {
 }
 
 TEST(Write6Command, ShouldReturnInvalidStatusCode) {
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   uint8_t write6_cmd[sizeof(scsi::Write6Command) - 1];
   translator::StatusCode status_code = translator::Write6ToNvme(
-      write6_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      write6_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(status_code, translator::StatusCode::kInvalidInput);
 }
 
 TEST(Write10Command, ShouldReturnInvalidStatusCode) {
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   uint8_t write10_cmd[sizeof(scsi::Write10Command) - 1];
   translator::StatusCode status_code = translator::Write10ToNvme(
-      write10_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      write10_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(status_code, translator::StatusCode::kInvalidInput);
 }
 
 TEST(Write12Command, ShouldReturnInvalidStatusCode) {
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   uint8_t write12_cmd[sizeof(scsi::Write12Command) - 1];
   translator::StatusCode status_code = translator::Write12ToNvme(
-      write12_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      write12_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(status_code, translator::StatusCode::kInvalidInput);
 }
 
 TEST(Write16Command, ShouldReturnInvalidStatusCode) {
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   uint8_t write16_cmd[sizeof(scsi::Write16Command) - 1];
   translator::StatusCode status_code = translator::Write16ToNvme(
-      write16_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      write16_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(status_code, translator::StatusCode::kInvalidInput);
 }
 
@@ -109,11 +108,11 @@ TEST_F(WriteTest, Write6ShouldReturnValidStatusCode) {
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
 
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code = translator::Write6ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
 }
 
@@ -128,11 +127,11 @@ TEST_F(WriteTest, Write10ShouldReturnValidStatusCode) {
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code = translator::Write10ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
 }
@@ -148,11 +147,11 @@ TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code = translator::Write12ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
 }
 
@@ -167,11 +166,11 @@ TEST_F(WriteTest, Write16ShouldReturnValidStatusCode) {
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
   translator::WriteValue(cmd, scsi_cmd);
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
   translator::StatusCode status_code = translator::Write16ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
 }
 
@@ -185,20 +184,20 @@ TEST_F(WriteTest, Write6ShouldBuildCorrectNvmeCommandStruct) {
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write6ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   uint32_t expected_lba_value =
       (network_endian_lba_1 << 16) | ntohs(network_endian_lba_2);
   uint32_t expected_cdw12 = translator::htoll(kWrite6TransferLength - 1);
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
-  EXPECT_EQ(nvme_cmd.cdw[0], expected_lba_value);
-  EXPECT_EQ(nvme_cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
-  EXPECT_EQ(nvme_cmd.psdt, 0);
-  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[0], expected_lba_value);
+  EXPECT_EQ(nvme_wrapper.cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
+  EXPECT_EQ(nvme_wrapper.cmd.psdt, 0);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
 }
 
 TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
@@ -212,20 +211,20 @@ TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write10ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   uint32_t expected_cdw12 =
       translator::htoll(BuildCdw12(kTransferLength, kPrInfo, kFua));
   uint32_t expected_cdw10 = translator::htoll(kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
-  EXPECT_EQ(nvme_cmd.cdw[0], expected_cdw10);
-  EXPECT_EQ(nvme_cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
-  EXPECT_EQ(nvme_cmd.psdt, 0);
-  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[0], expected_cdw10);
+  EXPECT_EQ(nvme_wrapper.cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
+  EXPECT_EQ(nvme_wrapper.cmd.psdt, 0);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
 }
 
 TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
@@ -239,20 +238,20 @@ TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write12ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLba);
 
   uint32_t expected_cdw12 = translator::htoll(
       BuildCdw12(ntohl(network_transfer_length), kPrInfo, kFua));
   uint32_t expected_cdw10 = translator::htoll(kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
-  EXPECT_EQ(nvme_cmd.cdw[0], expected_cdw10);
-  EXPECT_EQ(nvme_cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
-  EXPECT_EQ(nvme_cmd.psdt, 0);
-  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[0], expected_cdw10);
+  EXPECT_EQ(nvme_wrapper.cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
+  EXPECT_EQ(nvme_wrapper.cmd.psdt, 0);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
 }
 
 TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
@@ -267,10 +266,10 @@ TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write16ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLba);
 
   uint32_t expected_cdw10 = translator::htoll(kWrite16Lba);
   uint32_t expected_cdw11 = translator::htoll(kWrite16Lba >> 32);
@@ -278,11 +277,11 @@ TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
       BuildCdw12(ntohl(network_transfer_length), kPrInfo, kFua));
 
   EXPECT_EQ(status_code, translator::StatusCode::kSuccess);
-  EXPECT_EQ(nvme_cmd.cdw[0], expected_cdw10);
-  EXPECT_EQ(nvme_cmd.cdw[1], expected_cdw11);
-  EXPECT_EQ(nvme_cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
-  EXPECT_EQ(nvme_cmd.psdt, 0);
-  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[0], expected_cdw10);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[1], expected_cdw11);
+  EXPECT_EQ(nvme_wrapper.cmd.opc, (uint8_t)nvme::NvmOpcode::kWrite);
+  EXPECT_EQ(nvme_wrapper.cmd.psdt, 0);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
 }
 
 TEST_F(WriteTest, Write10ShoudlFailOnWrongProtectBit) {
@@ -294,10 +293,10 @@ TEST_F(WriteTest, Write10ShoudlFailOnWrongProtectBit) {
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write10ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   EXPECT_EQ(status_code, translator::StatusCode::kFailure);
 }
@@ -313,10 +312,10 @@ TEST_F(WriteTest, Write12ShoudlFailOnWrongProtectBit) {
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write12ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   EXPECT_EQ(status_code, translator::StatusCode::kFailure);
 }
@@ -333,10 +332,10 @@ TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write16ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kFailure);
 }
@@ -352,15 +351,15 @@ TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write6ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   uint16_t expected_transfer_length = 256;
   uint32_t expected_cdw12 = translator::htoll(expected_transfer_length - 1);
 
-  EXPECT_EQ(nvme_cmd.cdw[2], expected_cdw12);
+  EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
 }
 
 TEST_F(WriteTest, Write10ShouldWriteFailOnZeroTransferLength) {
@@ -374,10 +373,10 @@ TEST_F(WriteTest, Write10ShouldWriteFailOnZeroTransferLength) {
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write10ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
 }
@@ -393,10 +392,10 @@ TEST_F(WriteTest, Write12ShouldWriteFailOnZeroTransferLength) {
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write12ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLbaSize);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLbaSize);
 
   EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
 }
@@ -413,10 +412,10 @@ TEST_F(WriteTest, Write16ShouldWriteFailOnZeroTransferLength) {
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
   translator::WriteValue(cmd, scsi_cmd);
 
-  nvme::GenericQueueEntryCmd nvme_cmd;
+  translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::StatusCode status_code = translator::Write16ToNvme(
-      scsi_cmd, nvme_cmd, allocation, kNsid, kPageSize, kLba);
+      scsi_cmd, nvme_wrapper, allocation, kNsid, kPageSize, kLba);
 
   EXPECT_EQ(status_code, translator::StatusCode::kNoTranslation);
 }

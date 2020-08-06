@@ -22,24 +22,20 @@
 namespace translator {
 
 StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size);
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size);
 
 StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
-                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                         Allocation& allocation, uint32_t nsid,
-                         uint32_t page_size, uint32_t lba_size);
+                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                         uint32_t nsid, uint32_t page_size, uint32_t lba_size);
 
 StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
-                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                         Allocation& allocation, uint32_t nsid,
-                         uint32_t page_size, uint32_t lba_size);
+                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                         uint32_t nsid, uint32_t page_size, uint32_t lba_size);
 
 StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
-                         nvme::GenericQueueEntryCmd& nvme_cmd,
-                         Allocation& allocation, uint32_t nsid,
-                         uint32_t page_size, uint32_t lba_size);
+                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                         uint32_t nsid, uint32_t page_size, uint32_t lba_size);
 
 }  // namespace translator
 
