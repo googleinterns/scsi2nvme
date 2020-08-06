@@ -172,6 +172,36 @@ StatusCode TranslateUnitSerialNumberVpd(
   return StatusCode::kSuccess;
 }
 
+StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
+  scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
+
+      // Shall be set to 00h indicating direct access block device
+      .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
+
+      // Shall be set to 000b indicating device for PERIPHERAL DEVICE TYPE
+      // connected to logical unit
+      .peripheral_qualifier =
+          scsi::PeripheralQualifier::kPeripheralDeviceConnected,
+
+      // Shall be set to B1h indicating Device Identification VPD Page
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to 3Ch.
+      .page_length = scsi::PageLength::kBlockDeviceCharacteristicsVpd,
+
+      // Shall be set to 0001h indicating a non-rotating device(SSD)
+      .medium_rotation_rate = scsi::MediumRotationRate::kNonRotatingMedium,
+
+      // Shall be set to 0h indicating form factor not reported
+      .nominal_form_factor = scsi::NominalFormFactor::kNotReported};
+
+  if (!WriteValue(block_device_characteristics_vpd, buffer)) {
+    DebugLog("Couldn't write BlockDeviceCharacteristicsVpd to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
+}
+
 StatusCode TranslateBlockLimitsVpd(
     const nvme::IdentifyControllerData& identify_ctrl, Span<uint8_t> buffer) {
   // The value is in units of the minimum memory
@@ -412,9 +442,9 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
         // application client, refer to 6.1.6.
         return TranslateBlockLimitsVpd(*identify_ctrl, buffer);
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
-        // TODO: Return Block Device Characteristics Vpd Page to application
+        // Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
-        break;
+        return TranslateBlockDeviceCharacteristicsVpd(buffer);
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
         return TranslateLogicalBlockProvisioningVpd(*identify_ctrl,
                                                     *identify_ns, buffer);

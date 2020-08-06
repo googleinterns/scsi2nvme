@@ -726,4 +726,26 @@ TEST_F(InquiryTest, FailsOnNamespaceNullPointer) {
   ASSERT_EQ(status, translator::StatusCode::kFailure);
 }
 
+TEST_F(InquiryTest, BlockDeviceCharacteristicsVpdBuildsCorrectStruct) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kBlockDeviceCharacteristicsVpd;
+
+  translator::StatusCode status =
+      translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_cmds_);
+
+  scsi::BlockDeviceCharacteristicsVpd result{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, result));
+
+  EXPECT_EQ(result.peripheral_qualifier,
+            scsi::PeripheralQualifier::kPeripheralDeviceConnected);
+  EXPECT_EQ(result.peripheral_device_type,
+            scsi::PeripheralDeviceType::kDirectAccessBlock);
+  EXPECT_EQ(result.page_code, scsi::PageCode::kDeviceIdentification);
+  EXPECT_EQ(result.page_length,
+            scsi::PageLength::kBlockDeviceCharacteristicsVpd);
+  EXPECT_EQ(result.medium_rotation_rate,
+            scsi::MediumRotationRate::kNonRotatingMedium);
+  EXPECT_EQ(result.nominal_form_factor, scsi::NominalFormFactor::kNotReported);
+}
+
 }  // namespace

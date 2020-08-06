@@ -206,6 +206,100 @@ enum class PageCode : uint8_t {
   kLogicalBlockProvisioningVpd = 0xb2
 };
 
+// SCSI Reference Manual Table 440
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class MediumRotationRate : uint16_t {
+  kRotationNotReported = 0x0000,
+  kNonRotatingMedium = 0x0001,
+  kReserved = 0xFFFF,
+};
+
+// SCSI Reference Manual Table 441
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ProductType : uint8_t {
+  kNotIndicated = 0x00,
+  kCFast = 0x01,
+  kCompactFlash = 0x02,
+  kMemoryStick = 0x03,
+  kMultiMediaCard = 0x04,
+  kSecureDigitalCard = 0x05,
+  kXQD = 0x06,
+  kUniversalFlashStorage = 0x07
+};
+
+// SCSI Reference Manual Table 442
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Wacereq : uint8_t {
+  kNotSpecified = 0b00,
+
+  // The device server completes the read command specifying that LBA with GOOD
+  // status and any data transferred to the Data-In Buffer is indeterminate.
+  kSuccess = 0b01,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to an appropriate value other than WRITE AFTER
+  // SANITIZE REQUIRED (e.g., ID CRC OR ECC ERROR).
+  kFailureWithoutWriteSanitize = 0b10,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to WRITE AFTER SANITIZE REQUIRED.
+  kFailureWithWriteSanitize = 0b11
+};
+
+// SCSI Reference Manual Table 443
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Wabereq : uint8_t {
+  kNotSpecified = 0b00,
+
+  // The device server completes the read command specifying that LBA with GOOD
+  // status and any data transferred to the Data-In Buffer is indeterminate.
+  kSuccess = 0b01,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to an appropriate value other than WRITE AFTER
+  // SANITIZE REQUIRED (e.g., ID CRC OR ECC ERROR).
+  kFailureWithoutWriteSanitize = 0b10,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to WRITE AFTER SANITIZE REQUIRED.
+  kFailureWithWriteSanitize = 0b11
+};
+
+// SCSI Reference Manual Table 444
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class NominalFormFactor : uint8_t {
+  kNotReported = 0x0,
+  kExtraLarge = 0x1,  // 5.25 inch
+  kLarge = 0x2,       // 3.5 inch
+  kMedium = 0x3,      // 2.5 inch
+  kSmall = 0x4,       // 1.8 inch
+  kExtraSmall = 0x5,  // less than 1.8 inch
+};
+
+// SCSI Reference Manual Table 445
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Zoned : uint8_t {
+  kNotReported = 0b00,
+
+  // Device server implements the host aware zoned block device capabilities
+  // defined in ZBC
+  kHostAware = 0b01,
+
+  // Device server implements device managed zoned block device capabilities
+  kDeviceManaged = 0b10,
+  kReserved = 0b11,
+};
+
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class PageLength : uint16_t {
+  kExtendedInquiryCommand = 0x3c,
+  kBlockDeviceCharacteristicsVpd = 0x3c
+};
+
 // SCSI Reference Manual Table 10
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct ControlByte {
@@ -1075,6 +1169,28 @@ struct DeviceIdentificationVpd {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
+// SCSI Reference Manual Table 459
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct BlockDeviceCharacteristicsVpd {
+  PeripheralDeviceType peripheral_device_type : 5;
+  PeripheralQualifier peripheral_qualifier : 3;
+  PageCode page_code : 8;
+  PageLength page_length : 16;
+  MediumRotationRate medium_rotation_rate : 16;
+  ProductType product_type : 8;
+  NominalFormFactor nominal_form_factor : 4;
+  Wacereq wacereq : 2;
+  Wabereq wabereq : 2;
+  bool vbuls : 1;
+  bool fuab : 1;
+  bool bocs : 1;
+  bool _reserved1 : 1;
+  Zoned zoned : 2;  //
+  uint8_t _reserved2 : 2;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(BlockDeviceCharacteristicsVpd) == 9);
+
+// namespace scsi_defs
 // SCSI Reference Manual Table 467
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct LogicalBlockProvisioningVpd {
