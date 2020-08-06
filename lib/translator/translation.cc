@@ -244,8 +244,8 @@ Span<const nvme::GenericQueueEntryCmd> Translation::GetNvmeCmds() {
 
 void Translation::AbortPipeline() {
   pipeline_status_ = StatusCode::kUninitialized;
-  nvme_cmd_count_ = 0;
   FlushMemory();
+  nvme_cmd_count_ = 0;
 }
 
 void Translation::FlushMemory() {
