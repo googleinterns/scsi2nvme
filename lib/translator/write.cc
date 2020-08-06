@@ -53,11 +53,19 @@ StatusCode BuildPRInfo(uint8_t wrprotect, uint8_t& pr_info) {
 }
 
 // Converts transfer_length in units of logical blocks to units of pages
-uint32_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
-                                uint32_t lba_size) {
+StatusCode GetTransferLengthPages(uint32_t& transfer_length_pages,
+                                  uint16_t transfer_length, uint32_t page_size,
+                                  uint32_t lba_size) {
+  if (page_size == 0) {
+    DebugLog("Page size is 0 for Write Command\n");
+    return StatusCode::kFailure;
+  }
+
   uint64_t transfer_length_bytes = transfer_length * lba_size;
-  return transfer_length_bytes / page_size +
-         ((transfer_length_bytes % page_size == 0) ? 0 : 1);
+  transfer_length_pages = transfer_length_bytes / page_size +
+                          ((transfer_length_bytes % page_size == 0) ? 0 : 1);
+
+  return StatusCode::kSuccess;
 }
 
 // This function populates the nvme::GenericQueueEntryCmd object with fields
@@ -68,6 +76,7 @@ StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
   StatusCode status_code = allocation.SetPages(transfer_length_pages, 0);
 
   if (status_code != StatusCode::kSuccess) {
+    DebugLog("Failed to allocate pages for Write Command\n");
     return status_code;
   }
 
@@ -96,9 +105,17 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
   }
 
   transfer_length &= 0xffff;  // truncate to 16 bits
-  StatusCode status_code =
-      LegacyWrite(nvme_wrapper, allocation, nsid,
-                  GetTransferLengthPages(transfer_length, page_size, lba_size));
+
+  uint32_t transfer_length_pages = 0;
+  StatusCode status_code = GetTransferLengthPages(
+      transfer_length_pages, transfer_length, page_size, lba_size);
+
+  if (status_code != StatusCode::kSuccess) {
+    return status_code;
+  }
+
+  status_code =
+      LegacyWrite(nvme_wrapper, allocation, nsid, transfer_length_pages);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -132,9 +149,17 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
   // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
   uint16_t updated_transfer_length =
       (write_cmd.transfer_length == 0) ? 256 : write_cmd.transfer_length;
-  StatusCode status_code = LegacyWrite(
-      nvme_wrapper, allocation, nsid,
-      GetTransferLengthPages(updated_transfer_length, page_size, lba_size));
+
+  uint32_t transfer_length_pages = 0;
+  StatusCode status_code = GetTransferLengthPages(
+      transfer_length_pages, updated_transfer_length, page_size, lba_size);
+
+  if (status_code != StatusCode::kSuccess) {
+    return status_code;
+  }
+
+  status_code =
+      LegacyWrite(nvme_wrapper, allocation, nsid, transfer_length_pages);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
