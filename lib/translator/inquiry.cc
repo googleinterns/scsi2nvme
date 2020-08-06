@@ -25,6 +25,81 @@ namespace translator {
 
 // command specific helpers
 namespace {
+
+constexpr uint8_t kIdentifierLengthNguid = 0x10;
+constexpr uint8_t kIdentifierLengthEui64 = 0x8;
+
+// Builds the IdentificationDescriptor according to 6.1.4.5 of the translation
+// spec:
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+// This only builds the constant part of the Identification Descriptor. The
+// caller is responsible for building the identifier.
+StatusCode BuildIdentificationDescriptor(
+    const nvme::IdentifyNamespace& identify_namespace_data,
+    Span<uint8_t> buffer, uint8_t& identifier_length) {
+  // check if nonzero
+  bool nguid_nz =
+      identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
+  bool eui64_nz = identify_namespace_data.eui64;
+
+  // Writes the value of the identification at the end of the buffer. This data
+  // comes after the DeviceIdentificationVPD and IdentificationDescriptor
+  // struct. Hence, the data is written at index +
+  // sizeof(IdentificationDescriptor), where index is the size of the
+  // DeviceIdentificationVPD struct.
+  if (nguid_nz) {
+    // Shall be set to 08h if the EUI-64 field is populated from the NVMe EUI64
+    // field.
+    identifier_length = kIdentifierLengthNguid;
+    if (!WriteValue(identify_namespace_data.nguid,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+  } else if (eui64_nz) {
+    // Shall be set to 10h if the EUI-64 field is populated from the NVMe NGUID
+    // field.
+    identifier_length = kIdentifierLengthEui64;
+    if (!WriteValue(identify_namespace_data.eui64,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+
+  } else {
+    // function not supported as both NGUID and EUI64 fields are zero
+    DebugLog("Both NGUID and EUI-64 fields are zero in IdentityNamespaceData");
+    return StatusCode::kFailure;
+  }
+
+  scsi::IdentificationDescriptor identification_descriptor = {
+
+      // Shall be set to 1h indicating associated fields are in binary format.
+      .code_set = scsi::CodeSet::kBinary,
+
+      // Shall be set to 0h. PIV field shall indicate this field is reserved as
+      // no
+      // specific protocol to be identified. This field will be ignored!
+      .protocol_identifier = scsi::ProtocolIdentifier::kFibreChannel,
+
+      // Shall be set to 2h indicating EUI-64 based identifier.
+      .identifier_type = scsi::IdentifierType::kEUI64,
+
+      // Shall be set to 00b indicating DESIGNATOR field is associated with
+      // logical unit.
+      .association = scsi::Association::kPhysicalDevice,
+
+      // Shall be set to 0b indicating PROTOCOL IDENTIFIER field is reserved.
+      .protocol_identifier_valid = 0,
+
+      .identifier_length = identifier_length};
+  if (!WriteValue(identification_descriptor, buffer)) {
+    DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+    return StatusCode::kFailure;
+  };
+  return StatusCode::kSuccess;
+}
+
 StatusCode TranslateStandardInquiry(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, Span<uint8_t> buffer) {
@@ -172,8 +247,23 @@ StatusCode TranslateUnitSerialNumberVpd(
   return StatusCode::kSuccess;
 }
 
-StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
-  scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
+// Refer to section 6.1.2 on
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+StatusCode TranslateDeviceIdentificationVpd(
+    const nvme::IdentifyNamespace& identify_namespace, Span<uint8_t> buffer) {
+  uint8_t identification_descriptor_length = 0;
+  StatusCode status = translator::BuildIdentificationDescriptor(
+      identify_namespace, buffer.subspan(sizeof(scsi::DeviceIdentificationVpd)),
+      identification_descriptor_length);
+
+  if (status != StatusCode::kSuccess) {
+    return status;
+  }
+
+  uint8_t page_length =
+      sizeof(scsi::DeviceIdentificationVpd) + identification_descriptor_length;
+
+  scsi::DeviceIdentificationVpd result = {
 
       // Shall be set to 00h indicating direct access block device
       .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
@@ -183,6 +273,24 @@ StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
       .peripheral_qualifier =
           scsi::PeripheralQualifier::kPeripheralDeviceConnected,
 
+      // Shall be set to 83h indicating Device Identification VPD Page, refer
+      // to 6.1.4
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to the size of the remaining bytes of Device
+      // Identification
+      // VPD Page.
+      .page_length = page_length,
+  };
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error! Cannot write DeviceIdentificationVPD to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return status;
+}
+
+StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
+  scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
       // Shall be set to B1h indicating Device Identification VPD Page
       .page_code = scsi::PageCode::kDeviceIdentification,
 
@@ -434,9 +542,7 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
         return TranslateUnitSerialNumberVpd(*identify_ctrl_data,
                                             *identify_ns_data, nsid, buffer);
       case scsi::PageCode::kDeviceIdentification:
-        // TODO: Return Device Identification data page toapplication client,
-        // refer to 6.1.4
-        break;
+        return TranslateDeviceIdentificationVpd(*identify_ns_data, buffer);
       case scsi::PageCode::kExtended:
         // TODO: May optionally be supported by returning Extended INQUIRY data
         // page toapplication client, refer to 6.1.5.

@@ -21,6 +21,10 @@
 // Tests
 namespace {
 
+constexpr uint64_t kSampleIdentifierData = 0x12345678;
+constexpr uint8_t kIdentifierLengthNGUID = 0x10;
+constexpr uint8_t kIdentifierLengthEUI64 = 0x8;
+
 class InquiryTest : public ::testing::Test {
  protected:
   scsi::InquiryCommand inquiry_cmd_;
@@ -714,6 +718,127 @@ TEST_F(InquiryTest, LogicalBlockProvisioningVpdAdThinprov) {
   EXPECT_EQ(result.anc_sup, 0);
   EXPECT_EQ(result.provisioning_type, 2);
   EXPECT_EQ(result.lbpu, 1);
+}
+
+TEST_F(InquiryTest, TranslateDeviceIdentificationVPDBuildCorrectStructs) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kUnitSerialNumber};
+
+  identify_ns_.eui64 = 0;
+  identify_ns_.nguid[0] = kSampleIdentifierData;
+  identify_ns_.nguid[1] = kSampleIdentifierData;
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kDeviceIdentification;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::DeviceIdentificationVpd device_identification_vpd{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, device_identification_vpd));
+
+  EXPECT_EQ(device_identification_vpd.peripheral_qualifier,
+            scsi::PeripheralQualifier::kPeripheralDeviceConnected);
+
+  EXPECT_EQ(device_identification_vpd.peripheral_device_type,
+            scsi::PeripheralDeviceType::kDirectAccessBlock);
+
+  EXPECT_EQ(device_identification_vpd.page_code,
+            scsi::PageCode::kDeviceIdentification);
+}
+
+TEST_F(InquiryTest, DeviceIdentificationBuildsCorrectIdentificationDescriptor) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kUnitSerialNumber};
+
+  identify_ns_.eui64 = 0;
+  identify_ns_.nguid[0] = kSampleIdentifierData;
+  identify_ns_.nguid[1] = kSampleIdentifierData;
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kDeviceIdentification;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::IdentificationDescriptor identification_descriptor{};
+  translator::Span<uint8_t> span_buf(
+      &buffer_[sizeof(scsi::DeviceIdentificationVpd)],
+      sizeof(scsi::IdentificationDescriptor));
+  ASSERT_TRUE(translator::ReadValue(span_buf, identification_descriptor));
+
+  EXPECT_EQ(identification_descriptor.protocol_identifier,
+            scsi::ProtocolIdentifier::kFibreChannel);
+  EXPECT_EQ(identification_descriptor.code_set, scsi::CodeSet::kBinary);
+  EXPECT_EQ(identification_descriptor.protocol_identifier_valid, false);
+  EXPECT_EQ(identification_descriptor.association,
+            scsi::Association::kPhysicalDevice);
+  EXPECT_EQ(identification_descriptor.identifier_type,
+            scsi::IdentifierType::kEUI64);
+}
+
+TEST_F(InquiryTest, DeviceIdentificationVpdUsesNGUID) {
+  inquiry_cmd_ = scsi::InquiryCommand{
+      .evpd = 1, .page_code = scsi::PageCode::kUnitSerialNumber};
+
+  identify_ns_.eui64 = 0;
+  identify_ns_.nguid[0] = kSampleIdentifierData;
+  identify_ns_.nguid[1] = kSampleIdentifierData;
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kDeviceIdentification;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::IdentificationDescriptor identification_descriptor{};
+  translator::Span<uint8_t> span_buf(
+      &buffer_[sizeof(scsi::DeviceIdentificationVpd)],
+      sizeof(scsi::IdentificationDescriptor));
+  ASSERT_TRUE(translator::ReadValue(span_buf, identification_descriptor));
+
+  EXPECT_EQ(identification_descriptor.identifier_length,
+            kIdentifierLengthNGUID);
+
+  // test whether each field of the nguid array has correct data. Each field is
+  // 64 bit wide.
+  for (int i = 0; i < sizeof(identify_ns_.nguid) / sizeof(uint64_t); i++) {
+    uint64_t nguid_data = 0;
+    translator::Span<uint8_t> span_buf_data(
+        &buffer_[sizeof(scsi::DeviceIdentificationVpd) +
+                 sizeof(scsi::IdentificationDescriptor) + i * sizeof(uint64_t)],
+        sizeof(uint64_t));
+    ASSERT_TRUE(translator::ReadValue(span_buf_data, nguid_data));
+    EXPECT_EQ(nguid_data, kSampleIdentifierData);
+  }
+}
+
+TEST_F(InquiryTest, IdentificationDescriptorUsesEUI64) {
+  identify_ns_.eui64 = 0x12345678;
+  identify_ns_.nguid[0] = 0;
+  identify_ns_.nguid[1] = 0;
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kDeviceIdentification;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+
+  scsi::IdentificationDescriptor identification_descriptor{};
+  translator::Span<uint8_t> span_buf(
+      &buffer_[sizeof(scsi::DeviceIdentificationVpd)],
+      sizeof(scsi::IdentificationDescriptor));
+  ASSERT_TRUE(translator::ReadValue(span_buf, identification_descriptor));
+
+  uint64_t eui64_data = 0;
+  translator::Span<uint8_t> span_buf_data(
+      &buffer_[sizeof(scsi::DeviceIdentificationVpd) +
+               sizeof(scsi::IdentificationDescriptor)],
+      8);
+  ASSERT_TRUE(translator::ReadValue(span_buf_data, eui64_data));
+  EXPECT_EQ(eui64_data, kSampleIdentifierData);
+  EXPECT_EQ(identification_descriptor.identifier_length,
+            kIdentifierLengthEUI64);
 }
 
 TEST_F(InquiryTest, FailsOnControllerNullPointer) {

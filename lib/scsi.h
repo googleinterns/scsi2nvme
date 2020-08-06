@@ -206,6 +206,100 @@ enum class PageCode : uint8_t {
   kLogicalBlockProvisioningVpd = 0xb2
 };
 
+// SCSI Reference Manual Table 461
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Association : uint8_t {
+
+  // The IDENTIFIER field is associated with the addressed physical or logical
+  // device
+  kPhysicalDevice = 0x0,
+
+  // The IDENTIFIER field is associated with the port that received the request
+  kPort = 0x1,
+
+  // The IDENTIFIER field is associated with the SCSI target device that
+  // contains the addressed logical unit.
+  kScsiTargetDevice = 0x2,
+
+  // Reserved code
+  kReserved = 0x3
+};
+
+// SCSI Reference Manual, Section 5.4.11
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class CodeSet : uint8_t {
+  kReserved = 0x0,
+
+  // The IDENTIFIER field shall contain binary values
+  kBinary = 0x1,
+
+  // 2h The IDENTIFIER field shall contain ASCII graphic codes (i.e., code
+  // values 20h through 7Eh)
+  kASCII = 0x2,
+};
+
+// SCSI Reference Manual, Table 463
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class IdentifierType : uint8_t {
+  // No assignment authority was used and consequently there is no guarantee
+  // that the identifier is globally unique (i.e., the identifier is vendor
+  // specific).
+  kVendorSpecific1 = 0x0,
+
+  // The first 8 bytes of the IDENTIFIER field are a Vendor ID. The organization
+  // associated with the Vendor ID is responsible for ensuring that the
+  // remainder of the identifier field is unique. One recommended method of
+  // constructing the remainder of the identifier field is to concatenate the
+  // product identification field from the standard INQUIRY data field and the
+  // product serial number field from the unit serial number page
+  kVendorSpecific2 = 0x1,
+
+  // The IDENTIFIER field contains a Canonical form IEEE Extended Unique
+  // Identifier, 64-bit (EUI-64). In this case, the identifier length field
+  // shall be set to 8. Note that the IEEE guide-lines for EUI-64 specify a
+  // method for unambiguously encapsulating an IEEE 48-bit identifier within an
+  // EUI-64.
+  kEUI64 = 0x2,
+
+  // The IDENTIFIER field contains an FC-PH, FC-PH3 or FC-FS Name_Identifier.
+  // Any FC-PH, FC-PH3 or FC-FS identifier may be used, including one of the
+  // four based on a Canonical form IEEE company_id.
+  kFibreChannel = 0x3,
+
+  // If the ASSOCIATION field contains 1h, the Identifier value contains a
+  // four-byte binary number identifying the port relative to other ports in the
+  // device using the values shown Table 462. The CODE SET field shall be set to
+  // 1h and the IDENTIFIER LENGTH field shall be set to 4h. If the ASSOCIATION
+  // field does not contain 1h, use of this identifier type is reserved.
+  kAssociationDependent1 = 0x4,
+  kAssociationDependent2 = 0x5,
+
+  // If the ASSOCIATION value is 0h, the IDENTIFIER value contains a four-byte
+  // binary number identifying the port relative to other ports in the device
+  // using the values shown Table 462. The CODE SET field shall be set to 1h and
+  // the IDENTIFIER LENGTH field shall be set to 4h. If the ASSOCIATION field
+  // does not contain 0h, use of this identifier type is reserved.
+  kAssociationDependent3 = 0x6,
+
+  // The MD5 logical unit identifier shall not be used if a logical unit
+  // provides unique identification using identifier types 2h or 3h. A bridge
+  // device may return a MD5 logical unit identifier type for that logical unit
+  // that does not support the Device Identification VPD page.
+  kNoMD5Support = 0x7,
+};
+
+// SCSI Reference Manual Table 461
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ProtocolIdentifier : uint8_t {
+  kFibreChannel = 0x0,
+  kObsolete = 0x1,
+  kSSA = 0x2,
+  kIEEE1394 = 0x3,
+  kRDMA = 0x4,
+  kInternetSCSI = 0x5,
+  kSASSerialSCSIProtocol = 0x6,
+};
+
 // SCSI Reference Manual Table 440
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 enum class MediumRotationRate : uint16_t {
@@ -1146,15 +1240,14 @@ static_assert(sizeof(UnitSerialNumber) == 4);
 // SCSI Reference Manual Table 460
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct IdentificationDescriptor {
-  uint8_t code_set : 4;
-  uint8_t protocol_identifier : 4;
-  uint8_t identifier_type : 4;
-  uint8_t association : 2;
-  bool reserved_1 : 1;
-  bool piv : 1;  // Protocal Identifier Valid
-  uint8_t reserved_2 : 8;
+  CodeSet code_set : 4;
+  ProtocolIdentifier protocol_identifier : 4;
+  IdentifierType identifier_type : 4;
+  Association association : 2;
+  bool _reserved1 : 1;
+  bool protocol_identifier_valid : 1;
+  uint8_t _reserved2 : 8;
   uint8_t identifier_length : 8;
-  // uint8_t identifier[256];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(IdentificationDescriptor) == 4);
 
@@ -1165,7 +1258,6 @@ struct DeviceIdentificationVpd {
   PeripheralQualifier peripheral_qualifier : 3;
   PageCode page_code : 8;
   uint8_t page_length : 8;
-  // IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
