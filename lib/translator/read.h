@@ -15,8 +15,6 @@
 #ifndef LIB_TRANSLATOR_READ_H
 #define LIB_TRANSLATOR_READ_H
 
-#include "third_party/spdk/nvme.h"
-
 #include "common.h"
 
 namespace translator {
@@ -35,27 +33,23 @@ namespace translator {
 // which calls LegacyRead() and handles some additional fields
 
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid,
-                       uint32_t page_size, uint32_t lba_size,
+                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                       uint32_t nsid, uint32_t page_size, uint32_t lba_size,
                        uint32_t& alloc_len);
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size,
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
                         uint32_t& alloc_len);
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size,
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
                         uint32_t& alloc_len);
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd,
-                        Allocation& allocation, uint32_t nsid,
-                        uint32_t page_size, uint32_t lba_size,
+                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
                         uint32_t& alloc_len);
 
 // Common to Read(6), Read(10), Read(12), and Read(16)

@@ -18,6 +18,8 @@
 #include <cstring>
 #include <type_traits>
 
+#include "third_party/spdk/nvme.h"
+
 #include "lib/scsi.h"
 
 namespace translator {
@@ -48,6 +50,11 @@ struct Allocation {
   // Sets [m]data_page_count, calls AllocPages([m]data_page_count),
   // and returns StatusCode based on whether AllocPages was successful
   StatusCode SetPages(uint16_t data_page_count, uint16_t mdata_page_count);
+};
+
+struct NvmeCmdWrapper {
+  nvme::GenericQueueEntryCmd cmd;
+  bool is_admin;
 };
 
 void DebugLog(const char* format, ...);

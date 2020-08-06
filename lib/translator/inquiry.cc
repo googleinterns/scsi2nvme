@@ -346,8 +346,8 @@ StatusCode TranslateLogicalBlockProvisioningVpd(
 }  // namespace
 
 StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
-                         nvme::GenericQueueEntryCmd& identify_ns,
-                         nvme::GenericQueueEntryCmd& identify_ctrl,
+                         NvmeCmdWrapper& identify_ns_wrapper,
+                         NvmeCmdWrapper& identify_ctrl_wrapper,
                          uint32_t& alloc_len, uint32_t nsid,
                          Span<Allocation> allocations) {
   scsi::InquiryCommand cmd = {};
@@ -363,10 +363,10 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc1;
   }
 
-  identify_ns = nvme::GenericQueueEntryCmd{
+  identify_ns_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify), .nsid = nsid};
-  identify_ns.dptr.prp.prp1 = allocations[0].data_addr;
-  identify_ns.cdw[0] =
+  identify_ns_wrapper.cmd.dptr.prp.prp1 = allocations[0].data_addr;
+  identify_ns_wrapper.cmd.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
 
@@ -375,19 +375,23 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
     return status_alloc2;
   }
 
-  identify_ctrl = nvme::GenericQueueEntryCmd{
+  identify_ctrl_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
   };
-  identify_ctrl.dptr.prp.prp1 = allocations[1].data_addr;
-  identify_ctrl.cdw[0] =
+  identify_ctrl_wrapper.cmd.dptr.prp.prp1 = allocations[1].data_addr;
+  identify_ctrl_wrapper.cmd.cdw[0] =
       htoll(0x1);  // Controller or Namespace Structure (CNS): This field
                    // specifies the information to be returned to the host.
+
+  identify_ns_wrapper.is_admin = true;
+  identify_ctrl_wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
 
 // Main logic engine for the Inquiry command
 StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
-                         Span<const nvme::GenericQueueEntryCmd> nvme_cmds) {
+                         const nvme::GenericQueueEntryCmd& identify_ns,
+                         const nvme::GenericQueueEntryCmd& identify_ctrl) {
   scsi::InquiryCommand inquiry_cmd = {};
 
   if (!ReadValue(raw_scsi, inquiry_cmd)) {
@@ -395,28 +399,28 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     return StatusCode::kInvalidInput;
   };
 
-  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[0].dptr.prp.prp1);
-  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
-
-  uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(nvme_cmds[1].dptr.prp.prp1);
+  uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(identify_ns.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
 
-  const nvme::IdentifyControllerData* identify_ctrl =
-      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
-  if (identify_ctrl == nullptr) {
-    DebugLog("Identify controller structure failed to cast");
-    return StatusCode::kFailure;
-  }
+  uint8_t* ctrl_dptr = reinterpret_cast<uint8_t*>(identify_ctrl.dptr.prp.prp1);
+  Span<uint8_t> ctrl_span(ctrl_dptr, sizeof(nvme::IdentifyControllerData));
 
-  const nvme::IdentifyNamespace* identify_ns =
+  const nvme::IdentifyNamespace* identify_ns_data =
       SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
-  if (identify_ns == nullptr) {
+  if (identify_ns_data == nullptr) {
     DebugLog("Identify namespace structure failed to cast");
     return StatusCode::kFailure;
   }
 
+  const nvme::IdentifyControllerData* identify_ctrl_data =
+      SafePointerCastRead<nvme::IdentifyControllerData>(ctrl_span);
+  if (identify_ctrl_data == nullptr) {
+    DebugLog("Identify controller structure failed to cast");
+    return StatusCode::kFailure;
+  }
+
   // nsid should come from Namespace
-  uint32_t nsid = nvme_cmds[1].nsid;
+  uint32_t nsid = identify_ns.nsid;
 
   if (inquiry_cmd.evpd) {
     switch (inquiry_cmd.page_code) {
@@ -427,8 +431,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kUnitSerialNumber:
         // Return Unit Serial Number data page toapplication client.
         // Referto 6.1.3.
-        return TranslateUnitSerialNumberVpd(*identify_ctrl, *identify_ns, nsid,
-                                            buffer);
+        return TranslateUnitSerialNumberVpd(*identify_ctrl_data,
+                                            *identify_ns_data, nsid, buffer);
       case scsi::PageCode::kDeviceIdentification:
         // TODO: Return Device Identification data page toapplication client,
         // refer to 6.1.4
@@ -440,14 +444,14 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
-        return TranslateBlockLimitsVpd(*identify_ctrl, buffer);
+        return TranslateBlockLimitsVpd(*identify_ctrl_data, buffer);
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
         // Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
         return TranslateBlockDeviceCharacteristicsVpd(buffer);
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
-        return TranslateLogicalBlockProvisioningVpd(*identify_ctrl,
-                                                    *identify_ns, buffer);
+        return TranslateLogicalBlockProvisioningVpd(*identify_ctrl_data,
+                                                    *identify_ns_data, buffer);
       // May be supported by returning Logical Block Provisioning VPD Page to
       // application client, refer to 6.1.8.
       default:
@@ -458,7 +462,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
     }
   } else {
     // Return Standard INQUIRY Data to application client
-    return TranslateStandardInquiry(*identify_ctrl, *identify_ns, buffer);
+    return TranslateStandardInquiry(*identify_ctrl_data, *identify_ns_data,
+                                    buffer);
   }
   return StatusCode::kSuccess;
 }

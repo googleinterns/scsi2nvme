@@ -59,7 +59,7 @@ void BuildPrInfo(uint8_t bytchk, uint8_t vr_protect, uint8_t& pr_info) {
 }  // namespace
 
 StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
-                        nvme::GenericQueueEntryCmd& nvme_cmd) {
+                        NvmeCmdWrapper& nvme_wrapper) {
   scsi::Verify10Command verify_cmd{};
   if (!ReadValue(scsi_cmd, verify_cmd)) {
     DebugLog("Malformed Verify Command - ReadValue Failure");
@@ -93,7 +93,7 @@ StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
   // NOTE: Bytchk does not seem to translate nicely. have defaulted FUA to off.
 
   // Group Number -- support unspecified
-  nvme_cmd = nvme::GenericQueueEntryCmd{
+  nvme_wrapper.cmd = nvme::GenericQueueEntryCmd{
       .opc = static_cast<uint8_t>(nvme::NvmOpcode::kCompare),
       .cdw = {
           // Support requires translation to Starting LBA field of NVM Express
@@ -119,6 +119,7 @@ StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
                 ((pr_info) << 26)),  // cdw 12
       }};
 
+  nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
 }
 

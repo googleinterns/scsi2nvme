@@ -87,9 +87,9 @@ TEST(Translation, ShouldReturnSenseData) {
 
 TEST(Translation, ShouldReturnEmptyCmdSpan) {
   translator::Translation translation = {};
-  translator::Span<const nvme::GenericQueueEntryCmd> cmds =
-      translation.GetNvmeCmds();
-  EXPECT_EQ(0, cmds.size());
+  translator::Span<const translator::NvmeCmdWrapper> nvme_wrappers =
+      translation.GetNvmeWrappers();
+  EXPECT_EQ(0, nvme_wrappers.size());
 }
 
 }  // namespace
