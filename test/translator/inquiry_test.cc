@@ -857,6 +857,198 @@ TEST_F(InquiryTest, FailsOnNamespaceNullPointer) {
   ASSERT_EQ(status, translator::StatusCode::kFailure);
 }
 
+TEST_F(InquiryTest, ExtndedInquiryDataVpdShouldReturnCorrectSPTValue) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kExtended;
+
+  identify_ns_.dpc.pit1 = identify_ns_.dpc.pit2 = 0;
+  identify_ns_.dpc.pit3 = 1;
+
+  // dpc = 0b001
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.spt, 0b000);
+
+  // dpc = 0b010
+  identify_ns_.dpc.pit2 = 1;
+  identify_ns_.dpc.pit3 = 0;
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.spt, 0b010);
+
+  // dpc = 0b011
+  identify_ns_.dpc.pit3 = 1;
+
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+  EXPECT_EQ(extended_inquiry_data.spt, 0b001);
+
+  // dpc = 0b100
+  identify_ns_.dpc.pit1 = 1;
+  identify_ns_.dpc.pit2 = 0;
+  identify_ns_.dpc.pit3 = 0;
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+  EXPECT_EQ(extended_inquiry_data.spt, 0b100);
+
+  // dpc = 0b101
+  identify_ns_.dpc.pit3 = 1;
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+  EXPECT_EQ(extended_inquiry_data.spt, 0b011);
+
+  // dpc = 0b110
+  identify_ns_.dpc.pit2 = 1;
+  identify_ns_.dpc.pit3 = 0;
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+  EXPECT_EQ(extended_inquiry_data.spt, 0b101);
+
+  // dpc = 0b111
+  identify_ns_.dpc.pit3 = 1;
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+  EXPECT_EQ(extended_inquiry_data.spt, 0b111);
+}
+
+TEST_F(InquiryTest, ExtndedInquiryDataVpdShouldUseTheCorrectDPSValue) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kExtended;
+  identify_ns_.dps.reserved4 = identify_ns_.dps.md_start =
+      identify_ns_.dps.pit = 0;
+
+  // dpc = 0b100
+  identify_ns_.dpc.pit1 = 1;
+  identify_ns_.dpc.pit2 = 0;
+  identify_ns_.dpc.pit3 = 0;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.grd_chk, 0b0);
+  EXPECT_EQ(extended_inquiry_data.app_chk, 0b0);
+  EXPECT_EQ(extended_inquiry_data.ref_chk, 0b0);
+
+  identify_ns_.dps.reserved4 = 1;
+  identify_ns_.dps.md_start = 1;
+  identify_ns_.dps.pit = 1;
+
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.grd_chk, 0b1);
+  EXPECT_EQ(extended_inquiry_data.app_chk, 0b1);
+  EXPECT_EQ(extended_inquiry_data.ref_chk, 0b1);
+}
+
+TEST_F(InquiryTest,
+       ExtendedInquiryDataVpdShouldUseTheIdentifyControllerDataVWCBit) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kExtended;
+
+  identify_ctrl_.vwc.present = 0;
+
+  // dpc = 0b100
+  identify_ns_.dpc.pit1 = 1;
+  identify_ns_.dpc.pit2 = 0;
+  identify_ns_.dpc.pit3 = 0;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.v_sup, 0);
+
+  identify_ctrl_.vwc.present = 1;
+
+  status = translator::InquiryToScsi(scsi_cmd_, buffer_, nvme_wrappers_[0].cmd,
+                                     nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.v_sup, 1);
+}
+
+TEST_F(InquiryTest, ExtendedInquiryDataVpdShouldReturnCorrectDataPage) {
+  inquiry_cmd_.evpd = 1;
+  inquiry_cmd_.page_code = scsi::PageCode::kExtended;
+
+  // adding mock values for testing purposes
+  identify_ns_.dps.md_start = identify_ns_.dps.pit =
+      identify_ns_.dps.reserved4 = 0;
+
+  identify_ns_.dpc.pit1 = identify_ns_.dpc.pit2 = 0;
+  identify_ns_.dpc.pit3 = 1;
+
+  identify_ctrl_.vwc.present = 0;
+
+  translator::StatusCode status = translator::InquiryToScsi(
+      scsi_cmd_, buffer_, nvme_wrappers_[0].cmd, nvme_wrappers_[1].cmd);
+  EXPECT_EQ(status, translator::StatusCode::kSuccess);
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data{};
+  ASSERT_TRUE(translator::ReadValue(buffer_, extended_inquiry_data));
+
+  EXPECT_EQ(extended_inquiry_data.peripheral_qualifer,
+            scsi::PeripheralQualifier::kPeripheralDeviceConnected);
+
+  EXPECT_EQ(extended_inquiry_data.peripheral_device_type,
+            scsi::PeripheralDeviceType::kDirectAccessBlock);
+
+  EXPECT_EQ(extended_inquiry_data.page_code, scsi::PageCode::kExtended);
+  EXPECT_EQ(extended_inquiry_data.page_length,
+            scsi::PageLength::kExtendedInquiryCommand);
+  EXPECT_EQ(extended_inquiry_data.activate_microcode,
+            scsi::ActivateMicrocode::kActivateAfterHardReset);
+  EXPECT_EQ(extended_inquiry_data.spt, 0);
+  EXPECT_EQ(extended_inquiry_data.grd_chk, 0);
+  EXPECT_EQ(extended_inquiry_data.app_chk, 0);
+  EXPECT_EQ(extended_inquiry_data.ref_chk, 0);
+  EXPECT_EQ(extended_inquiry_data.uask_sup, 1);
+  EXPECT_EQ(extended_inquiry_data.group_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.prior_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.headsup, 0);
+  EXPECT_EQ(extended_inquiry_data.ordsup, 0);
+  EXPECT_EQ(extended_inquiry_data.simpsup, 0);
+  EXPECT_EQ(extended_inquiry_data.wu_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.crd_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.nv_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.v_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.p_i_i_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.luiclr, 1);
+  EXPECT_EQ(extended_inquiry_data.r_sup, 0);
+  EXPECT_EQ(extended_inquiry_data._reserved6, 0);
+  EXPECT_EQ(extended_inquiry_data.multi_t_nexus_microcode_download, 0);
+  EXPECT_EQ(extended_inquiry_data.extended_self_test_completion_minutes, 0);
+  EXPECT_EQ(extended_inquiry_data.poa_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.hra_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.vsa_sup, 0);
+  EXPECT_EQ(extended_inquiry_data.maximum_supported_sense_data_length, 0);
+}
+
 TEST_F(InquiryTest, BlockDeviceCharacteristicsVpdBuildsCorrectStruct) {
   inquiry_cmd_.evpd = 1;
   inquiry_cmd_.page_code = scsi::PageCode::kBlockDeviceCharacteristicsVpd;

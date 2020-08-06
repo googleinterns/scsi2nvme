@@ -29,6 +29,49 @@ namespace {
 constexpr uint8_t kIdentifierLengthNguid = 0x10;
 constexpr uint8_t kIdentifierLengthEui64 = 0x8;
 
+// The SPT field of the ExtendedInquiryData depends on the DPC field of the
+// IdentifyNamespaceData
+StatusCode GetSptValueFromDPC(
+    const nvme::IdentifyNamespace& identify_namespace_data, uint8_t& spt) {
+  // no need to convert from network to host endian as all three fields are 1
+  // byte long
+  uint8_t dpc = identify_namespace_data.dpc.pit1 << 2 |
+                identify_namespace_data.dpc.pit2 << 1 |
+                identify_namespace_data.dpc.pit3;
+
+  // SPT shall be translated using the DPC field of the Identify
+  // Namespace Data Structure. Refer to:
+  // https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+  // Section 6.1.5
+  switch (dpc) {
+    case 0b001:
+      spt = 0b000;
+      break;
+    case 0b010:
+      spt = 0b010;
+      break;
+    case 0b011:
+      spt = 0b001;
+      break;
+    case 0b100:
+      spt = 0b100;
+      break;
+    case 0b101:
+      spt = 0b011;
+      break;
+    case 0b110:
+      spt = 0b101;
+      break;
+    case 0b111:
+      spt = 0b111;
+      break;
+    default:
+      DebugLog("DPC value not recoginized while translating ExtendedInquiry\n");
+      return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
+}
+
 // Builds the IdentificationDescriptor according to 6.1.4.5 of the translation
 // spec:
 // https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
@@ -289,6 +332,76 @@ StatusCode TranslateDeviceIdentificationVpd(
   return status;
 }
 
+// Returns Extended Inquiry Data Page. Refer to section 6.1.5
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+StatusCode TranslateExtendedInquiryDataVpd(
+    const nvme::IdentifyNamespace& identify_namespace_data,
+    const nvme::IdentifyControllerData& identify_controller_data,
+    Span<uint8_t> buffer) {
+  uint8_t dps_result =
+      identify_namespace_data.dps.md_start || identify_namespace_data.dps.pit;
+  uint8_t spt = 0;
+  StatusCode status = GetSptValueFromDPC(identify_namespace_data, spt);
+
+  if (status != StatusCode::kSuccess) {
+    return status;
+  }
+
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data = {
+
+      // Shall be set to 00h indicating direct access block device
+      .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
+
+      // Shall be set to 000b indicating device for PERIPHERAL DEVICE TYPE
+      // connected to logical unit
+      .peripheral_qualifer =
+          scsi::PeripheralQualifier::kPeripheralDeviceConnected,
+
+      // Shall be set to 86h indicating Extending INQUIRY Data VPD
+      .page_code = scsi::PageCode::kExtended,
+
+      // Shall be set to 3ch
+      .page_length = scsi::PageLength::kExtendedInquiryCommand,
+
+      // If DPS field of Identify Namespace Data Structure is 000b, these fields
+      // shall be set to 0b, otherwise set to 1b.
+      .ref_chk = dps_result,
+      .app_chk = dps_result,
+      .grd_chk = dps_result,
+
+      // SPT shall be translated using the DPC field of the Identify Namespace
+      // Data
+      // Structure
+      .spt = spt,
+
+      // Shall be set to 10b indicating microcode will be activated after a hard
+      // reset.
+      .activate_microcode = scsi::ActivateMicrocode::kActivateAfterHardReset,
+
+      // Shall be set to 1b indicating sense key specific data is returned for
+      // UNIT
+      // ATTENTION sense key.
+      .uask_sup = 0b1,
+
+      // Shall be set using the Volatile Write Cache (VMC) field of the Identify
+      // Controller Data Structure.
+      .v_sup = identify_controller_data.vwc.present,
+
+      // Shall be set to 1b indicating unit attentions are cleared according to
+      // SPC-4.
+      .luiclr = 0b1,
+
+      // Rest of the fields of this structure shall be set to 0. The Desginator
+      // Lists initialize all fields to zero unless they are explicitly declared
+      // to ll some other value.
+  };
+  if (!WriteValue(extended_inquiry_data, buffer)) {
+    DebugLog("Couldn't write ExtendedInquiry to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return status;
+}
+
 StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
   scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
       // Shall be set to B1h indicating Device Identification VPD Page
@@ -544,9 +657,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
       case scsi::PageCode::kDeviceIdentification:
         return TranslateDeviceIdentificationVpd(*identify_ns_data, buffer);
       case scsi::PageCode::kExtended:
-        // TODO: May optionally be supported by returning Extended INQUIRY data
-        // page toapplication client, refer to 6.1.5.
-        break;
+        return TranslateExtendedInquiryDataVpd(*identify_ns_data,
+                                               *identify_ctrl_data, buffer);
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.

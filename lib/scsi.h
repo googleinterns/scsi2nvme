@@ -206,6 +206,36 @@ enum class PageCode : uint8_t {
   kLogicalBlockProvisioningVpd = 0xb2
 };
 
+// SCSI Reference Manual Table 456
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ActivateMicrocode : uint8_t {
+  // The actions of the device server may or may not be as defined for values
+  // 01b or 10b.
+  kAmbiguous = 0b00,
+
+  // The device server:
+  // 1) activates the microcode before completion of the final command in the
+  // WRITE BUFFER sequence; and
+  // 2) establishes a unit attention condition for the initiator port associated
+  // with every I_T nexus, except the I_T nexus on which the WRITE BUFFER
+  // command was received, with the additional sense code set to MICROCODE HAS
+  // BEEN CHANGED.
+  kActivateBeforeHardReset = 0b01,
+
+  // The device server:
+  // 1) activates the microcode after:
+  //    A) a vendor specific event;
+  //    B) a power on event; or
+  //    C) a hard reset event;
+  // and
+  // 2) establishes a unit attention condition for the initiator port associated
+  //    with every I_T nexus with the additional sense code set to MICROCODE HAS
+  //    BEEN CHANGED.
+  kActivateAfterHardReset = 0b10,
+
+  kReserved = 0b11,
+};
+
 // SCSI Reference Manual Table 461
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 enum class Association : uint8_t {
@@ -391,11 +421,9 @@ enum class Zoned : uint8_t {
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 enum class PageLength : uint16_t {
   kExtendedInquiryCommand = 0x3c,
-  kBlockDeviceCharacteristicsVpd = 0x3c
+  kBlockDeviceCharacteristicsVpd = 0x3c,
 };
 
-// SCSI Reference Manual Table 10
-// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct ControlByte {
   uint8_t obsolete : 2;
   bool naca : 1;
@@ -1260,6 +1288,53 @@ struct DeviceIdentificationVpd {
   uint8_t page_length : 8;
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
+
+// SCSI reference Manual Table 455
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ExtendedInquiryDataVpd {
+  PeripheralDeviceType peripheral_device_type : 5;
+  PeripheralQualifier peripheral_qualifer : 3;
+  PageCode page_code : 8;
+  PageLength page_length : 16;
+  bool ref_chk : 1;  // reference tag check bit
+  bool app_chk : 1;  // application tag check bit
+  bool grd_chk : 1;  // guard check bit
+  uint8_t spt : 3;   // supported protection type
+  ActivateMicrocode activate_microcode : 2;
+  bool simpsup : 1;    // Simple Supported bit
+  bool ordsup : 1;     // Ordered Supported bit
+  bool headsup : 1;    // Head of Queue Supported bit
+  bool prior_sup : 1;  // Priority Supported bit
+  bool group_sup : 1;  // Grouping Function Supported bit
+  bool uask_sup : 1;   // Unit Attention Sense Key Supported bit
+  uint8_t _reserved1 : 2;
+  bool v_sup : 1;    // Volatile Cache Supported Bit
+  bool nv_sup : 1;   // Non-Volatile Cache Supported bit
+  bool crd_sup : 1;  // Correction Disable Supported bit
+  bool wu_sup : 1;   // Write Uncorrectable Supported bit
+  uint8_t _reserved2 : 4;
+  bool luiclr : 1;  // Logical Unit I_T Nexus Clear bit
+  uint8_t _reserved3 : 3;
+  bool p_i_i_sup : 1;  // Protection Information Interval Supported bit
+  bool no_pi_chk : 1;  // No Protection Information Checking bit
+  uint8_t _reserved4 : 2;
+  bool obsolete : 1;
+  bool hssrelef : 1;  // History Snapshots Release Effects bit
+  bool rtd_sup : 1;   // Resistance Temperature Detection bit
+  bool _reserved5 : 1;
+  bool r_sup : 1;  // Referrals Supported bit
+  uint8_t _reserved6 : 3;
+  uint8_t multi_t_nexus_microcode_download : 4;
+  uint8_t _reserved7 : 4;
+  uint16_t extended_self_test_completion_minutes : 16;
+  uint8_t _reserved8 : 5;
+  bool vsa_sup : 1;  // Vendor Specific Activation Supported bit
+  bool hra_sup : 1;  // Hard Reset Activation Supported bit
+  bool poa_sup : 1;  // Power on Activation Supported bit
+  uint8_t maximum_supported_sense_data_length : 8;
+  // uint8_t _reserved9[50];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ExtendedInquiryDataVpd) == 14);
 
 // SCSI Reference Manual Table 459
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
