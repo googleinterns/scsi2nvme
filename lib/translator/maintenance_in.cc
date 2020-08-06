@@ -18,7 +18,8 @@
 
 namespace translator {
 
-StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd) {
+StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd,
+                                          uint32_t& alloc_len) {
   scsi::ReportOpCodesCommand report_cmd = {};
   if (!ReadValue(scsi_cmd, report_cmd)) {
     DebugLog("Malformed Report Supported OpCodes command");
@@ -33,6 +34,8 @@ StatusCode ValidateReportSupportedOpCodes(Span<const uint8_t> scsi_cmd) {
     DebugLog("Only supporting ReportSupportedOpCodes for WriteSame16");
     return StatusCode::kInvalidInput;
   }
+
+  alloc_len = sizeof(scsi::OneCommandParamData);
 
   return StatusCode::kSuccess;
 }

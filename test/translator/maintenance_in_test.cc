@@ -18,18 +18,20 @@
 namespace {
 
 TEST(ReportSupportedOpCodes, InvalidOpCodeValidationFailure) {
+  uint32_t alloc_len = 0;
   scsi::ReportOpCodesCommand cmd = {
       .requested_op_code = static_cast<uint8_t>(scsi::OpCode::kRead10)};
   uint8_t scsi_cmd[sizeof(scsi::ReportOpCodesCommand)];
   translator::WriteValue(cmd, scsi_cmd);
 
   translator::StatusCode status_code =
-      translator::ValidateReportSupportedOpCodes(scsi_cmd);
+      translator::ValidateReportSupportedOpCodes(scsi_cmd, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
 TEST(ReportSupportedOpCodes, InvalidReportingOptionsValidationFailure) {
+  uint32_t alloc_len = 0;
   scsi::ReportOpCodesCommand cmd = {
       .reporting_options = 0,
       .requested_op_code = static_cast<uint8_t>(scsi::OpCode::kWriteSame16)};
@@ -37,12 +39,13 @@ TEST(ReportSupportedOpCodes, InvalidReportingOptionsValidationFailure) {
   translator::WriteValue(cmd, scsi_cmd);
 
   translator::StatusCode status_code =
-      translator::ValidateReportSupportedOpCodes(scsi_cmd);
+      translator::ValidateReportSupportedOpCodes(scsi_cmd, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kInvalidInput, status_code);
 }
 
 TEST(ReportSupportedOpCodes, ValidationSuccess) {
+  uint32_t alloc_len = 0;
   scsi::ReportOpCodesCommand cmd = {
       .reporting_options = 0b001,
       .requested_op_code = static_cast<uint8_t>(scsi::OpCode::kWriteSame16)};
@@ -50,9 +53,10 @@ TEST(ReportSupportedOpCodes, ValidationSuccess) {
   translator::WriteValue(cmd, scsi_cmd);
 
   translator::StatusCode status_code =
-      translator::ValidateReportSupportedOpCodes(scsi_cmd);
+      translator::ValidateReportSupportedOpCodes(scsi_cmd, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
+  EXPECT_EQ(sizeof(scsi::OneCommandParamData), alloc_len);
 }
 
 TEST(ReportSupportedOpCodes, WriteResultSuccess) {

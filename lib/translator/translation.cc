@@ -73,7 +73,8 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                             nvme_cmd_count_, response.alloc_len);
     case scsi::OpCode::kMaintenanceIn:
       // ReportSupportedOpCodes is the only supported MaintenanceIn command
-      pipeline_status_ = ValidateReportSupportedOpCodes(scsi_cmd_no_op);
+      pipeline_status_ =
+          ValidateReportSupportedOpCodes(scsi_cmd_no_op, response.alloc_len);
       nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_cmds_[0],
@@ -92,25 +93,25 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kRead6:
       pipeline_status_ =
           Read6ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
-                      kPageSize, kLbaSize);
+                      kPageSize, kLbaSize, response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead10:
       pipeline_status_ =
           Read10ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize);
+                       kPageSize, kLbaSize, response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead12:
       pipeline_status_ =
           Read12ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize);
+                       kPageSize, kLbaSize, response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRead16:
       pipeline_status_ =
           Read16ToNvme(scsi_cmd_no_op, nvme_cmds_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize);
+                       kPageSize, kLbaSize, response.alloc_len);
       break;
     case scsi::OpCode::kSync10:
       SynchronizeCache10ToNvme(nvme_cmds_[0], nsid);
