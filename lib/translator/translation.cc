@@ -23,6 +23,7 @@
 #include "request_sense.h"
 #include "status.h"
 #include "synchronize_cache.h"
+#include "unmap.h"
 #include "verify.h"
 
 namespace translator {
@@ -33,6 +34,7 @@ constexpr uint32_t kPageSize = 4096;
 constexpr uint32_t kLbaSize = 512;
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
+                                 Span<const uint8_t> buffer_out,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
@@ -44,7 +46,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
 
   // Verify buffer is large enough to contain opcode (one byte)
   if (scsi_cmd.empty()) {
-    DebugLog("Empty SCSI Buffer");
+    DebugLog("Empty SCSI Command Buffer");
     pipeline_status_ = StatusCode::kFailure;
     return response;
   }
@@ -62,6 +64,9 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
+    case scsi::OpCode::kUnmap:
+      pipeline_status_ = UnmapToNvme(scsi_cmd_no_op, buffer_out, nvme_cmds_[0],
+                                     allocations_[0], nsid);
     case scsi::OpCode::kModeSense6:
       pipeline_status_ =
           ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
@@ -212,6 +217,9 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToScsi(nvme_wrappers_[0].cmd, buffer_in);
       break;
+    case scsi::OpCode::kUnmap:
+      pipeline_status_ = StatusCode::kSuccess;
+      break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_wrappers_[0].cmd);
       break;
@@ -226,6 +234,7 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
+      pipeline_status_ = StatusCode::kSuccess;
       break;
     default:
       DebugLog(
