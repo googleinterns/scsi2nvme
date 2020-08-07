@@ -25,8 +25,8 @@ namespace translator {
 // Buffer_out is a SCSI data buffer containing variable-length cmd data.
 StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
                        Span<const uint8_t> buffer_out,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid);
+                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                       uint32_t nsid);
 
 }  // namespace translator
 #endif

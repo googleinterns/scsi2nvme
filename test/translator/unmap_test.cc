@@ -56,7 +56,7 @@ TEST(TranslateUnmap, ShouldFillBufferCorrectly) {
     buf_descriptor_list = buf_descriptor_list.subspan(sizeof(descriptors[i]));
   }
 
-  nvme::GenericQueueEntryCmd nvme_cmd = {};
+  translator::NvmeCmdWrapper nvme_wrapper = {};
   translator::Allocation allocation = {};
 
   auto alloc_callback = [](uint16_t count) -> uint64_t {
@@ -67,21 +67,24 @@ TEST(TranslateUnmap, ShouldFillBufferCorrectly) {
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
   // Run function we're testing
-  translator::StatusCode status_code =
-      translator::UnmapToNvme(scsi_cmd, buffer_out, nvme_cmd, allocation, nsid);
+  translator::StatusCode status_code = translator::UnmapToNvme(
+      scsi_cmd, buffer_out, nvme_wrapper, allocation, nsid);
 
   // Validate outputs
   ASSERT_EQ(status_code, translator::StatusCode::kSuccess);
 
-  EXPECT_EQ(nsid, nvme_cmd.nsid);
-  EXPECT_EQ(descriptor_count - 1, nvme_cmd.cdw[0]);
-  EXPECT_EQ(0b100, nvme_cmd.cdw[1]);
+  EXPECT_EQ(true, nvme_wrapper.is_admin);
+
+  EXPECT_EQ(nsid, nvme_wrapper.cmd.nsid);
+  EXPECT_EQ(descriptor_count - 1, nvme_wrapper.cmd.cdw[0]);
+  EXPECT_EQ(0b100, nvme_wrapper.cmd.cdw[1]);
 
   EXPECT_NE(0, allocation.data_addr);
   EXPECT_EQ(1, allocation.data_page_count);
 
   nvme::DatasetManagmentRange* dmr_ptr =
-      reinterpret_cast<nvme::DatasetManagmentRange*>(nvme_cmd.dptr.prp.prp1);
+      reinterpret_cast<nvme::DatasetManagmentRange*>(
+          nvme_wrapper.cmd.dptr.prp.prp1);
   for (uint32_t i = 0; i < descriptor_count; ++i) {
     EXPECT_EQ(i + addr_offset, translator::ltohl(dmr_ptr[i].lba));
     EXPECT_EQ(i + count_offset, translator::ltohl(dmr_ptr[i].lb_count));

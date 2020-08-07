@@ -28,8 +28,8 @@ namespace translator {
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
                        Span<const uint8_t> buffer_out,
-                       nvme::GenericQueueEntryCmd& nvme_cmd,
-                       Allocation& allocation, uint32_t nsid) {
+                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
+                       uint32_t nsid) {
   scsi::UnmapCommand unmap_cmd;
   if (!ReadValue(scsi_cmd, unmap_cmd)) {
     DebugLog("Malformed unmap command");
@@ -109,8 +109,10 @@ StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
       .nr = bd_count_byte,  // (1's based -> 0's based)
       .ad = 1};
   dataset_cmd.dptr.prp.prp1 = allocation.data_addr,
-  memcpy(&nvme_cmd, &dataset_cmd, sizeof(nvme_cmd));
-  static_assert(sizeof(nvme_cmd) == sizeof(dataset_cmd));
+  memcpy(&nvme_wrapper.cmd, &dataset_cmd, sizeof(nvme_wrapper.cmd));
+  nvme_wrapper.is_admin = true;
+  static_assert(sizeof(nvme_wrapper.cmd) == sizeof(dataset_cmd));
+
   return StatusCode::kSuccess;
 }
 

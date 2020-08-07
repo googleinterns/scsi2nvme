@@ -65,8 +65,9 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kUnmap:
-      pipeline_status_ = UnmapToNvme(scsi_cmd_no_op, buffer_out, nvme_cmds_[0],
-                                     allocations_[0], nsid);
+      pipeline_status_ = UnmapToNvme(scsi_cmd_no_op, buffer_out,
+                                     nvme_wrappers_[0], allocations_[0], nsid);
+      nvme_cmd_count_ = 1;
     case scsi::OpCode::kModeSense6:
       pipeline_status_ =
           ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
