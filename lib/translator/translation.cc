@@ -23,6 +23,7 @@
 #include "request_sense.h"
 #include "status.h"
 #include "synchronize_cache.h"
+#include "unmap.h"
 #include "verify.h"
 #include "write.h"
 
@@ -34,6 +35,7 @@ constexpr uint32_t kPageSize = 4096;
 constexpr uint32_t kLbaSize = 512;
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
+                                 Span<const uint8_t> buffer_out,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
@@ -45,7 +47,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
 
   // Verify buffer is large enough to contain opcode (one byte)
   if (scsi_cmd.empty()) {
-    DebugLog("Empty SCSI Buffer");
+    DebugLog("Empty SCSI Command Buffer");
     pipeline_status_ = StatusCode::kFailure;
     return response;
   }
@@ -63,6 +65,10 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                         response.alloc_len, nsid, allocations_);
       nvme_cmd_count_ = 2;
       break;
+    case scsi::OpCode::kUnmap:
+      pipeline_status_ = UnmapToNvme(scsi_cmd_no_op, buffer_out,
+                                     nvme_wrappers_[0], allocations_[0], nsid);
+      nvme_cmd_count_ = 1;
     case scsi::OpCode::kModeSense6:
       pipeline_status_ =
           ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
@@ -127,25 +133,25 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kWrite6:
       pipeline_status_ =
           Write6ToNvme(scsi_cmd, nvme_wrappers_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize);
+                       kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite10:
       pipeline_status_ =
           Write10ToNvme(scsi_cmd, nvme_wrappers_[0], allocations_[0], nsid,
-                        kPageSize, kLbaSize);
+                        kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite12:
       pipeline_status_ =
           Write12ToNvme(scsi_cmd, nvme_wrappers_[0], allocations_[0], nsid,
-                        kPageSize, kLbaSize);
+                        kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite16:
       pipeline_status_ =
           Write16ToNvme(scsi_cmd, nvme_wrappers_[0], allocations_[0], nsid,
-                        kPageSize, kLbaSize);
+                        kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     default:
@@ -237,6 +243,9 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kReportLuns:
       pipeline_status_ = ReportLunsToScsi(nvme_wrappers_[0].cmd, buffer_in);
       break;
+    case scsi::OpCode::kUnmap:
+      pipeline_status_ = StatusCode::kSuccess;
+      break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ = ReadCapacity10ToScsi(buffer_in, nvme_wrappers_[0].cmd);
       break;
@@ -251,6 +260,7 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
+      pipeline_status_ = StatusCode::kSuccess;
       break;
     default:
       DebugLog(

@@ -71,7 +71,16 @@ cc_test(
   ]
 )
 
-cc_library(
+cc_test(
+  name = "unmap_test",
+  srcs = [ "unmap_test.cc" ],
+  deps = [
+    "//lib/translator:unmap_lib",
+    "@googletest//:gtest_main",
+  ]
+)
+
+cc_test(
   name = "mode_sense_test",
   srcs = [ "mode_sense_test.cc"],
   deps = [

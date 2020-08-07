@@ -26,7 +26,8 @@ TEST(Translation, ShouldHandleUnknownOpcode) {
   translator::Translation translation = {};
   uint8_t opc = 233;
   translator::Span<const uint8_t> scsi_cmd = translator::Span(&opc, 1);
-  translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
+  translator::Span<const uint8_t> buffer_out;
+  translator::BeginResponse resp = translation.Begin(scsi_cmd, buffer_out, 0);
   EXPECT_EQ(translator::ApiStatus::kSuccess, resp.status);
 }
 
@@ -34,7 +35,8 @@ TEST(Translation, ShouldReturnInquirySuccess) {
   translator::Translation translation = {};
   uint8_t opc = static_cast<uint8_t>(scsi::OpCode::kInquiry);
   translator::Span<const uint8_t> scsi_cmd = translator::Span(&opc, 1);
-  translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
+  translator::Span<const uint8_t> buffer_out;
+  translator::BeginResponse resp = translation.Begin(scsi_cmd, buffer_out, 0);
   EXPECT_EQ(translator::ApiStatus::kSuccess, resp.status);
 }
 
@@ -53,7 +55,8 @@ TEST(Translation, ShouldReturnSenseData) {
 
   uint8_t opc = 255;  // Unsupported opcode
   translator::Span<const uint8_t> scsi_cmd = translator::Span(&opc, 1);
-  translator::BeginResponse resp = translation.Begin(scsi_cmd, 0);
+  translator::Span<const uint8_t> buffer_out;
+  translator::BeginResponse resp = translation.Begin(scsi_cmd, buffer_out, 0);
 
   ASSERT_EQ(translator::ApiStatus::kSuccess, resp.status);
 

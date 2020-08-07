@@ -20,6 +20,7 @@ cc_library(
     ":read_lib",
     ":read_capacity_10_lib",
     ":request_sense_lib",
+    ":unmap_lib",
     ":status_lib",
     ":mode_sense_lib",
     ":synchronize_cache_lib",
@@ -131,6 +132,17 @@ cc_library(
   visibility = ["//visibility:public"],
 )
  
+cc_library(
+  name = "unmap_lib",
+  hdrs = ["unmap.h"],
+  srcs = ["unmap.cc"],
+  deps = [
+      "//third_party/spdk:nvme_lib",
+      ":common",
+  ],
+  visibility = ["//visibility:public"],
+)
+
 cc_library(
   name = "mode_sense_lib",
   hdrs = ["mode_sense.h"],
