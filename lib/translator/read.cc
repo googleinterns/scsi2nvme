@@ -73,7 +73,7 @@ uint16_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
 StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation, uint32_t nsid,
                       uint16_t transfer_length, uint32_t page_size,
-                      uint32_t lba_size, uint32_t& alloc_len) {
+                      uint32_t lba_size, uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   StatusCode status = allocation.SetPages(
       GetTransferLengthPages(transfer_length, page_size, lba_size), 0);
   if (status != StatusCode::kSuccess) {
@@ -85,9 +85,16 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
       .psdt = 0,  // PRPs are used for data transfer
       .nsid = nsid};
 
-  nvme_cmd.dptr.prp.prp1 = allocation.data_addr;
-
   alloc_len = transfer_length * lba_size;
+
+  // checks beforehand if enough space has been allocated for the buffer
+  if(buffer_in.size() < alloc_len) {
+    DebugLog("Not enough memory allocated for Read buffer");
+    return StatusCode::kFailure;
+  }
+
+  nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(buffer_in.data());
+
 
   return StatusCode::kSuccess;
 }
@@ -96,7 +103,7 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
 StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
                 nvme::GenericQueueEntryCmd& nvme_cmd, Allocation& allocation,
                 uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                uint32_t& alloc_len) {
+                uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   if (transfer_length == 0) {
     DebugLog("NVMe read command does not support transfering zero blocks");
     return StatusCode::kNoTranslation;
@@ -111,7 +118,7 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
   transfer_length &= 0xffff;  // truncate to 16 bits
 
   StatusCode status = LegacyRead(nvme_cmd, allocation, nsid, transfer_length,
-                                 page_size, lba_size, alloc_len);
+                                 page_size, lba_size, alloc_len, buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -132,7 +139,7 @@ StatusCode Read(uint8_t rd_protect, bool fua, uint32_t transfer_length,
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                       uint32_t& alloc_len) {
+                       uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   scsi::Read6Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read6 command");
@@ -147,7 +154,7 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
 
   StatusCode status =
       LegacyRead(nvme_wrapper.cmd, allocation, nsid, updated_transfer_length,
-                 page_size, lba_size, alloc_len);
+                 page_size, lba_size, alloc_len, buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -168,7 +175,7 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len) {
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   scsi::Read10Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read10 command");
@@ -178,7 +185,7 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohs(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -193,7 +200,7 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len) {
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   scsi::Read12Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read12 command");
@@ -203,7 +210,7 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -217,7 +224,7 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len) {
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
   scsi::Read16Command read_cmd;
   if (!ReadValue(scsi_cmd, read_cmd)) {
     DebugLog("Malformed Read16 command");
@@ -227,7 +234,7 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address to network endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -249,11 +256,6 @@ StatusCode ReadToScsi(Span<uint8_t> buffer,
   uint16_t transfer_length = static_cast<uint16_t>(ltohl(nvme_cmd.cdw[2]) + 1);
 
   uint32_t bytes_transferred = transfer_length * lba_size;
-
-  if (buffer.size() < bytes_transferred) {
-    DebugLog("Insufficient buffer size");
-    return StatusCode::kFailure;
-  }
 
   memcpy(buffer.data(), reinterpret_cast<uint8_t*>(data_ptr),
          bytes_transferred);

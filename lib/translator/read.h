@@ -35,22 +35,22 @@ namespace translator {
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                       uint32_t& alloc_len);
+                       uint32_t& alloc_len, Span<const uint8_t> buffer_in);
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in);
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in);
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
+                        uint32_t& alloc_len, Span<const uint8_t> buffer_in);
 
 // Common to Read(6), Read(10), Read(12), and Read(16)
 // Takes in the SCSI data-in buffer and an NVMe read command
