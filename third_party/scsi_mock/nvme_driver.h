@@ -55,15 +55,16 @@ struct NvmeCompletion {
 int nvme_driver_init(void);
 
 int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                         unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout);
+                         unsigned bufflen, struct NvmeCompletion* cpl,
+                         unsigned timeout);
 int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                      unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout);
-                      
+                      unsigned bufflen, struct NvmeCompletion* cpl,
+                      unsigned timeout);
+
 int send_sample_write_request(void);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif  // NVME2SCSI_NVME_H

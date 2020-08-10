@@ -57,20 +57,20 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
       return respond(cmd, 23);
     }
     printk("Data Length of SCSI Buffer: %u", data_len);
-    if (!is_data_in)
-      scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
+    if (!is_data_in) scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
   }
-  struct ScsiToNvmeResponse resp = ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, 
-    sense_len, data_buf, data_len, is_data_in);
+  struct ScsiToNvmeResponse resp =
+      ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, sense_len, data_buf,
+                 data_len, is_data_in);
   // Copy response to SGL buffer
   if (is_data_in && data_len > 0) {
     printk("ALLOC_LEN %u", resp.alloc_len);
     struct scsi_data_buffer* sdb = &cmd->sdb;
-    int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents, data_buf, resp.alloc_len);
+    int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents,
+                                      data_buf, resp.alloc_len);
     scsi_set_resid(cmd, data_len - sdb_len);
   }
-  if (data_len > 0)
-    kfree(data_buf);
+  if (data_len > 0) kfree(data_buf);
   return respond(cmd, resp.return_code);
 }
 
@@ -103,8 +103,7 @@ static int bus_driver_probe(struct device* dev) {
   struct Scsi_Host* scsi_host;
 
   printk("REGISTERING NEW DEVICE!");
-  if (dev != &pseudo_adapter || registered > 0)
-    return -1;
+  if (dev != &pseudo_adapter || registered > 0) return -1;
 
   printk("REGISTER CONTINUE!");
 

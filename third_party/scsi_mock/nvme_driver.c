@@ -16,9 +16,9 @@
 
 #define MY_BDEV_MODE (FMODE_READ | FMODE_WRITE)
 
-#define BITS_PER_SLICE 	6
-#define BITS_PER_WU 	7
-#define BITS_PER_DIE	6
+#define BITS_PER_SLICE 6
+#define BITS_PER_WU 7
+#define BITS_PER_DIE 6
 
 struct block_device* bdev;
 struct gendisk* bd_disk;
@@ -37,9 +37,9 @@ static inline struct nvme_request* nvme_req(struct request* req) {
   return blk_mq_rq_to_pdu(req);
 }
 
-static void submit_req_done (struct request *rq) {
-	struct nvme_request* nvme_rq = nvme_req(rq); 
-  //if (nvme_rq) {
+static void submit_req_done(struct request* rq) {
+  struct nvme_request* nvme_rq = nvme_req(rq);
+  // if (nvme_rq) {
   //  kfree(nvme_rq->cmd);
   //}
 
@@ -53,11 +53,11 @@ struct request* nvme_alloc_request(struct request_queue* q,
   struct request* req;
   unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
 
-  //printk("Request queue addr: %p", q);
+  // printk("Request queue addr: %p", q);
   req = blk_mq_alloc_request(q, op, 0);
-  
+
   if (IS_ERR(req)) return req;
-  
+
   req->cmd_flags |= REQ_FAILFAST_DRIVER;
   nvme_req(req)->retries = 0;
   nvme_req(req)->flags = 0;
@@ -67,10 +67,10 @@ struct request* nvme_alloc_request(struct request_queue* q,
   return req;
 }
 
-
 int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
                          struct nvme_command* cmd, void* buffer,
-                         unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout) {
+                         unsigned bufflen, struct NvmeCompletion* cpl,
+                         unsigned timeout) {
   struct request* req;
   struct bio* bio = NULL;
   int ret;
@@ -113,7 +113,6 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
   printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
   goto out;
 
-
 out_unmap:
   if (bio) {
     if (disk && bdev) bdput(bdev);
@@ -124,23 +123,25 @@ out:
 }
 
 int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                         unsigned bufflen, struct NvmeCompletion* cpl, unsigned timeout) {
+                         unsigned bufflen, struct NvmeCompletion* cpl,
+                         unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
   memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
-  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
-  //kernel_nvme_cmd.common.opcode = nvme_admin_identify;
-  //kernel_nvme_cmd.identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
-  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd, buffer,
-                              bufflen, cpl, timeout);
+  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  // kernel_nvme_cmd.common.opcode = nvme_admin_identify;
+  // kernel_nvme_cmd.identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
+  return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd,
+                              buffer, bufflen, cpl, timeout);
 }
 
 int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
-                      unsigned bufflen,struct NvmeCompletion* cpl, unsigned timeout) {
+                      unsigned bufflen, struct NvmeCompletion* cpl,
+                      unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
   memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
-  //static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
-  return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer, bufflen,
-                              cpl, timeout);
+  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
+  return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer,
+                              bufflen, cpl, timeout);
 }
 
 /*int send_sample_write_request() {
@@ -197,7 +198,7 @@ int nvme_driver_init(void) {
   }
   printk("CTRL State: %u", ns->ctrl->state);
   printk("Connects_q: %p", ns->ctrl->connect_q);
-  //nvme_get_ctrl(ns->ctrl);
+  // nvme_get_ctrl(ns->ctrl);
   printk("Admin_q address: %p", ns->ctrl->admin_q);
 
   printk("CTRL POINTER %p, NS POINTER %p", ns->ctrl, ns);

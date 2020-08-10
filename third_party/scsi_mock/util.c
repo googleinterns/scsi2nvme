@@ -15,21 +15,16 @@
 
 const int NVME_MIN_PAGE_SIZE = 4096;
 
-void Print(const char* msg) {
-  printk(msg);
-}
+void Print(const char* msg) { printk(msg); }
 
 unsigned long long AllocPages(unsigned short count) {
-  if (count == 0)
-    return 0;
+  if (count == 0) return 0;
   printk("Allocating %u bytes", NVME_MIN_PAGE_SIZE * count);
   void* addr = kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_ATOMIC | GFP_KERNEL);
-  if (addr == NULL)
-    printk("NULLPTR ALLOC PAGES!!!!");
-  return (unsigned long long) addr;
+  if (addr == NULL) printk("NULLPTR ALLOC PAGES!!!!");
+  return (unsigned long long)addr;
 }
 
 void DeallocPages(unsigned long long addr, unsigned short count) {
-  if (addr != 0)
-    kfree((void*)addr);
+  if (addr != 0) kfree((void*)addr);
 }
