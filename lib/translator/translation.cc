@@ -96,7 +96,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kRequestSense:
       pipeline_status_ = RequestSenseToNvme(scsi_cmd_no_op, response.alloc_len);
       break;
-case scsi::OpCode::kRead6:
+    case scsi::OpCode::kRead6:
       pipeline_status_ =
           Read6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                       kPageSize, kLbaSize, response.alloc_len, buffer_out);
