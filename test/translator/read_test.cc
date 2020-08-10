@@ -437,46 +437,4 @@ TEST_F(ReadTest, ReadToScsiInsufficientBufferShouldReturnFailure) {
   delete[] data;
 }
 
-TEST_F(ReadTest, ReadToScsiShouldReturnSuccess) {
-  uint32_t alloc_len = 0;
-  uint32_t host_transfer_length = 16;
-  uint32_t network_transfer_length = htonl(host_transfer_length);
-  uint32_t transfer_length_bytes = host_transfer_length * kLbaSize;
-
-  // create an array size 8192 = {0, 1, 2, ... 255, 0, 1, .., 255}
-  uint8_t* data = new uint8_t[transfer_length_bytes];
-  for (int i = 0; i < transfer_length_bytes; ++i) {
-    data[i] = i % 256;
-  }
-
-  scsi::Read12Command cmd = {
-      .fua = kFua,
-      .rd_protect = kRdProtect,
-      .logical_block_address = 0xffffffff,
-      .transfer_length = network_transfer_length,
-  };
-  uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
-  translator::NvmeCmdWrapper nvme_wrapper;
-  translator::Allocation allocation = {};
-
-  translator::Span<uint8_t> buffer_in(data, transfer_length_bytes);
-
-  // Build NVMe command
-  translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_wrapper, allocation, kNsid,
-                               kPageSize, kLbaSize, alloc_len, buffer_in);
-  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
-  ASSERT_EQ(transfer_length_bytes, alloc_len);
-
-  status_code = translator::ReadToScsi(buffer_in, nvme_wrapper.cmd, kLbaSize);
-
-  ASSERT_EQ(translator::StatusCode::kSuccess, status_code);
-  for (int i = 0; i < alloc_len; ++i) {
-    ASSERT_EQ(buffer_in.data()[i], data[i]);
-  }
-
-  delete[] data;
-}
-
 }  // namespace

@@ -234,7 +234,8 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kRead10:
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
-      pipeline_status_ = ReadToScsi(buffer_in, nvme_wrappers_[0].cmd, kLbaSize);
+      // All the errors should be caught by now so the status can be set to kSuccess
+      pipeline_status_ = StatusCode::kSuccess;
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
