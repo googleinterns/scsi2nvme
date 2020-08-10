@@ -25,6 +25,124 @@ namespace translator {
 
 // command specific helpers
 namespace {
+
+constexpr uint8_t kIdentifierLengthNguid = 0x10;
+constexpr uint8_t kIdentifierLengthEui64 = 0x8;
+
+// The SPT field of the ExtendedInquiryData depends on the DPC field of the
+// IdentifyNamespaceData
+StatusCode GetSptValueFromDPC(
+    const nvme::IdentifyNamespace& identify_namespace_data, uint8_t& spt) {
+  // no need to convert from network to host endian as all three fields are 1
+  // byte long
+  uint8_t dpc = identify_namespace_data.dpc.pit1 << 2 |
+                identify_namespace_data.dpc.pit2 << 1 |
+                identify_namespace_data.dpc.pit3;
+
+  // SPT shall be translated using the DPC field of the Identify
+  // Namespace Data Structure. Refer to:
+  // https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+  // Section 6.1.5
+  switch (dpc) {
+    case 0b001:
+      spt = 0b000;
+      break;
+    case 0b010:
+      spt = 0b010;
+      break;
+    case 0b011:
+      spt = 0b001;
+      break;
+    case 0b100:
+      spt = 0b100;
+      break;
+    case 0b101:
+      spt = 0b011;
+      break;
+    case 0b110:
+      spt = 0b101;
+      break;
+    case 0b111:
+      spt = 0b111;
+      break;
+    default:
+      DebugLog("DPC value not recoginized while translating ExtendedInquiry\n");
+      return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
+}
+
+// Builds the IdentificationDescriptor according to 6.1.4.5 of the translation
+// spec:
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+// This only builds the constant part of the Identification Descriptor. The
+// caller is responsible for building the identifier.
+StatusCode BuildIdentificationDescriptor(
+    const nvme::IdentifyNamespace& identify_namespace_data,
+    Span<uint8_t> buffer, uint8_t& identifier_length) {
+  // check if nonzero
+  bool nguid_nz =
+      identify_namespace_data.nguid[0] || identify_namespace_data.nguid[1];
+  bool eui64_nz = identify_namespace_data.eui64;
+
+  // Writes the value of the identification at the end of the buffer. This data
+  // comes after the DeviceIdentificationVPD and IdentificationDescriptor
+  // struct. Hence, the data is written at index +
+  // sizeof(IdentificationDescriptor), where index is the size of the
+  // DeviceIdentificationVPD struct.
+  if (nguid_nz) {
+    // Shall be set to 08h if the EUI-64 field is populated from the NVMe EUI64
+    // field.
+    identifier_length = kIdentifierLengthNguid;
+    if (!WriteValue(identify_namespace_data.nguid,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+  } else if (eui64_nz) {
+    // Shall be set to 10h if the EUI-64 field is populated from the NVMe NGUID
+    // field.
+    identifier_length = kIdentifierLengthEui64;
+    if (!WriteValue(identify_namespace_data.eui64,
+                    buffer.subspan(sizeof(scsi::IdentificationDescriptor)))) {
+      DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+      return StatusCode::kFailure;
+    }
+
+  } else {
+    // function not supported as both NGUID and EUI64 fields are zero
+    DebugLog("Both NGUID and EUI-64 fields are zero in IdentityNamespaceData");
+    return StatusCode::kFailure;
+  }
+
+  scsi::IdentificationDescriptor identification_descriptor = {
+
+      // Shall be set to 1h indicating associated fields are in binary format.
+      .code_set = scsi::CodeSet::kBinary,
+
+      // Shall be set to 0h. PIV field shall indicate this field is reserved as
+      // no
+      // specific protocol to be identified. This field will be ignored!
+      .protocol_identifier = scsi::ProtocolIdentifier::kFibreChannel,
+
+      // Shall be set to 2h indicating EUI-64 based identifier.
+      .identifier_type = scsi::IdentifierType::kEUI64,
+
+      // Shall be set to 00b indicating DESIGNATOR field is associated with
+      // logical unit.
+      .association = scsi::Association::kPhysicalDevice,
+
+      // Shall be set to 0b indicating PROTOCOL IDENTIFIER field is reserved.
+      .protocol_identifier_valid = 0,
+
+      .identifier_length = identifier_length};
+  if (!WriteValue(identification_descriptor, buffer)) {
+    DebugLog("Failed to write IdentificationDescriptor to the buffer\n");
+    return StatusCode::kFailure;
+  };
+  return StatusCode::kSuccess;
+}
+
 StatusCode TranslateStandardInquiry(
     const nvme::IdentifyControllerData& identify_ctrl,
     const nvme::IdentifyNamespace& identify_ns, Span<uint8_t> buffer) {
@@ -165,6 +283,139 @@ StatusCode TranslateUnitSerialNumberVpd(
       !WriteValue(product_serial_number, buffer.subspan(sizeof(result)))) {
     DebugLog(
         "Error writing Unit Serial Number or Product Serial Number to buffer");
+    return StatusCode::kFailure;
+  }
+  return StatusCode::kSuccess;
+}
+
+// Refer to section 6.1.2 on
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+StatusCode TranslateDeviceIdentificationVpd(
+    const nvme::IdentifyNamespace& identify_namespace, Span<uint8_t> buffer) {
+  uint8_t identification_descriptor_length = 0;
+  StatusCode status = translator::BuildIdentificationDescriptor(
+      identify_namespace, buffer.subspan(sizeof(scsi::DeviceIdentificationVpd)),
+      identification_descriptor_length);
+
+  if (status != StatusCode::kSuccess) {
+    return status;
+  }
+
+  uint8_t page_length =
+      sizeof(scsi::DeviceIdentificationVpd) + identification_descriptor_length;
+
+  scsi::DeviceIdentificationVpd result = {
+
+      // Shall be set to 00h indicating direct access block device
+      .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
+
+      // Shall be set to 000b indicating device for PERIPHERAL DEVICE TYPE
+      // connected to logical unit
+      .peripheral_qualifier =
+          scsi::PeripheralQualifier::kPeripheralDeviceConnected,
+
+      // Shall be set to 83h indicating Device Identification VPD Page, refer
+      // to 6.1.4
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to the size of the remaining bytes of Device
+      // Identification
+      // VPD Page.
+      .page_length = page_length,
+  };
+  if (!WriteValue(result, buffer)) {
+    DebugLog("Error! Cannot write DeviceIdentificationVPD to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return status;
+}
+
+// Returns Extended Inquiry Data Page. Refer to section 6.1.5
+// https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf
+StatusCode TranslateExtendedInquiryDataVpd(
+    const nvme::IdentifyNamespace& identify_namespace_data,
+    const nvme::IdentifyControllerData& identify_controller_data,
+    Span<uint8_t> buffer) {
+  uint8_t dps_result =
+      identify_namespace_data.dps.md_start || identify_namespace_data.dps.pit;
+  uint8_t spt = 0;
+  StatusCode status = GetSptValueFromDPC(identify_namespace_data, spt);
+
+  if (status != StatusCode::kSuccess) {
+    return status;
+  }
+
+  scsi::ExtendedInquiryDataVpd extended_inquiry_data = {
+
+      // Shall be set to 00h indicating direct access block device
+      .peripheral_device_type = scsi::PeripheralDeviceType::kDirectAccessBlock,
+
+      // Shall be set to 000b indicating device for PERIPHERAL DEVICE TYPE
+      // connected to logical unit
+      .peripheral_qualifer =
+          scsi::PeripheralQualifier::kPeripheralDeviceConnected,
+
+      // Shall be set to 86h indicating Extending INQUIRY Data VPD
+      .page_code = scsi::PageCode::kExtended,
+
+      // Shall be set to 3ch
+      .page_length = scsi::PageLength::kExtendedInquiryCommand,
+
+      // If DPS field of Identify Namespace Data Structure is 000b, these fields
+      // shall be set to 0b, otherwise set to 1b.
+      .ref_chk = dps_result,
+      .app_chk = dps_result,
+      .grd_chk = dps_result,
+
+      // SPT shall be translated using the DPC field of the Identify Namespace
+      // Data
+      // Structure
+      .spt = spt,
+
+      // Shall be set to 10b indicating microcode will be activated after a hard
+      // reset.
+      .activate_microcode = scsi::ActivateMicrocode::kActivateAfterHardReset,
+
+      // Shall be set to 1b indicating sense key specific data is returned for
+      // UNIT
+      // ATTENTION sense key.
+      .uask_sup = 0b1,
+
+      // Shall be set using the Volatile Write Cache (VMC) field of the Identify
+      // Controller Data Structure.
+      .v_sup = identify_controller_data.vwc.present,
+
+      // Shall be set to 1b indicating unit attentions are cleared according to
+      // SPC-4.
+      .luiclr = 0b1,
+
+      // Rest of the fields of this structure shall be set to 0. The Desginator
+      // Lists initialize all fields to zero unless they are explicitly declared
+      // to ll some other value.
+  };
+  if (!WriteValue(extended_inquiry_data, buffer)) {
+    DebugLog("Couldn't write ExtendedInquiry to buffer\n");
+    return StatusCode::kFailure;
+  }
+  return status;
+}
+
+StatusCode TranslateBlockDeviceCharacteristicsVpd(Span<uint8_t> buffer) {
+  scsi::BlockDeviceCharacteristicsVpd block_device_characteristics_vpd = {
+      // Shall be set to B1h indicating Device Identification VPD Page
+      .page_code = scsi::PageCode::kDeviceIdentification,
+
+      // Shall be set to 3Ch.
+      .page_length = scsi::PageLength::kBlockDeviceCharacteristicsVpd,
+
+      // Shall be set to 0001h indicating a non-rotating device(SSD)
+      .medium_rotation_rate = scsi::MediumRotationRate::kNonRotatingMedium,
+
+      // Shall be set to 0h indicating form factor not reported
+      .nominal_form_factor = scsi::NominalFormFactor::kNotReported};
+
+  if (!WriteValue(block_device_characteristics_vpd, buffer)) {
+    DebugLog("Couldn't write BlockDeviceCharacteristicsVpd to buffer\n");
     return StatusCode::kFailure;
   }
   return StatusCode::kSuccess;
@@ -403,21 +654,18 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
         return TranslateUnitSerialNumberVpd(*identify_ctrl_data,
                                             *identify_ns_data, nsid, buffer);
       case scsi::PageCode::kDeviceIdentification:
-        // TODO: Return Device Identification data page toapplication client,
-        // refer to 6.1.4
-        break;
+        return TranslateDeviceIdentificationVpd(*identify_ns_data, buffer);
       case scsi::PageCode::kExtended:
-        // TODO: May optionally be supported by returning Extended INQUIRY data
-        // page toapplication client, refer to 6.1.5.
-        break;
+        return TranslateExtendedInquiryDataVpd(*identify_ns_data,
+                                               *identify_ctrl_data, buffer);
       case scsi::PageCode::kBlockLimitsVpd:
         // May be supported by returning Block Limits VPD data page to
         // application client, refer to 6.1.6.
         return TranslateBlockLimitsVpd(*identify_ctrl_data, buffer);
       case scsi::PageCode::kBlockDeviceCharacteristicsVpd:
-        // TODO: Return Block Device Characteristics Vpd Page to application
+        // Return Block Device Characteristics Vpd Page to application
         // client, refer to 6.1.7.
-        break;
+        return TranslateBlockDeviceCharacteristicsVpd(buffer);
       case scsi::PageCode::kLogicalBlockProvisioningVpd:
         return TranslateLogicalBlockProvisioningVpd(*identify_ctrl_data,
                                                     *identify_ns_data, buffer);

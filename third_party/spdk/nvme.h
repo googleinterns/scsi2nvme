@@ -338,7 +338,7 @@ struct GenericQueueEntryCmd {
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(GenericQueueEntryCmd) == 64);
 
-// NVMe Base Specification Section 5.13
+// NVMe Base Specification Section 6.7
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
 struct GetFeaturesCmd {
   // dword 0
@@ -369,6 +369,50 @@ struct GetFeaturesCmd {
   uint32_t cdw[5];  // reserved
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(GetFeaturesCmd) == 64);
+
+// NVMe Base Specification Section 5.13
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct DatasetManagementCmd {
+  // dword 0
+  uint16_t opc : 8;   // opcode
+  uint16_t fuse : 2;  // fused operation
+  uint16_t rsvd1 : 4;
+  uint16_t psdt : 2;
+  uint16_t cid : 16;  // command identifier
+  // dword 1
+  uint32_t nsid : 32;  // namespace identifier
+  // dword 2-3
+  uint32_t rsvd2 : 32;
+  uint32_t rsvd3 : 32;
+  // dword 4-5
+  uint64_t mptr : 64;  // metadata pointer
+  // dword 6-9: data pointer
+  union {
+    struct {
+      uint64_t prp1 : 64;  // prp entry 1
+      uint64_t prp2 : 64;  // prp entry 2
+    } prp;
+    SglDescriptor sgl_descriptor;
+  } dptr;
+  // dword 10-15
+  uint8_t nr : 8;  // number of ranges (0's based)
+  uint32_t rsvd4 : 24;
+  bool idr : 1;  // integral dataset for read
+  bool idw : 1;  // integral dataset for write
+  bool ad : 1;   // deallocate
+  uint32_t rsvd5 : 29;
+  uint32_t cdw[4];  // command-specific
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DatasetManagementCmd) == 64);
+
+// NVMe Base Specification Figure 366
+// https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
+struct DatasetManagmentRange {
+  uint32_t context_attributes : 32;
+  uint32_t lb_count : 32;  // length in logical blocks
+  uint64_t lba : 64;       // starting lba
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(DatasetManagmentRange) == 16);
 
 // NVMe Base Specification Figure 70 to Figure 75
 // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf

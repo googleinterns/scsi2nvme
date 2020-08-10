@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
+#include <iostream>
 #include "report_luns.h"
 
 #ifdef __KERNEL__
@@ -74,6 +74,10 @@ StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
   return StatusCode::kSuccess;
 }
 
+void print(const char* msg) {
+  printf(msg);
+  printf("\n");
+}
 // Section 6.6
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
@@ -83,6 +87,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     return StatusCode::kFailure;
   }
 
+  SetDebugCallback(&print);
   // Get ns_list and lun count from NVMe dptr
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(identify_cmd.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespaceList));
