@@ -33,6 +33,7 @@ constexpr uint32_t kPageSize = 4096;
 constexpr uint32_t kLbaSize = 512;
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
+                                 Span<const uint8_t> buffer_out,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
