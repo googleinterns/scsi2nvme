@@ -30,7 +30,7 @@ namespace translator {
 // TODO: Set up persistence structure to hold
 // actual page size and lba size queried from NVMe device
 constexpr uint32_t kPageSize = 4096;
-constexpr uint32_t kLbaSize = 4096;
+constexpr uint32_t kLbaSize = 512;
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  Span<const uint8_t> buffer_out,

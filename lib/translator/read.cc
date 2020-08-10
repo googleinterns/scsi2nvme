@@ -91,6 +91,7 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
   // checks beforehand if enough space has been allocated for the buffer
   if (buffer_in.size() < alloc_len) {
     DebugLog("Not enough memory allocated for Read buffer");
+    DebugLog("Memory available %u", buffer_in.size());
     return StatusCode::kFailure;
   }
 
