@@ -234,7 +234,8 @@ CompleteResponse Translation::Complete(
     case scsi::OpCode::kRead10:
     case scsi::OpCode::kRead12:
     case scsi::OpCode::kRead16:
-      // All the errors should be caught by now so the status can be set to kSuccess
+      // All the errors should be caught by now so the status can be set to
+      // kSuccess
       pipeline_status_ = StatusCode::kSuccess;
       break;
     case scsi::OpCode::kSync10:
