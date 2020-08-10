@@ -73,7 +73,8 @@ uint16_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
 StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
                       Allocation& allocation, uint32_t nsid,
                       uint16_t transfer_length, uint32_t page_size,
-                      uint32_t lba_size, uint32_t& alloc_len, Span<const uint8_t> buffer_in) {
+                      uint32_t lba_size, uint32_t& alloc_len,
+                      Span<const uint8_t> buffer_in) {
   StatusCode status = allocation.SetPages(
       GetTransferLengthPages(transfer_length, page_size, lba_size), 0);
   if (status != StatusCode::kSuccess) {
@@ -88,13 +89,12 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
   alloc_len = transfer_length * lba_size;
 
   // checks beforehand if enough space has been allocated for the buffer
-  if(buffer_in.size() < alloc_len) {
+  if (buffer_in.size() < alloc_len) {
     DebugLog("Not enough memory allocated for Read buffer");
     return StatusCode::kFailure;
   }
 
   nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(buffer_in.data());
-
 
   return StatusCode::kSuccess;
 }
@@ -185,7 +185,8 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohs(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len,
+           buffer_in);
 
   if (status != StatusCode::kSuccess) {
     return status;
@@ -210,7 +211,8 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address and transfer_length to host endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len,
+           buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
@@ -234,7 +236,8 @@ StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
   // Transform logical_block_address to network endian
   StatusCode status =
       Read(read_cmd.rd_protect, read_cmd.fua, ntohl(read_cmd.transfer_length),
-           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len, buffer_in);
+           nvme_wrapper.cmd, allocation, nsid, page_size, lba_size, alloc_len,
+           buffer_in);
   if (status != StatusCode::kSuccess) {
     return status;
   }
