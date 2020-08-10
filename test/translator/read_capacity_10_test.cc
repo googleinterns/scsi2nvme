@@ -165,7 +165,7 @@ TEST_F(ReadCapacity10Test, BlocklengthTooSmall) {
   identify_ns_.flbas.format = 0;
   identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 8;
   EXPECT_EQ(translator::StatusCode::kFailure,
-            translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
+            translator::ReadCapacity10ToScsi(buffer_, nvme_wrapper_.cmd));
 }
 
 TEST_F(ReadCapacity10Test, BlocklengthTooBig) {
@@ -173,7 +173,7 @@ TEST_F(ReadCapacity10Test, BlocklengthTooBig) {
   identify_ns_.flbas.format = 0;
   identify_ns_.lbaf[identify_ns_.flbas.format].lbads = 32;
   EXPECT_EQ(translator::StatusCode::kFailure,
-            translator::ReadCapacity10ToScsi(buffer_, nvme_cmds_[0]));
+            translator::ReadCapacity10ToScsi(buffer_, nvme_wrapper_.cmd));
 }
 
 TEST_F(ReadCapacity10Test, BlocklengthLimit) {
