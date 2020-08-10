@@ -86,7 +86,7 @@ TEST(reportLunsToScsi, shouldFillBufferCorrectly) {
   lun_list =
       reinterpret_cast<scsi::LunAddress*>(buffer + sizeof(actual_response));
   for (scsi::LunAddress i = 0; i < ns_list_size; ++i) {
-    EXPECT_EQ(i, translator::ntohll(lun_list[i]));
+    ASSERT_EQ(i, translator::ntohll(lun_list[i]));
   }
 }
 

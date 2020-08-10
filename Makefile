@@ -23,6 +23,7 @@ OBJS := $(MODULE_SRC_DIR)/scsi_mock_module.o \
 	$(TRANSLATION_SRC_DIR)/synchronize_cache.cc.o \
 	$(TRANSLATION_SRC_DIR)/mode_sense.cc.o \
 	$(TRANSLATION_SRC_DIR)/maintenance_in.cc.o \
+	$(TRANSLATION_SRC_DIR)/unmap.cc.o \
 	$(TRANSLATION_SRC_DIR)/translation.cc.o
 
 INC := -I$(PWD)/third_party -I$(PWD)

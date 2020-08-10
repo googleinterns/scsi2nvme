@@ -96,6 +96,8 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
 
   nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(buffer_in.data());
 
+  alloc_len = transfer_length * lba_size;
+
   return StatusCode::kSuccess;
 }
 
@@ -193,6 +195,8 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+
+  DebugLog("Reading LBA %u", nvme_wrapper.cmd.cdw[0]);
 
   nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;

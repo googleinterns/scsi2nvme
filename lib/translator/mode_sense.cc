@@ -236,7 +236,8 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
   const nvme::IdentifyNamespace* idns;
   idns = SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
   DebugLog("Reported Block Count: %u", idns->ncap);
-  DebugLog("Reported Block Size: %u", 1 << (idns->lbaf[idns->flbas.format].lbads));
+  DebugLog("Reported Block Size: %u",
+           1 << (idns->lbaf[idns->flbas.format].lbads));
   if (llbaa) {
     write_len = sizeof(scsi::LongLbaBlockDescriptor);
     scsi::LongLbaBlockDescriptor lbd = {};

@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #include "report_luns.h"
 
 #ifdef __KERNEL__
@@ -105,6 +104,8 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     lun_count = lbl / sizeof(scsi::LunAddress);
   }
 
+  DebugLog("LUN Count: %u", lun_count);
+
   // Write response to buffer
   if (!WriteValue(rlpd, buffer)) {
     DebugLog("Buffer not large enough for report luns response header");
@@ -120,6 +121,11 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
       return StatusCode::kSuccess;
     }
   }
+  // TODO: TEMP TESTING
+  // scsi::LunAddress lun = htonll(0);
+  // WriteValue(lun, buffer);
+
+  DebugLog("Lun List Length: %u", ntohl(rlpd.list_byte_length));
 
   return StatusCode::kSuccess;
 }

@@ -206,8 +206,224 @@ enum class PageCode : uint8_t {
   kLogicalBlockProvisioningVpd = 0xb2
 };
 
-// SCSI Reference Manual Table 10
+// SCSI Reference Manual Table 456
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ActivateMicrocode : uint8_t {
+  // The actions of the device server may or may not be as defined for values
+  // 01b or 10b.
+  kAmbiguous = 0b00,
+
+  // The device server:
+  // 1) activates the microcode before completion of the final command in the
+  // WRITE BUFFER sequence; and
+  // 2) establishes a unit attention condition for the initiator port associated
+  // with every I_T nexus, except the I_T nexus on which the WRITE BUFFER
+  // command was received, with the additional sense code set to MICROCODE HAS
+  // BEEN CHANGED.
+  kActivateBeforeHardReset = 0b01,
+
+  // The device server:
+  // 1) activates the microcode after:
+  //    A) a vendor specific event;
+  //    B) a power on event; or
+  //    C) a hard reset event;
+  // and
+  // 2) establishes a unit attention condition for the initiator port associated
+  //    with every I_T nexus with the additional sense code set to MICROCODE HAS
+  //    BEEN CHANGED.
+  kActivateAfterHardReset = 0b10,
+
+  kReserved = 0b11,
+};
+
+// SCSI Reference Manual Table 461
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Association : uint8_t {
+
+  // The IDENTIFIER field is associated with the addressed physical or logical
+  // device
+  kPhysicalDevice = 0x0,
+
+  // The IDENTIFIER field is associated with the port that received the request
+  kPort = 0x1,
+
+  // The IDENTIFIER field is associated with the SCSI target device that
+  // contains the addressed logical unit.
+  kScsiTargetDevice = 0x2,
+
+  // Reserved code
+  kReserved = 0x3
+};
+
+// SCSI Reference Manual, Section 5.4.11
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class CodeSet : uint8_t {
+  kReserved = 0x0,
+
+  // The IDENTIFIER field shall contain binary values
+  kBinary = 0x1,
+
+  // 2h The IDENTIFIER field shall contain ASCII graphic codes (i.e., code
+  // values 20h through 7Eh)
+  kASCII = 0x2,
+};
+
+// SCSI Reference Manual, Table 463
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class IdentifierType : uint8_t {
+  // No assignment authority was used and consequently there is no guarantee
+  // that the identifier is globally unique (i.e., the identifier is vendor
+  // specific).
+  kVendorSpecific1 = 0x0,
+
+  // The first 8 bytes of the IDENTIFIER field are a Vendor ID. The organization
+  // associated with the Vendor ID is responsible for ensuring that the
+  // remainder of the identifier field is unique. One recommended method of
+  // constructing the remainder of the identifier field is to concatenate the
+  // product identification field from the standard INQUIRY data field and the
+  // product serial number field from the unit serial number page
+  kVendorSpecific2 = 0x1,
+
+  // The IDENTIFIER field contains a Canonical form IEEE Extended Unique
+  // Identifier, 64-bit (EUI-64). In this case, the identifier length field
+  // shall be set to 8. Note that the IEEE guide-lines for EUI-64 specify a
+  // method for unambiguously encapsulating an IEEE 48-bit identifier within an
+  // EUI-64.
+  kEUI64 = 0x2,
+
+  // The IDENTIFIER field contains an FC-PH, FC-PH3 or FC-FS Name_Identifier.
+  // Any FC-PH, FC-PH3 or FC-FS identifier may be used, including one of the
+  // four based on a Canonical form IEEE company_id.
+  kFibreChannel = 0x3,
+
+  // If the ASSOCIATION field contains 1h, the Identifier value contains a
+  // four-byte binary number identifying the port relative to other ports in the
+  // device using the values shown Table 462. The CODE SET field shall be set to
+  // 1h and the IDENTIFIER LENGTH field shall be set to 4h. If the ASSOCIATION
+  // field does not contain 1h, use of this identifier type is reserved.
+  kAssociationDependent1 = 0x4,
+  kAssociationDependent2 = 0x5,
+
+  // If the ASSOCIATION value is 0h, the IDENTIFIER value contains a four-byte
+  // binary number identifying the port relative to other ports in the device
+  // using the values shown Table 462. The CODE SET field shall be set to 1h and
+  // the IDENTIFIER LENGTH field shall be set to 4h. If the ASSOCIATION field
+  // does not contain 0h, use of this identifier type is reserved.
+  kAssociationDependent3 = 0x6,
+
+  // The MD5 logical unit identifier shall not be used if a logical unit
+  // provides unique identification using identifier types 2h or 3h. A bridge
+  // device may return a MD5 logical unit identifier type for that logical unit
+  // that does not support the Device Identification VPD page.
+  kNoMD5Support = 0x7,
+};
+
+// SCSI Reference Manual Table 461
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ProtocolIdentifier : uint8_t {
+  kFibreChannel = 0x0,
+  kObsolete = 0x1,
+  kSSA = 0x2,
+  kIEEE1394 = 0x3,
+  kRDMA = 0x4,
+  kInternetSCSI = 0x5,
+  kSASSerialSCSIProtocol = 0x6,
+};
+
+// SCSI Reference Manual Table 440
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class MediumRotationRate : uint16_t {
+  kRotationNotReported = 0x0000,
+  kNonRotatingMedium = 0x0001,
+  kReserved = 0xFFFF,
+};
+
+// SCSI Reference Manual Table 441
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class ProductType : uint8_t {
+  kNotIndicated = 0x00,
+  kCFast = 0x01,
+  kCompactFlash = 0x02,
+  kMemoryStick = 0x03,
+  kMultiMediaCard = 0x04,
+  kSecureDigitalCard = 0x05,
+  kXQD = 0x06,
+  kUniversalFlashStorage = 0x07
+};
+
+// SCSI Reference Manual Table 442
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Wacereq : uint8_t {
+  kNotSpecified = 0b00,
+
+  // The device server completes the read command specifying that LBA with GOOD
+  // status and any data transferred to the Data-In Buffer is indeterminate.
+  kSuccess = 0b01,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to an appropriate value other than WRITE AFTER
+  // SANITIZE REQUIRED (e.g., ID CRC OR ECC ERROR).
+  kFailureWithoutWriteSanitize = 0b10,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to WRITE AFTER SANITIZE REQUIRED.
+  kFailureWithWriteSanitize = 0b11
+};
+
+// SCSI Reference Manual Table 443
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Wabereq : uint8_t {
+  kNotSpecified = 0b00,
+
+  // The device server completes the read command specifying that LBA with GOOD
+  // status and any data transferred to the Data-In Buffer is indeterminate.
+  kSuccess = 0b01,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to an appropriate value other than WRITE AFTER
+  // SANITIZE REQUIRED (e.g., ID CRC OR ECC ERROR).
+  kFailureWithoutWriteSanitize = 0b10,
+
+  // The device server terminates the read command specifying that LBA with
+  // CHECK CONDITION status with sense key set to MEDIUM ERROR and the
+  // additional sense code set to WRITE AFTER SANITIZE REQUIRED.
+  kFailureWithWriteSanitize = 0b11
+};
+
+// SCSI Reference Manual Table 444
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class NominalFormFactor : uint8_t {
+  kNotReported = 0x0,
+  kExtraLarge = 0x1,  // 5.25 inch
+  kLarge = 0x2,       // 3.5 inch
+  kMedium = 0x3,      // 2.5 inch
+  kSmall = 0x4,       // 1.8 inch
+  kExtraSmall = 0x5,  // less than 1.8 inch
+};
+
+// SCSI Reference Manual Table 445
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class Zoned : uint8_t {
+  kNotReported = 0b00,
+
+  // Device server implements the host aware zoned block device capabilities
+  // defined in ZBC
+  kHostAware = 0b01,
+
+  // Device server implements device managed zoned block device capabilities
+  kDeviceManaged = 0b10,
+  kReserved = 0b11,
+};
+
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+enum class PageLength : uint16_t {
+  kExtendedInquiryCommand = 0x3c,
+  kBlockDeviceCharacteristicsVpd = 0x3c,
+};
+
 struct ControlByte {
   uint8_t obsolete : 2;
   bool naca : 1;
@@ -1052,15 +1268,14 @@ static_assert(sizeof(UnitSerialNumber) == 4);
 // SCSI Reference Manual Table 460
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct IdentificationDescriptor {
-  uint8_t code_set : 4;
-  uint8_t protocol_identifier : 4;
-  uint8_t identifier_type : 4;
-  uint8_t association : 2;
-  bool reserved_1 : 1;
-  bool piv : 1;  // Protocal Identifier Valid
-  uint8_t reserved_2 : 8;
+  CodeSet code_set : 4;
+  ProtocolIdentifier protocol_identifier : 4;
+  IdentifierType identifier_type : 4;
+  Association association : 2;
+  bool _reserved1 : 1;
+  bool protocol_identifier_valid : 1;
+  uint8_t _reserved2 : 8;
   uint8_t identifier_length : 8;
-  // uint8_t identifier[256];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(IdentificationDescriptor) == 4);
 
@@ -1071,10 +1286,78 @@ struct DeviceIdentificationVpd {
   PeripheralQualifier peripheral_qualifier : 3;
   PageCode page_code : 8;
   uint8_t page_length : 8;
-  // IdentificationDescriptor identification_descriptor_list[256];
 } ABSL_ATTRIBUTE_PACKED;
 static_assert(sizeof(DeviceIdentificationVpd) == 3);
 
+// SCSI reference Manual Table 455
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct ExtendedInquiryDataVpd {
+  PeripheralDeviceType peripheral_device_type : 5;
+  PeripheralQualifier peripheral_qualifer : 3;
+  PageCode page_code : 8;
+  PageLength page_length : 16;
+  bool ref_chk : 1;  // reference tag check bit
+  bool app_chk : 1;  // application tag check bit
+  bool grd_chk : 1;  // guard check bit
+  uint8_t spt : 3;   // supported protection type
+  ActivateMicrocode activate_microcode : 2;
+  bool simpsup : 1;    // Simple Supported bit
+  bool ordsup : 1;     // Ordered Supported bit
+  bool headsup : 1;    // Head of Queue Supported bit
+  bool prior_sup : 1;  // Priority Supported bit
+  bool group_sup : 1;  // Grouping Function Supported bit
+  bool uask_sup : 1;   // Unit Attention Sense Key Supported bit
+  uint8_t _reserved1 : 2;
+  bool v_sup : 1;    // Volatile Cache Supported Bit
+  bool nv_sup : 1;   // Non-Volatile Cache Supported bit
+  bool crd_sup : 1;  // Correction Disable Supported bit
+  bool wu_sup : 1;   // Write Uncorrectable Supported bit
+  uint8_t _reserved2 : 4;
+  bool luiclr : 1;  // Logical Unit I_T Nexus Clear bit
+  uint8_t _reserved3 : 3;
+  bool p_i_i_sup : 1;  // Protection Information Interval Supported bit
+  bool no_pi_chk : 1;  // No Protection Information Checking bit
+  uint8_t _reserved4 : 2;
+  bool obsolete : 1;
+  bool hssrelef : 1;  // History Snapshots Release Effects bit
+  bool rtd_sup : 1;   // Resistance Temperature Detection bit
+  bool _reserved5 : 1;
+  bool r_sup : 1;  // Referrals Supported bit
+  uint8_t _reserved6 : 3;
+  uint8_t multi_t_nexus_microcode_download : 4;
+  uint8_t _reserved7 : 4;
+  uint16_t extended_self_test_completion_minutes : 16;
+  uint8_t _reserved8 : 5;
+  bool vsa_sup : 1;  // Vendor Specific Activation Supported bit
+  bool hra_sup : 1;  // Hard Reset Activation Supported bit
+  bool poa_sup : 1;  // Power on Activation Supported bit
+  uint8_t maximum_supported_sense_data_length : 8;
+  // uint8_t _reserved9[50];
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(ExtendedInquiryDataVpd) == 14);
+
+// SCSI Reference Manual Table 459
+// https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
+struct BlockDeviceCharacteristicsVpd {
+  PeripheralDeviceType peripheral_device_type : 5;
+  PeripheralQualifier peripheral_qualifier : 3;
+  PageCode page_code : 8;
+  PageLength page_length : 16;
+  MediumRotationRate medium_rotation_rate : 16;
+  ProductType product_type : 8;
+  NominalFormFactor nominal_form_factor : 4;
+  Wacereq wacereq : 2;
+  Wabereq wabereq : 2;
+  bool vbuls : 1;
+  bool fuab : 1;
+  bool bocs : 1;
+  bool _reserved1 : 1;
+  Zoned zoned : 2;  //
+  uint8_t _reserved2 : 2;
+} ABSL_ATTRIBUTE_PACKED;
+static_assert(sizeof(BlockDeviceCharacteristicsVpd) == 9);
+
+// namespace scsi_defs
 // SCSI Reference Manual Table 467
 // https://www.seagate.com/files/staticfiles/support/docs/manual/Interface%20manuals/100293068j.pdf
 struct LogicalBlockProvisioningVpd {

@@ -16,6 +16,7 @@
 #define LIB_TRANSLATOR_COMMON_H
 
 #include <cstring>
+#include <new>
 #include <type_traits>
 
 #include "third_party/spdk/nvme.h"
