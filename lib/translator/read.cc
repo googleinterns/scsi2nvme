@@ -259,7 +259,7 @@ StatusCode ReadToScsi(Span<uint8_t> buffer,
     DebugLog("Insufficient buffer size");
     return StatusCode::kFailure;
   }
-  
+
   DebugLog("Copying %u bytes to the read buffer", bytes_transferred);
   memcpy(buffer.data(), reinterpret_cast<uint8_t*>(data_ptr),
          bytes_transferred);

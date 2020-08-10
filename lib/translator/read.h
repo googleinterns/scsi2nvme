@@ -40,7 +40,7 @@ StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-			uint32_t& alloc_len);
+                        uint32_t& alloc_len);
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,

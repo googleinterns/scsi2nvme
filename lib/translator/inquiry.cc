@@ -642,7 +642,8 @@ StatusCode InquiryToScsi(Span<const uint8_t> raw_scsi, Span<uint8_t> buffer,
   uint32_t nsid = identify_ns.nsid;
 
   if (inquiry_cmd.evpd) {
-    DebugLog("Inquiry Page Code: %u", static_cast<uint8_t>(inquiry_cmd.page_code));
+    DebugLog("Inquiry Page Code: %u",
+             static_cast<uint8_t>(inquiry_cmd.page_code));
     switch (inquiry_cmd.page_code) {
       case scsi::PageCode::kSupportedVpd:
         // Return Supported Vpd Pages data page to application client, refer

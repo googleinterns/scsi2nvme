@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#include <iostream>
 #include "report_luns.h"
 
 #ifdef __KERNEL__
@@ -74,10 +73,6 @@ StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
   return StatusCode::kSuccess;
 }
 
-void print(const char* msg) {
-  printf(msg);
-  printf("\n");
-}
 // Section 6.6
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
@@ -87,7 +82,6 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     return StatusCode::kFailure;
   }
 
-  SetDebugCallback(&print);
   // Get ns_list and lun count from NVMe dptr
   uint8_t* ns_dptr = reinterpret_cast<uint8_t*>(identify_cmd.dptr.prp.prp1);
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespaceList));
@@ -98,9 +92,9 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     return StatusCode::kFailure;
   }
 
+  uint32_t lun_count = GetNsListLength(*ns_list);
   // TODO: TEMP TESTING.
-  //uint32_t lun_count = GetNsListLength(*ns_list);
-  uint32_t lun_count = 1;
+  // uint32_t lun_count = 1;
 
   // Define scsi response structure and determine attributes
   uint32_t allocated_list_bytes =
@@ -113,7 +107,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     rlpd.list_byte_length = htonl(lbl);
     lun_count = lbl / sizeof(scsi::LunAddress);
   }
-  
+
   DebugLog("LUN Count: %u", lun_count);
 
   // Write response to buffer
@@ -121,7 +115,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     DebugLog("Buffer not large enough for report luns response header");
     return StatusCode::kSuccess;
   }
-  /*uint32_t lun_offset = sizeof(scsi::ReportLunsParamData);
+  uint32_t lun_offset = sizeof(scsi::ReportLunsParamData);
   for (uint32_t i = 0; i < lun_count; ++i) {
     scsi::LunAddress lun = htonll(static_cast<scsi::LunAddress>(
         ltohl(ns_list->ids[i]) - 1));  // LUN must start @ 0 via SAM spec
@@ -131,10 +125,10 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
       DebugLog("Truncating report luns response at position %u", i);
       return StatusCode::kSuccess;
     }
-  }*/
+  }
   // TODO: TEMP TESTING
-  scsi::LunAddress lun = htonll(0);
-  WriteValue(lun, buffer);
+  // scsi::LunAddress lun = htonll(0);
+  // WriteValue(lun, buffer);
 
   DebugLog("Lun List Length: %u", ntohl(rlpd.list_byte_length));
 
