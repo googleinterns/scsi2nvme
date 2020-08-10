@@ -57,7 +57,7 @@ StatusCode GetTransferLengthPages(uint32_t& transfer_length_pages,
                                   uint16_t transfer_length, uint32_t page_size,
                                   uint32_t lba_size) {
   if (page_size == 0) {
-    DebugLog("Page size is 0 for Write Command\n");
+    DebugLog("Page size is 0 for Write Command");
     return StatusCode::kFailure;
   }
 
@@ -77,7 +77,7 @@ StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
   StatusCode status_code = allocation.SetPages(transfer_length_pages, 0);
 
   if (status_code != StatusCode::kSuccess) {
-    DebugLog("Failed to allocate pages for Write Command\n");
+    DebugLog("Failed to allocate pages for Write Command");
     return status_code;
   }
 

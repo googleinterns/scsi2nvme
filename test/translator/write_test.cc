@@ -113,7 +113,7 @@ TEST_F(WriteTest, Write6ShouldReturnValidStatusCode) {
                              .transfer_length = kWrite6TransferLength};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::Span<uint8_t> buffer_out;
@@ -133,7 +133,7 @@ TEST_F(WriteTest, Write10ShouldReturnValidStatusCode) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::Span<uint8_t> buffer_out;
@@ -154,7 +154,7 @@ TEST_F(WriteTest, Write12ShouldReturnValidStatusCode) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
   translator::Span<uint8_t> buffer_out;
@@ -174,7 +174,7 @@ TEST_F(WriteTest, Write16ShouldReturnValidStatusCode) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
 
@@ -193,7 +193,7 @@ TEST_F(WriteTest, Write6ShouldBuildCorrectNvmeCommandStruct) {
                              .transfer_length = kWrite6TransferLength};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -224,7 +224,7 @@ TEST_F(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -255,7 +255,7 @@ TEST_F(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -286,7 +286,7 @@ TEST_F(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -316,7 +316,7 @@ TEST_F(WriteTest, Write10ShoudlFailOnWrongProtectBit) {
                               .transfer_length = kTransferLength};
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
   translator::Span<uint8_t> buffer_out;
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -336,7 +336,7 @@ TEST_F(WriteTest, Write12ShoudlFailOnWrongProtectBit) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -358,7 +358,7 @@ TEST_F(WriteTest, Write16ShoudlFailOnWrongProtectBit) {
                               .transfer_length = network_transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -378,7 +378,7 @@ TEST_F(WriteTest, Write6ShouldWrite256BlocksOnZeroTransferLength) {
                              .transfer_length = transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write6Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -402,7 +402,7 @@ TEST_F(WriteTest, Write10ShouldWriteFailOnZeroTransferLength) {
                               .transfer_length = transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write10Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -423,7 +423,7 @@ TEST_F(WriteTest, Write12ShouldWriteFailOnZeroTransferLength) {
                               .transfer_length = transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
@@ -445,7 +445,7 @@ TEST_F(WriteTest, Write16ShouldWriteFailOnZeroTransferLength) {
                               .transfer_length = transfer_length};
 
   uint8_t scsi_cmd[sizeof(scsi::Write16Command)];
-  translator::WriteValue(cmd, scsi_cmd);
+  ASSERT_TRUE(translator::WriteValue(cmd, scsi_cmd));
 
   translator::NvmeCmdWrapper nvme_wrapper;
   translator::Allocation allocation = {};
