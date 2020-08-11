@@ -33,6 +33,13 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::BeginResponse begin_resp =
       translation.Begin(scsi_cmd, buffer, lun);
 
+  if (begin_resp.status == ApiStatus::kFailure) {
+    Print("Incorrect usage of Translation Library API");
+    ScsiToNvmeResponse resp = {.return_code = 0x40, .alloc_len = 0};
+    translation.AbortPipeline();
+    return resp;
+  }
+
   if (begin_resp.alloc_len > data_len) {
     Print(
         "Specified allocation length exceeds buffer size. Possible malicious "
@@ -70,6 +77,13 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::Span<uint8_t> sense_buffer(sense_buf, sense_len);
   translator::CompleteResponse cpl_resp =
       translation.Complete(nvme_cpl, buffer_in, sense_buffer);
+
+  if (cpl_resp.status == ApiStatus::kFailure) {
+    Print("Incorrect usage of Translation Library API");
+    ScsiToNvmeResponse resp = {.return_code = 0x40, .alloc_len = 0};
+    translation.AbortPipeline();
+    return resp;
+  }
 
   ScsiToNvmeResponse resp = {
       .return_code = static_cast<uint8_t>(cpl_resp.scsi_status),
