@@ -87,13 +87,14 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
       .nsid = nsid};
 
   alloc_len = transfer_length * lba_size;
+  buffer_in = Span<uint8_t>(buffer_in.data, alloc_len);
 
-  // checks beforehand if enough space has been allocated for the buffer
-  if (buffer_in.size() < alloc_len) {
-    DebugLog("Not enough memory allocated for Read buffer");
-    DebugLog("Memory required: %d", alloc_len);
-    return StatusCode::kFailure;
-  }
+  // // checks beforehand if enough space has been allocated for the buffer
+  // if (buffer_in.size() < alloc_len) {
+  //   DebugLog("Not enough memory allocated for Read buffer");
+  //   DebugLog("Memory required: %d", alloc_len);
+  //   return StatusCode::kFailure;
+  // }
 
   nvme_cmd.dptr.prp.prp1 = reinterpret_cast<uint64_t>(buffer_in.data());
 
