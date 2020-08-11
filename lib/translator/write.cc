@@ -103,7 +103,7 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
                  uint32_t nsid, uint32_t page_size, uint32_t lba_size,
                  Span<const uint8_t> buffer_out) {
   if (transfer_length == 0) {
-    DebugLog("NVMe read command does not support transfering zero blocks\n");
+    DebugLog("NVMe write command does not support transfering zero blocks\n");
     return StatusCode::kNoTranslation;
   }
 
@@ -188,6 +188,12 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
     DebugLog("Malformed Write10 Command");
     return StatusCode::kInvalidInput;
   }
+
+	DebugLog("byte 7 %d\n", scsi_cmd[6]);
+	DebugLog("byte 8 %d\n", scsi_cmd[7]);
+
+	DebugLog("transfer length %d\n", write_cmd.transfer_length);
+	DebugLog("transfer length %d\n", ntohs(write_cmd.transfer_length));
 
   StatusCode status_code = Write(
       write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.transfer_length),

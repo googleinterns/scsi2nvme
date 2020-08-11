@@ -37,6 +37,8 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  scsi::LunAddress lun) {
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
+
+	DebugLog("TRANSLATING %s", ScsiOpcodeToString((scsi::OpCode) (scsi_cmd[0])));
   if (pipeline_status_ != StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Begin called before complete or abort");
     response.status = ApiStatus::kFailure;
@@ -141,7 +143,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       break;
     case scsi::OpCode::kWrite10:
       pipeline_status_ =
-          Write10ToNvme(scsi_cmd, nvme_wrappers_[0], allocations_[0], nsid,
+          Write10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
                         kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
@@ -267,6 +269,10 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kTestUnitReady:
       break;
+		case scsi::OpCode::kWrite10:
+			pipeline_status_ = StatusCode::kSuccess;
+			DebugLog("done writing");
+			break;
     default:
       DebugLog(
           "Invalid opcode case reached: %u. Please contact SCSI2NVMe devs.",
