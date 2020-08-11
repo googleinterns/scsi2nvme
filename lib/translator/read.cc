@@ -87,7 +87,6 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
       .nsid = nsid};
 
   alloc_len = transfer_length * lba_size;
-  buffer_in = Span<uint8_t>(buffer_in.data, alloc_len);
 
   // // checks beforehand if enough space has been allocated for the buffer
   // if (buffer_in.size() < alloc_len) {

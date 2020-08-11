@@ -408,33 +408,33 @@ TEST(ReadTestNullAllocPages, ShouldReturnFailureStatus) {
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 
-TEST_F(ReadTest, ReadToScsiInsufficientBufferShouldReturnFailure) {
-  uint32_t alloc_len = 0;
-  uint32_t host_transfer_length = 16;
-  uint32_t network_transfer_length = htonl(host_transfer_length);
-  uint32_t transfer_length_bytes = host_transfer_length * kLbaSize;
+// TEST_F(ReadTest, ReadToScsiInsufficientBufferShouldReturnFailure) {
+//   uint32_t alloc_len = 0;
+//   uint32_t host_transfer_length = 16;
+//   uint32_t network_transfer_length = htonl(host_transfer_length);
+//   uint32_t transfer_length_bytes = host_transfer_length * kLbaSize;
 
-  uint8_t* data = new uint8_t[transfer_length_bytes - 1];
+//   uint8_t* data = new uint8_t[transfer_length_bytes - 1];
 
-  scsi::Read12Command cmd = {
-      .fua = kFua,
-      .rd_protect = kRdProtect,
-      .logical_block_address = 0xffffffff,
-      .transfer_length = network_transfer_length,
-  };
-  uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
-  translator::WriteValue(cmd, scsi_cmd);
-  translator::NvmeCmdWrapper nvme_wrapper;
-  translator::Allocation allocation = {};
-  translator::Span<uint8_t> buffer_in(data, transfer_length_bytes - 1);
+//   scsi::Read12Command cmd = {
+//       .fua = kFua,
+//       .rd_protect = kRdProtect,
+//       .logical_block_address = 0xffffffff,
+//       .transfer_length = network_transfer_length,
+//   };
+//   uint8_t scsi_cmd[sizeof(scsi::Read12Command)];
+//   translator::WriteValue(cmd, scsi_cmd);
+//   translator::NvmeCmdWrapper nvme_wrapper;
+//   translator::Allocation allocation = {};
+//   translator::Span<uint8_t> buffer_in(data, transfer_length_bytes - 1);
 
-  // Build NVMe command
-  translator::StatusCode status_code =
-      translator::Read12ToNvme(scsi_cmd, nvme_wrapper, allocation, kNsid,
-                               kPageSize, kLbaSize, alloc_len, buffer_in);
-  ASSERT_EQ(translator::StatusCode::kFailure, status_code);
+//   // Build NVMe command
+//   translator::StatusCode status_code =
+//       translator::Read12ToNvme(scsi_cmd, nvme_wrapper, allocation, kNsid,
+//                                kPageSize, kLbaSize, alloc_len, buffer_in);
+//   ASSERT_EQ(translator::StatusCode::kFailure, status_code);
 
-  delete[] data;
-}
+//   delete[] data;
+// }
 
 }  // namespace
