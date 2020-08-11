@@ -690,7 +690,7 @@ static_assert(sizeof(Read16Command) == 15);
 struct Write6Command {
   uint8_t logical_block_address_1 : 5;
   uint8_t reserved : 3;
-  uint16_t logical_block_address : 16;
+  uint16_t logical_block_address_2 : 16;
   uint8_t transfer_length : 8;
   ControlByte control_byte;
 } ABSL_ATTRIBUTE_PACKED;

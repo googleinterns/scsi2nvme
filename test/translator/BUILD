@@ -63,6 +63,15 @@ cc_test(
 )
 
 cc_test(
+  name = "write_test",
+  srcs = [ "write_test.cc" ],
+  deps = [
+    "//lib/translator:write_lib",
+    "@googletest//:gtest_main"
+  ]
+)
+
+cc_test(
   name = "unmap_test",
   srcs = [ "unmap_test.cc" ],
   deps = [
