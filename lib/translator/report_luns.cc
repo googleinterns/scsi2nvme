@@ -97,7 +97,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
       buffer.size() - sizeof(scsi::ReportLunsParamData);
   scsi::ReportLunsParamData rlpd = {};
   rlpd.list_byte_length = htonl(lun_count * sizeof(scsi::LunAddress));
-  if (rlpd.list_byte_length > allocated_list_bytes) {
+  if (ntohl(rlpd.list_byte_length) > allocated_list_bytes) {
     uint32_t lbl = allocated_list_bytes -
                    (allocated_list_bytes % sizeof(scsi::LunAddress));
     rlpd.list_byte_length = htonl(lbl);
