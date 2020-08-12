@@ -74,21 +74,15 @@ StatusCode GetTransferLengthPages(uint32_t& transfer_length_pages,
 StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
                        uint32_t nsid, uint32_t transfer_length_pages,
                        Span<const uint8_t> buffer_out) {
-  StatusCode status_code = allocation.SetPages(transfer_length_pages, 0);
-
-  if (status_code != StatusCode::kSuccess) {
-    DebugLog("Failed to allocate pages for Write Command");
-    return status_code;
-  }
-
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::NvmOpcode::kWrite),
-                      .psdt = 0,  // prps are used
+	.psdt = 0, //PRPs are used
                       .nsid = nsid};
 
   nvme_wrapper.cmd.dptr.prp.prp1 =
       reinterpret_cast<uint64_t>(buffer_out.data());
+	nvme_wrapper.cmd.mptr = 0;
 
-  return status_code;
+  return StatusCode::kSuccess;
 }
 
 // Builds NVMe cdw 12 for Write10, Write12, Write16 translations
@@ -107,7 +101,7 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
     return StatusCode::kNoTranslation;
   }
 
-  transfer_length &= 0xffff;  // truncate to 16 bits
+	transfer_length &=0xffff;
 
   uint32_t transfer_length_pages = 0;
   StatusCode status_code = GetTransferLengthPages(
@@ -189,11 +183,10 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-	DebugLog("byte 7 %d\n", scsi_cmd[6]);
-	DebugLog("byte 8 %d\n", scsi_cmd[7]);
-
-	DebugLog("transfer length %d\n", write_cmd.transfer_length);
 	DebugLog("transfer length %d\n", ntohs(write_cmd.transfer_length));
+	DebugLog("starting lba %d\n", ntohl(write_cmd.logical_block_address));
+	DebugLog("Fua %d\n", write_cmd.fua);
+	DebugLog("wr_protect%d\n", write_cmd.wr_protect);
 
   StatusCode status_code = Write(
       write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.transfer_length),
@@ -204,6 +197,9 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
   }
 
   nvme_wrapper.cmd.cdw[0] = __bswap_32(write_cmd.logical_block_address);
+	DebugLog("cdw 0 %x, cdw 2 %x\n", nvme_wrapper.cmd.cdw[0], nvme_wrapper.cmd.cdw[2]);
+	DebugLog("Writing %u blocks", (nvme_wrapper.cmd.cdw[2] & 0xffff) +1);
+	nvme_wrapper.is_admin = 0;
   return status_code;
 }
 StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,

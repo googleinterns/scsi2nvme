@@ -56,9 +56,10 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
       printk("OUT OF MEMORY!!");
       return respond(cmd, 23);
     }
-    printk("Data Length of SCSI Buffer: %u", data_len);
+    //printk("Data Length of SCSI Buffer: %u", data_len);
     if (!is_data_in) scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
   }
+	printk("command opcode %d\n", cmd_buf[0]);
   struct ScsiToNvmeResponse resp =
       ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, sense_len, data_buf,
                  data_len, is_data_in);

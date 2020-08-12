@@ -38,7 +38,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
 
-	DebugLog("TRANSLATING %s", ScsiOpcodeToString((scsi::OpCode) (scsi_cmd[0])));
+	DebugLog("TRANSLATING %x %s", scsi_cmd[0], ScsiOpcodeToString((scsi::OpCode) (scsi_cmd[0])));
   if (pipeline_status_ != StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Begin called before complete or abort");
     response.status = ApiStatus::kFailure;
@@ -55,8 +55,6 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
 
-  DebugLog("Translating opcode: %#x", scsi_cmd[0]);
-  DebugLog("LUN: %u", lun);
   uint32_t nsid = static_cast<uint32_t>(lun) + 1;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
