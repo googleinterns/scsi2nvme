@@ -80,7 +80,6 @@ StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
 
   nvme_wrapper.cmd.dptr.prp.prp1 =
       reinterpret_cast<uint64_t>(buffer_out.data());
-	nvme_wrapper.cmd.mptr = 0;
 
   return StatusCode::kSuccess;
 }
