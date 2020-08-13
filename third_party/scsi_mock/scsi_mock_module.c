@@ -44,7 +44,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   u64 lun = cmd->device->lun;
   unsigned char* cmd_buf = cmd->cmnd;
   u16 cmd_len = cmd->cmd_len;
-  u16 data_len = scsi_bufflen(cmd);
+  u16 data_len = scsi_bufflen(cmd)*8;
   printk("Data length is: %d\n", data_len);
   unsigned char* sense_buf = cmd->sense_buffer;
   unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
