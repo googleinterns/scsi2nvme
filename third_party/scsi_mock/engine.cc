@@ -33,7 +33,7 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::BeginResponse begin_resp =
       translation.Begin(scsi_cmd, buffer, lun);
 
-  if (begin_resp.status == ApiStatus::kFailure) {
+  if (begin_resp.status == translator::ApiStatus::kFailure) {
     Print("Incorrect usage of Translation Library API");
     ScsiToNvmeResponse resp = {.return_code = 0x40, .alloc_len = 0};
     return resp;
@@ -76,7 +76,7 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::CompleteResponse cpl_resp =
       translation.Complete(nvme_cpl, buffer_in, sense_buffer);
 
-  if (cpl_resp.status == ApiStatus::kFailure) {
+  if (cpl_resp.status == translator::ApiStatus::kFailure) {
     Print("Incorrect usage of Translation Library API");
     ScsiToNvmeResponse resp = {.return_code = 0x40, .alloc_len = 0};
     return resp;
