@@ -38,7 +38,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   BeginResponse response = {};
   response.status = ApiStatus::kSuccess;
 
-	DebugLog("TRANSLATING %x %s", scsi_cmd[0], ScsiOpcodeToString((scsi::OpCode) (scsi_cmd[0])));
+	DebugLog("TRANSLATING %s command with opcode %x", ScsiOpcodeToString((scsi::OpCode) (scsi_cmd[0])), scsi_cmd[0]);
   if (pipeline_status_ != StatusCode::kUninitialized) {
     DebugLog("Invalid use of API: Begin called before complete or abort");
     response.status = ApiStatus::kFailure;

@@ -107,7 +107,6 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
     }
   }
 
-  printk("Before block request execution.\n");
   blk_execute_rq(req->q, disk, req, 0);
 	u16 status  = nvme_req(req)->status;
 	if(status == 0) {

@@ -184,8 +184,6 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
 
 	DebugLog("transfer length %d\n", ntohs(write_cmd.transfer_length));
 	DebugLog("starting lba %d\n", ntohl(write_cmd.logical_block_address));
-	DebugLog("Fua %d\n", write_cmd.fua);
-	DebugLog("wr_protect%d\n", write_cmd.wr_protect);
 
   StatusCode status_code = Write(
       write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.transfer_length),

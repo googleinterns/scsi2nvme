@@ -49,7 +49,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
   unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
   bool is_data_in = cmd->sc_data_direction == DMA_FROM_DEVICE;
   unsigned char* data_buf;
-  printk("RECIEVED COMMAND");
+  printk("RECIEVED COMMAND----------------------------");
   if (data_len > 0) {
     data_buf = kzalloc(data_len, GFP_ATOMIC | GFP_KERNEL);
     if (data_buf == NULL) {
@@ -59,7 +59,6 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
     //printk("Data Length of SCSI Buffer: %u", data_len);
     if (!is_data_in) scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
   }
-	printk("command opcode %d\n", cmd_buf[0]);
   struct ScsiToNvmeResponse resp =
       ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, sense_len, data_buf,
                  data_len, is_data_in);
@@ -72,6 +71,7 @@ static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
     scsi_set_resid(cmd, data_len - sdb_len);
   }
   if (data_len > 0) kfree(data_buf);
+	printk("COMPLETED COMMAND---------------------------");
   return respond(cmd, resp.return_code);
 }
 
