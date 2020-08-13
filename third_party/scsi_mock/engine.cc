@@ -33,8 +33,8 @@ ScsiToNvmeResponse ScsiToNvme(unsigned char* cmd_buf, unsigned short cmd_len,
   translator::Span<uint8_t> buffer(data_buf, data_len);
   translator::BeginResponse begin_resp = translation.Begin(scsi_cmd, buffer, lun);
   
-  if (begin_resp.alloc_len > data_len) {
-    Print("Specified allocation length exceeds buffer size. Possible malicious request?");
+  if (begin_resp.alloc_len != data_len) {
+    Print("Specified allocation length does not match buffer size. Possible malicious request?");
     ScsiToNvmeResponse resp = {
       .return_code = 0x40,
       .alloc_len = 0
