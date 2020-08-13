@@ -86,7 +86,7 @@ StatusCode LegacyRead(nvme::GenericQueueEntryCmd& nvme_cmd,
       .psdt = 0,  // PRPs are used for data transfer
       .nsid = nsid};
 
-  alloc_len = transfer_length * lba_size;
+  alloc_len = transfer_length * page_size;
 
   // // checks beforehand if enough space has been allocated for the buffer
   // if (buffer_in.size() < alloc_len) {
