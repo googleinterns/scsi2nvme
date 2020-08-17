@@ -83,10 +83,11 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
                                               uint32_t nsid) {
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
                       .nsid = nsid};
-  DebugLog("Allocating mode sense");
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure)
+  if (allocation.SetPages(1, 0) == StatusCode::kFailure) {
     return StatusCode::kFailure;
-  DebugLog("Finished allocating mode sense");
+  }
+  DebugLog("");  // TODO investigate: a log needs to exist here otherwise the
+                 // engine gets stuck during startup
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
 
   nvme_wrapper.is_admin = true;
