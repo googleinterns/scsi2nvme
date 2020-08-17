@@ -163,6 +163,7 @@ CompleteResponse Translation::Complete(
         "Invalid use of API, completion count %u does not equal command count "
         "%u",
         cpl_data.size(), nvme_cmd_count_);
+    AbortPipeline();
     resp.status = ApiStatus::kFailure;
     return resp;
   }
