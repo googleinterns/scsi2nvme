@@ -62,9 +62,9 @@ uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
 // Converts transfer_length in units of logical blocks to units of pages
 uint16_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
                                 uint32_t lba_size) {
-  /*uint64_t transfer_length_bytes = transfer_length * lba_size;
+  uint64_t transfer_length_bytes = transfer_length * lba_size;
   return transfer_length_bytes / page_size +
-         ((transfer_length_bytes % page_size == 0) ? 0 : 1);*/
+         ((transfer_length_bytes % page_size == 0) ? 0 : 1);
   return transfer_length;
 }
 

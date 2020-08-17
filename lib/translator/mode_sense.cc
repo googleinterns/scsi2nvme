@@ -177,8 +177,6 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
     return StatusCode::kFailure;
   }
 
-  DebugLog("Starting Mode Sense");
-
   // Configure NVMe get features cmd
   return GenerateCacheGetFeaturesCmd(cmd_attributes.pc, nsid,
                                      nvme_wrappers[cmd_count++]);
@@ -235,9 +233,6 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
   const nvme::IdentifyNamespace* idns;
   idns = SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
-  DebugLog("Reported Block Count: %u", idns->ncap);
-  DebugLog("Reported Block Size: %u",
-           1 << (idns->lbaf[idns->flbas.format].lbads));
   if (llbaa) {
     write_len = sizeof(scsi::LongLbaBlockDescriptor);
     scsi::LongLbaBlockDescriptor lbd = {};
@@ -318,7 +313,6 @@ StatusCode ModeSenseToScsi(CommonCmdAttributes cmd_attributes, bool is_mode_10,
   if (!WritePageData(cmd_attributes.page_code, get_features_result, buffer)) {
     DebugLog("Failed to write variable length mode-page data");
   }
-  DebugLog("Finished Mode Sense");
   return StatusCode::kSuccess;
 }
 

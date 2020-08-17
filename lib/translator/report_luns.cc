@@ -90,10 +90,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     DebugLog("Namespace pointer was null");
     return StatusCode::kFailure;
   }
-
   uint32_t lun_count = GetNsListLength(*ns_list);
-  // TODO: TEMP TESTING.
-  // uint32_t lun_count = 1;
 
   // Define scsi response structure and determine attributes
   uint32_t allocated_list_bytes =
