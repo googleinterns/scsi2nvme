@@ -107,9 +107,16 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
     }
   }
 
-  printk("Before block request execution.\n");
   blk_execute_rq(req->q, disk, req, 0);
-  printk(KERN_INFO "status %d\n", nvme_req(req)->status);
+
+  u16 status = nvme_req(req)->status;
+  if (status == 0) {
+    printk(KERN_INFO "status 0: SUCCESS\n");
+  } else if (status < 0) {
+    printk(KERN_INFO "Linux error code %d: \n", status);
+  } else {
+    printk(KERN_INFO "NVMe error code %d: \n", status);
+  }
   printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
   goto out;
 
