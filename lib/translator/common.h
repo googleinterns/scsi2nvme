@@ -137,16 +137,12 @@ bool ReadValue(Span<const uint8_t> data, T& out) {
 }
 
 template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out, size_t num_bytes) {
+bool WriteValue(const T& data, Span<uint8_t> out,
+                size_t num_bytes = sizeof(T)) {
   static_assert(std::is_pod_v<T>, "Only supports POD types");
-  if (num_bytes > out.size()) return false;
+  if (num_bytes > out.size() || num_bytes > sizeof(T)) return false;
   memcpy(out.data(), &data, num_bytes);
   return true;
-}
-
-template <typename T>
-bool WriteValue(const T& data, Span<uint8_t> out) {
-  return WriteValue(data, out, sizeof(T));
 }
 
 // Scsi status bundle
