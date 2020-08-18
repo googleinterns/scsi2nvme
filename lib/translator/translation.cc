@@ -25,6 +25,7 @@
 #include "synchronize_cache.h"
 #include "unmap.h"
 #include "verify.h"
+#include "write.h"
 
 namespace translator {
 
@@ -125,6 +126,30 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       break;
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_wrappers_[0]);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kWrite6:
+      pipeline_status_ =
+          Write6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
+                       kPageSize, kLbaSize, buffer_out);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kWrite10:
+      pipeline_status_ =
+          Write10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
+                        nsid, kPageSize, kLbaSize, buffer_out);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kWrite12:
+      pipeline_status_ =
+          Write12ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
+                        nsid, kPageSize, kLbaSize, buffer_out);
+      nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kWrite16:
+      pipeline_status_ =
+          Write16ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
+                        nsid, kPageSize, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     default:
@@ -233,6 +258,12 @@ CompleteResponse Translation::Complete(
       break;
     case scsi::OpCode::kSync10:
       // No command specific response data to translate
+      pipeline_status_ = StatusCode::kSuccess;
+      break;
+    case scsi::OpCode::kWrite6:
+    case scsi::OpCode::kWrite10:
+    case scsi::OpCode::kWrite12:
+    case scsi::OpCode::kWrite16:
       pipeline_status_ = StatusCode::kSuccess;
       break;
     default:
