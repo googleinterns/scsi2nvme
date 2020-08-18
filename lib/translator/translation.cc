@@ -52,8 +52,8 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
 
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
-
-  DebugLog("Translating opcode: %#x", scsi_cmd[0]);
+  DebugLog("Translating command %s with opcode %#x",
+           ScsiOpcodeToString((scsi::OpCode)(scsi_cmd[0])), scsi_cmd[0]);
   DebugLog("LUN: %u", lun);
   uint32_t nsid = static_cast<uint32_t>(lun) + 1;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
@@ -131,7 +131,11 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kTestUnitReady:
+      // Always return NVMe device is ready
+      // The implementation of actually querying readiness of NVMe device does
+      // not fit with our Library and engine design and is of little use
       pipeline_status_ = StatusCode::kSuccess;
+			break;
     case scsi::OpCode::kWrite6:
       pipeline_status_ =
           Write6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
@@ -184,6 +188,7 @@ CompleteResponse Translation::Complete(
         "Invalid use of API, completion count %u does not equal command count "
         "%u",
         cpl_data.size(), nvme_cmd_count_);
+    AbortPipeline();
     resp.status = ApiStatus::kFailure;
     return resp;
   }

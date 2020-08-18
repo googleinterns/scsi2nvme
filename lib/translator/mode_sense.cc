@@ -83,10 +83,11 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
                                               uint32_t nsid) {
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
                       .nsid = nsid};
-  DebugLog("Allocating mode sense");
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure)
+  if (allocation.SetPages(1, 0) == StatusCode::kFailure) {
     return StatusCode::kFailure;
-  DebugLog("Finished allocating mode sense");
+  }
+  DebugLog("");  // TODO investigate: a log needs to exist here otherwise the
+                 // engine gets stuck during startup
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
 
   nvme_wrapper.is_admin = true;
@@ -177,8 +178,6 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
     return StatusCode::kFailure;
   }
 
-  DebugLog("Starting Mode Sense");
-
   // Configure NVMe get features cmd
   return GenerateCacheGetFeaturesCmd(cmd_attributes.pc, nsid,
                                      nvme_wrappers[cmd_count++]);
@@ -235,9 +234,6 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
   Span<uint8_t> ns_span(ns_dptr, sizeof(nvme::IdentifyNamespace));
   const nvme::IdentifyNamespace* idns;
   idns = SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
-  DebugLog("Reported Block Count: %u", idns->ncap);
-  DebugLog("Reported Block Size: %u",
-           1 << (idns->lbaf[idns->flbas.format].lbads));
   if (llbaa) {
     write_len = sizeof(scsi::LongLbaBlockDescriptor);
     scsi::LongLbaBlockDescriptor lbd = {};
@@ -318,7 +314,6 @@ StatusCode ModeSenseToScsi(CommonCmdAttributes cmd_attributes, bool is_mode_10,
   if (!WritePageData(cmd_attributes.page_code, get_features_result, buffer)) {
     DebugLog("Failed to write variable length mode-page data");
   }
-  DebugLog("Finished Mode Sense");
   return StatusCode::kSuccess;
 }
 

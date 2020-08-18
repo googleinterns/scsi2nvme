@@ -29,7 +29,6 @@ namespace {
 uint32_t GetNsListLength(const nvme::IdentifyNamespaceList& ns_list) {
   uint32_t size = 0;
   for (uint32_t i = 0; i < nvme::kIdentifyNsListMaxLength; ++i) {
-    DebugLog("Potential NSID: %u", ns_list.ids[i]);
     if (ns_list.ids[i] == 0) break;
     ++size;
   }
@@ -91,10 +90,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     DebugLog("Namespace pointer was null");
     return StatusCode::kFailure;
   }
-
   uint32_t lun_count = GetNsListLength(*ns_list);
-  // TODO: TEMP TESTING.
-  // uint32_t lun_count = 1;
 
   // Define scsi response structure and determine attributes
   uint32_t allocated_list_bytes =
@@ -108,8 +104,6 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
     lun_count = lbl / sizeof(scsi::LunAddress);
   }
 
-  DebugLog("LUN Count: %u", lun_count);
-
   // Write response to buffer
   if (!WriteValue(rlpd, buffer)) {
     DebugLog("Buffer not large enough for report luns response header");
@@ -119,18 +113,12 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
   for (uint32_t i = 0; i < lun_count; ++i) {
     scsi::LunAddress lun = htonll(static_cast<scsi::LunAddress>(
         ltohl(ns_list->ids[i]) - 1));  // LUN must start @ 0 via SAM spec
-    DebugLog("Reporting LUN: %u", ntohll(lun));
     if (!WriteValue(
             lun, buffer.subspan(lun_offset + i * sizeof(scsi::LunAddress)))) {
       DebugLog("Truncating report luns response at position %u", i);
       return StatusCode::kSuccess;
     }
   }
-  // TODO: TEMP TESTING
-  // scsi::LunAddress lun = htonll(0);
-  // WriteValue(lun, buffer);
-
-  DebugLog("Lun List Length: %u", ntohl(rlpd.list_byte_length));
 
   return StatusCode::kSuccess;
 }
