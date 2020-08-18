@@ -85,7 +85,7 @@ uint16_t htols(uint16_t value) {
   if (IsLittleEndian()) {
     return value;
   } else {
-    return __bswap_16(value);
+    return bswap_16(value);
   }
 }
 
@@ -93,7 +93,7 @@ uint32_t htoll(uint32_t value) {
   if (IsLittleEndian()) {
     return value;
   } else {
-    return __bswap_32(value);
+    return bswap_32(value);
   }
 }
 
@@ -101,7 +101,7 @@ uint64_t htolll(uint64_t value) {
   if (IsLittleEndian()) {
     return value;
   } else {
-    return __bswap_64(value);
+    return bswap_64(value);
   }
 }
 

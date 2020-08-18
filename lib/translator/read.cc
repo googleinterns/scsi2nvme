@@ -184,7 +184,7 @@ StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
     return status;
   }
 
-  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = bswap_32(read_cmd.logical_block_address);
 
   nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;
@@ -208,7 +208,7 @@ StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
     return status;
   }
 
-  nvme_wrapper.cmd.cdw[0] = __bswap_32(read_cmd.logical_block_address);
+  nvme_wrapper.cmd.cdw[0] = bswap_32(read_cmd.logical_block_address);
 
   nvme_wrapper.is_admin = false;
   return StatusCode::kSuccess;

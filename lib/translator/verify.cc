@@ -104,7 +104,7 @@ StatusCode VerifyToNvme(translator::Span<const uint8_t> scsi_cmd,
           // to be verified as part of the operation. Command Dword 10 contains
           // bits 31:00; Command
           // Dword 11 contains bits 63: 32.
-          __bswap_32(verify_cmd.logical_block_address),  // cdw 10
+          bswap_32(verify_cmd.logical_block_address),  // cdw 10
           0,
 
           // Support requires translation to Number of Logical Blocks (NLB)
