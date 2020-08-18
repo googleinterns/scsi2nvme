@@ -143,7 +143,7 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
 TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   uint32_t alloc_len = 0;
   uint32_t network_endian_lba = 0x1a2b3c4d;
-  uint32_t cdw10 = __bswap_32(network_endian_lba);
+  uint32_t cdw10 = bswap_32(network_endian_lba);
 
   uint16_t network_endian_transfer_len = 0x2b1a;
   uint32_t cdw12 = translator::htoll((ntohs(network_endian_transfer_len) - 1) |
@@ -190,7 +190,7 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
 TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   uint32_t alloc_len = 0;
   uint32_t network_endian_lba = 0x1a2b3c4d;
-  uint32_t cdw10 = __bswap_32(network_endian_lba);
+  uint32_t cdw10 = bswap_32(network_endian_lba);
 
   uint32_t network_endian_transfer_len = 0x2b1a0000;
   uint32_t cdw12 = translator::htoll((ntohl(network_endian_transfer_len) - 1) |

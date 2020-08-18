@@ -26,6 +26,7 @@ cc_library(
     ":synchronize_cache_lib",
     ":verify_lib",
     ":report_luns_lib",
+    ":write_lib"
   ],
   visibility = ["//visibility:public"],
 )
@@ -120,6 +121,17 @@ cc_library(
   visibility = ["//visibility:public"],
 )
 
+cc_library(
+  name = "write_lib",
+  hdrs = ["write.h"],
+  srcs = ["write.cc"],
+  deps = [
+    ":common",
+    "//third_party/spdk:nvme_lib",
+  ],
+  visibility = ["//visibility:public"],
+)
+ 
 cc_library(
   name = "unmap_lib",
   hdrs = ["unmap.h"],

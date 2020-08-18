@@ -65,6 +65,15 @@ TEST(Common, ShouldNotWriteValueToSpan) {
   EXPECT_FALSE(result);
 }
 
+TEST(Common, ShouldNotWriteValueToSpanForTooLargeNumbytes) {
+  scsi::Read6Command cmd;
+  uint8_t buffer[sizeof(scsi::Read6Command) + 1];
+
+  bool result =
+      translator::WriteValue(cmd, buffer, sizeof(scsi::Read6Command) + 1);
+  EXPECT_FALSE(result);
+}
+
 TEST(Common, ShouldWriteNBytesToSpan) {
   scsi::Read6Command cmd;
   uint8_t buffer[sizeof(scsi::Read6Command) - 1];
