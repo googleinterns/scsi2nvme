@@ -2,7 +2,7 @@
 
 NAME := scsi2nvme
 
-MODULE_SRC_DIR := third_party/scsi_mock
+MODULE_SRC_DIR := third_party/e2e
 TRANSLATE_SRC_DIR := lib/translator
 NVME_SRC_DIR := third_party/spdk
 SCSI_SRC_DIR := lib
