@@ -86,9 +86,10 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
   if (allocation.SetPages(1, 0) == StatusCode::kFailure) {
     return StatusCode::kFailure;
   }
-  DebugLog("");  // TODO investigate: a log needs to exist here otherwise the
+  DebugLog("allocation data addr %llu", allocation.data_addr);  // TODO investigate: a log needs to exist here otherwise the
                  // engine gets stuck during startup
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
+  DebugLog("allocation data addr %llu", nvme_wrapper.cmd.dptr.prp.prp1);  // TODO investigate: a log needs to exist here otherwise the
 
   nvme_wrapper.is_admin = true;
 }
@@ -96,6 +97,7 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
 // Generates an nvme get features command for fetching cache features
 StatusCode GenerateCacheGetFeaturesCmd(scsi::PageControl pc, uint32_t nsid,
                                        NvmeCmdWrapper& nvme_wrapper) {
+																			 DebugLog("Starting 1");
   nvme::GetFeaturesCmd tmp_get_features = {};
   tmp_get_features.opc = static_cast<uint8_t>(nvme::AdminOpcode::kGetFeatures);
   tmp_get_features.nsid = nsid;
@@ -119,12 +121,14 @@ StatusCode GenerateCacheGetFeaturesCmd(scsi::PageControl pc, uint32_t nsid,
   static_assert(sizeof(nvme_wrapper.cmd) == sizeof(tmp_get_features));
 
   nvme_wrapper.is_admin = true;
+																			 DebugLog("Ending1");
   return StatusCode::kSuccess;
 }
 
 // Calculates the size of the mode sense 6 response
 uint16_t GetModeDataLength(CommonCmdAttributes cmd_attributes,
                            bool is_mode_10) {
+																			 DebugLog("Starting 2");
   uint32_t total_size = 0;
   // Subtract size of mode data length field per scsi spec
   // 1 byte for mode 6, 2 bytes for mode 10
@@ -153,6 +157,7 @@ uint16_t GetModeDataLength(CommonCmdAttributes cmd_attributes,
                     sizeof(scsi::ControlModePage) +
                     sizeof(scsi::PowerConditionModePage);
   }
+																			 DebugLog("Ending2");
   return total_size;
 }
 
@@ -161,6 +166,7 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
                            Span<NvmeCmdWrapper> nvme_wrappers,
                            Allocation& allocation, uint32_t nsid,
                            uint32_t& cmd_count) {
+													 DebugLog("Building mode sense nvme at count %d\n", cmd_count);
   // Handle block descriptors
   if (!cmd_attributes.dbd) {
     GenerateBlockDescriptorIdentifyCmd(nvme_wrappers[cmd_count++], allocation,
@@ -235,6 +241,7 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
   const nvme::IdentifyNamespace* idns;
   idns = SafePointerCastRead<nvme::IdentifyNamespace>(ns_span);
   if (llbaa) {
+		DebugLog("llbaa");
     write_len = sizeof(scsi::LongLbaBlockDescriptor);
     scsi::LongLbaBlockDescriptor lbd = {};
     lbd.number_of_blocks = bswap_64(idns->ncap);
@@ -244,6 +251,7 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
         htonl(1 << (idns->lbaf[idns->flbas.format].lbads));
     return WriteValue(lbd, buffer);
   } else {
+		DebugLog("not llbaa");
     write_len = sizeof(scsi::ShortLbaBlockDescriptor);
     scsi::ShortLbaBlockDescriptor sbd = {};
     sbd.number_of_blocks = htonl(static_cast<uint32_t>(ltohll(idns->ncap)));
@@ -299,6 +307,7 @@ StatusCode ModeSenseToScsi(CommonCmdAttributes cmd_attributes, bool is_mode_10,
     buffer = buffer.subspan(sizeof(scsi::ModeParameter6Header));
   }
 
+DebugLog("Gottne here");
   // Populate block descriptor
   if (!cmd_attributes.dbd) {
     uint32_t write_len = 0;

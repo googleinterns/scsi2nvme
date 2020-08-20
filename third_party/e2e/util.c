@@ -21,6 +21,7 @@ unsigned long long AllocPages(unsigned short count) {
   if (count == 0) return 0;
   printk("Allocating %u bytes", NVME_MIN_PAGE_SIZE * count);
   void* addr = kzalloc(NVME_MIN_PAGE_SIZE * count, GFP_ATOMIC | GFP_KERNEL);
+	printk("Address %llu",(unsigned long long) addr);
   if (addr == NULL) printk("NULLPTR ALLOC PAGES!!!!");
   return (unsigned long long)addr;
 }
