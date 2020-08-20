@@ -54,7 +54,6 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
   scsi_cmd_ = scsi_cmd;
   DebugLog("Translating command %s with opcode %#x",
            ScsiOpcodeToString((scsi::OpCode)(scsi_cmd[0])), scsi_cmd[0]);
-  DebugLog("LUN: %u", lun);
   uint32_t nsid = static_cast<uint32_t>(lun) + 1;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
@@ -135,7 +134,7 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
       // The implementation of actually querying readiness of NVMe device does
       // not fit with our Library and engine design and is of little use
       pipeline_status_ = StatusCode::kSuccess;
-			break;
+      break;
     case scsi::OpCode::kWrite6:
       pipeline_status_ =
           Write6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,

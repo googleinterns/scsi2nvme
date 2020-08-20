@@ -39,9 +39,6 @@ static inline struct nvme_request* nvme_req(struct request* req) {
 
 static void submit_req_done(struct request* rq) {
   struct nvme_request* nvme_rq = nvme_req(rq);
-  // if (nvme_rq) {
-  //  kfree(nvme_rq->cmd);
-  //}
 
   if (rq) {
     blk_mq_free_request(rq);
@@ -53,7 +50,6 @@ struct request* nvme_alloc_request(struct request_queue* q,
   struct request* req;
   unsigned op = nvme_is_write(cmd) ? REQ_OP_DRV_OUT : REQ_OP_DRV_IN;
 
-  // printk("Request queue addr: %p", q);
   req = blk_mq_alloc_request(q, op, 0);
 
   if (IS_ERR(req)) return req;
@@ -84,7 +80,7 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
 
   req = nvme_alloc_request(q, cmd);
   if (IS_ERR(req)) {
-    printk("nvme_alloc_request failed?.\n");
+    printk("nvme_alloc_request failed?.");
     return PTR_ERR(req);
   }
 
@@ -94,14 +90,14 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
   if (buffer && bufflen) {
     ret = blk_rq_map_kern(q, req, buffer, bufflen, GFP_KERNEL);
     if (ret) {
-      printk("blk_rq_map_kern failed?.\n");
+      printk("blk_rq_map_kern failed?.");
       goto out;
     }
     bio = req->bio;
 
     bio->bi_disk = disk;
     if (!bio->bi_disk) {
-      printk("bdget_disk failed?.\n");
+      printk("bdget_disk failed?.");
       ret = -ENODEV;
       goto out_unmap;
     }
@@ -111,13 +107,13 @@ int nvme_submit_user_cmd(struct gendisk* disk, struct request_queue* q,
 
   u16 status = nvme_req(req)->status;
   if (status == 0) {
-    printk(KERN_INFO "status 0: SUCCESS\n");
+    printk(KERN_INFO "status 0: SUCCESS");
   } else if (status < 0) {
-    printk(KERN_INFO "Linux error code %d: \n", status);
+    printk(KERN_INFO "Linux error code %d: ", status);
   } else {
-    printk(KERN_INFO "NVMe error code %d: \n", status);
+    printk(KERN_INFO "NVMe error code %d: ", status);
   }
-  printk(KERN_INFO "req flags %d\n", nvme_req(req)->flags);
+  printk(KERN_INFO "req flags %d ", nvme_req(req)->flags);
   goto out;
 
 out_unmap:
@@ -134,9 +130,6 @@ int submit_admin_command(struct NvmeCommand* nvme_cmd, void* buffer,
                          unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
   memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
-  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
-  // kernel_nvme_cmd.common.opcode = nvme_admin_identify;
-  // kernel_nvme_cmd.identify.cns = cpu_to_le32(NVME_ID_CNS_CTRL);
   return nvme_submit_user_cmd(bd_disk, ns->ctrl->admin_q, &kernel_nvme_cmd,
                               buffer, bufflen, cpl, timeout);
 }
@@ -146,70 +139,40 @@ int submit_io_command(struct NvmeCommand* nvme_cmd, void* buffer,
                       unsigned timeout) {
   struct nvme_command kernel_nvme_cmd;
   memcpy(&kernel_nvme_cmd, nvme_cmd, sizeof(kernel_nvme_cmd));
-  // static_assert(sizeof(kernel_nvme_cmd) == sizeof(nvme_cmd));
   return nvme_submit_user_cmd(bd_disk, ns->queue, &kernel_nvme_cmd, buffer,
                               bufflen, cpl, timeout);
 }
 
-/*int send_sample_write_request() {
-  int buff_size = sizeof(struct nvme_id_ctrl);
-  void *ret_buf = NULL;
-  ret_buf = kzalloc(buff_size, GFP_ATOMIC | GFP_KERNEL);
-  if (!ret_buf)
-  {
-    printk("Failed to malloc?.\n");
-  }
-  char * cbuff = ret_buf;
-  cbuff[0] = 'a';
-  cbuff[1] = 'b';
-  cbuff[2] = 'c';
-  cbuff[3] = '\n';
-
-  struct nvme_command *ncmd = NULL;
-  ncmd = kzalloc (sizeof (struct nvme_command), GFP_KERNEL);
-
-  memset(ncmd, 0, sizeof(&ncmd));
-  ncmd->common.opcode = nvme_cmd_write;
-  ncmd->rw.nsid = cpu_to_le32(1);
-  ncmd->rw.length = cpu_to_le16(1);
-
-  u32 code_result = 0;
-
-  int status = submit_io_command(ncmd, ret_buf, buff_size, &code_result, 0);
-  printk("Status of IO is: %d\n", status);
-}*/
-
 int nvme_driver_init(void) {
-  printk(KERN_INFO "Started NVMe Communication Module Insertion\n");
+  printk(KERN_INFO "Started NVMe Communication Module Insertion");
 
   bdev = blkdev_get_by_path(NVME_DEVICE_PATH, MY_BDEV_MODE, NULL);
   if (IS_ERR(bdev)) {
-    printk(KERN_ERR "No such block device. %ld\n", PTR_ERR(bdev));
+    printk(KERN_ERR "No such block device. %ld", PTR_ERR(bdev));
     return -1;
   }
 
-  printk("Block device registered\n");
+  printk("Block device registered");
 
   bd_disk = bdev->bd_disk;
   if (IS_ERR_OR_NULL(bd_disk)) {
-    printk("bd_disk is null?.\n");
+    printk("bd_disk is null?.");
     return -1;
   }
 
-  printk("Gendisk registered\n");
+  printk("Gendisk registered");
 
   ns = bdev->bd_disk->private_data;
   if (IS_ERR_OR_NULL(ns)) {
-    printk("nvme_ns is null?.\n");
+    printk("nvme_ns is null?.");
     return -1;
   }
   printk("CTRL State: %u", ns->ctrl->state);
   printk("Connects_q: %p", ns->ctrl->connect_q);
-  // nvme_get_ctrl(ns->ctrl);
   printk("Admin_q address: %p", ns->ctrl->admin_q);
 
   printk("CTRL POINTER %p, NS POINTER %p", ns->ctrl, ns);
 
-  printk("NVMe device registered!\n");
+  printk("NVMe device registered!");
   return 0;
 }

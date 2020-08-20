@@ -65,7 +65,6 @@ uint16_t GetTransferLengthPages(uint16_t transfer_length, uint32_t page_size,
   uint64_t transfer_length_bytes = transfer_length * lba_size;
   return transfer_length_bytes / page_size +
          ((transfer_length_bytes % page_size == 0) ? 0 : 1);
-  return transfer_length;
 }
 
 // Translates fields common to all Read commands

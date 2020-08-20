@@ -9,8 +9,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 
-#ifndef NVME2SCSI_ENGINE_H
-#define NVME2SCSI_ENGINE_H
+#ifndef ENGINE_H
+#define ENGINE_H
 
 #include "util.h"
 
