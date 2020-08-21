@@ -40,7 +40,8 @@ cxxflags = $(FLAGS) \
 	   -nostdlib \
 	   -fno-rtti \
 	   -fno-exceptions \
-	   -std=c++17
+	   -std=c++17 \
+		 -O2
 
 obj-m += $(NAME).o
 

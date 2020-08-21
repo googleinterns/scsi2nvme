@@ -172,6 +172,7 @@ T* SafePointerCastWrite(Span<uint8_t> buf) {
     DebugLog("Pointer cast called on unaligned memory");
     return nullptr;
   }
+	DebugLog("finished safe poitner cast");
   return new (buf.data()) T;
 }
 
@@ -189,6 +190,7 @@ const T* SafePointerCastRead(Span<const uint8_t> buf) {
     DebugLog("Pointer cast called on unaligned memory");
     return nullptr;
   }
+	DebugLog("finished safe poitner cast");
   return reinterpret_cast<const T*>(buf.data());
 }
 

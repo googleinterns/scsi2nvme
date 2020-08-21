@@ -92,6 +92,7 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
   DebugLog("allocation data addr %llu", nvme_wrapper.cmd.dptr.prp.prp1);  // TODO investigate: a log needs to exist here otherwise the
 
   nvme_wrapper.is_admin = true;
+	return StatusCode::kSuccess;
 }
 
 // Generates an nvme get features command for fetching cache features
@@ -167,12 +168,14 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
                            Allocation& allocation, uint32_t nsid,
                            uint32_t& cmd_count) {
 													 DebugLog("Building mode sense nvme at count %d\n", cmd_count);
+		DebugLog("Page code %d", cmd_attributes.page_code);
   // Handle block descriptors
   if (!cmd_attributes.dbd) {
     GenerateBlockDescriptorIdentifyCmd(nvme_wrappers[cmd_count++], allocation,
                                        nsid);
   }
 
+		DebugLog("Page code %d", cmd_attributes.page_code);
   // Validate page code
   if (cmd_attributes.page_code != scsi::ModePageCode::kCacheMode &&
       cmd_attributes.page_code != scsi::ModePageCode::kAllSupportedModes) {
@@ -254,7 +257,9 @@ bool WriteBlockDescriptor(const nvme::GenericQueueEntryCmd& identify,
 		DebugLog("not llbaa");
     write_len = sizeof(scsi::ShortLbaBlockDescriptor);
     scsi::ShortLbaBlockDescriptor sbd = {};
+		DebugLog("not llbaa");
     sbd.number_of_blocks = htonl(static_cast<uint32_t>(ltohll(idns->ncap)));
+		DebugLog("not llbaa");
     // Figure 246
     // https://nvmexpress.org/wp-content/uploads/NVM-Express-1_4-2019.06.10-Ratified.pdf
     uint32_t lbl_be = htonl(1 << (idns->lbaf[idns->flbas.format].lbads));
