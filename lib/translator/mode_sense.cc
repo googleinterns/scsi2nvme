@@ -83,11 +83,14 @@ StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
                                               uint32_t nsid) {
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
                       .nsid = nsid};
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure)
+  if (allocation.SetPages(1, 0) == StatusCode::kFailure) {
     return StatusCode::kFailure;
+  }
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
 
   nvme_wrapper.is_admin = true;
+
+  return StatusCode::kSuccess;
 }
 
 // Generates an nvme get features command for fetching cache features
@@ -160,8 +163,12 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
                            uint32_t& cmd_count) {
   // Handle block descriptors
   if (!cmd_attributes.dbd) {
-    GenerateBlockDescriptorIdentifyCmd(nvme_wrappers[cmd_count++], allocation,
-                                       nsid);
+    StatusCode status = GenerateBlockDescriptorIdentifyCmd(
+        nvme_wrappers[cmd_count++], allocation, nsid);
+    if (status != StatusCode::kSuccess) {
+      DebugLog("Error generating Block Descriptor Identify Command");
+      return status;
+    }
   }
 
   // Validate page code
