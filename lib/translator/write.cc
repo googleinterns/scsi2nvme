@@ -53,27 +53,12 @@ StatusCode BuildPRInfo(uint8_t wrprotect, uint8_t& pr_info) {
 }
 
 // Converts transfer_length in units of logical blocks to units of pages
-StatusCode GetTransferLengthPages(uint32_t& transfer_length_pages,
-                                  uint16_t transfer_length, uint32_t page_size,
-                                  uint32_t lba_size) {
-  if (page_size == 0) {
-    DebugLog("Page size is 0 for Write Command");
-    return StatusCode::kFailure;
-  }
-
-  uint64_t transfer_length_bytes = transfer_length * lba_size;
-  transfer_length_pages = transfer_length_bytes / page_size +
-                          ((transfer_length_bytes % page_size == 0) ? 0 : 1);
-
-  return StatusCode::kSuccess;
-}
 
 // This function populates the nvme::GenericQueueEntryCmd object with fields
 // that are common to all Write Commands (6, 10, 12, 16) Refer to Section 5.7
 // (https://nvmexpress.org/wp-content/uploads/NVM_Express_-_SCSI_Translation_Reference-1_5_20150624_Gold.pdf)
 StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                       uint32_t nsid, uint32_t transfer_length_pages,
-                       Span<const uint8_t> buffer_out) {
+                       uint32_t nsid, Span<const uint8_t> buffer_out) {
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::NvmOpcode::kWrite),
                       .psdt = 0,  // prps are used
                       .nsid = nsid};
@@ -93,7 +78,7 @@ uint32_t BuildCdw12(uint16_t transfer_length, uint8_t prinfo, bool fua) {
 
 StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
                  NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                 uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                 uint32_t nsid, uint32_t lba_size,
                  Span<const uint8_t> buffer_out) {
   if (transfer_length == 0) {
     DebugLog("NVMe write command does not support transfering zero blocks");
@@ -102,16 +87,8 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
 
   transfer_length &= 0xffff;  // truncate to 16 bits
 
-  uint32_t transfer_length_pages = 0;
-  StatusCode status_code = GetTransferLengthPages(
-      transfer_length_pages, transfer_length, page_size, lba_size);
-
-  if (status_code != StatusCode::kSuccess) {
-    return status_code;
-  }
-
-  status_code = LegacyWrite(nvme_wrapper, allocation, nsid,
-                            transfer_length_pages, buffer_out);
+  StatusCode status_code =
+      LegacyWrite(nvme_wrapper, allocation, nsid, buffer_out);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -133,7 +110,7 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
 
 StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                        uint32_t nsid, uint32_t lba_size,
                         Span<const uint8_t> buffer_out) {
   scsi::Write6Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
@@ -148,16 +125,8 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
   uint16_t updated_transfer_length =
       (write_cmd.transfer_length == 0) ? 256 : write_cmd.transfer_length;
 
-  uint32_t transfer_length_pages = 0;
-  StatusCode status_code = GetTransferLengthPages(
-      transfer_length_pages, updated_transfer_length, page_size, lba_size);
-
-  if (status_code != StatusCode::kSuccess) {
-    return status_code;
-  }
-
-  status_code = LegacyWrite(nvme_wrapper, allocation, nsid,
-                            transfer_length_pages, buffer_out);
+  StatusCode status_code =
+      LegacyWrite(nvme_wrapper, allocation, nsid, buffer_out);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -175,7 +144,7 @@ StatusCode Write6ToNvme(Span<const uint8_t> scsi_cmd,
 
 StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
                          NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                         uint32_t nsid, uint32_t lba_size,
                          Span<const uint8_t> buffer_out) {
   scsi::Write10Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
@@ -183,9 +152,9 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohs(write_cmd.transfer_length),
-      nvme_wrapper, allocation, nsid, page_size, lba_size, buffer_out);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohs(write_cmd.transfer_length), nvme_wrapper,
+                                 allocation, nsid, lba_size, buffer_out);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -196,7 +165,7 @@ StatusCode Write10ToNvme(Span<const uint8_t> scsi_cmd,
 }
 StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
                          NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                         uint32_t nsid, uint32_t lba_size,
                          Span<const uint8_t> buffer_out) {
   scsi::Write12Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
@@ -204,9 +173,9 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohl(write_cmd.transfer_length),
-      nvme_wrapper, allocation, nsid, page_size, lba_size, buffer_out);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohl(write_cmd.transfer_length), nvme_wrapper,
+                                 allocation, nsid, lba_size, buffer_out);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;
@@ -218,7 +187,7 @@ StatusCode Write12ToNvme(Span<const uint8_t> scsi_cmd,
 
 StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
                          NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                         uint32_t nsid, uint32_t page_size, uint32_t lba_size,
+                         uint32_t nsid, uint32_t lba_size,
                          Span<const uint8_t> buffer_out) {
   scsi::Write16Command write_cmd = {};
   if (!ReadValue(scsi_cmd, write_cmd)) {
@@ -226,9 +195,9 @@ StatusCode Write16ToNvme(Span<const uint8_t> scsi_cmd,
     return StatusCode::kInvalidInput;
   }
 
-  StatusCode status_code = Write(
-      write_cmd.fua, write_cmd.wr_protect, ntohl(write_cmd.transfer_length),
-      nvme_wrapper, allocation, nsid, page_size, lba_size, buffer_out);
+  StatusCode status_code = Write(write_cmd.fua, write_cmd.wr_protect,
+                                 ntohl(write_cmd.transfer_length), nvme_wrapper,
+                                 allocation, nsid, lba_size, buffer_out);
 
   if (status_code != StatusCode::kSuccess) {
     return status_code;

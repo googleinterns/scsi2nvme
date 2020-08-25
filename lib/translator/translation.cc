@@ -131,25 +131,25 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kWrite6:
       pipeline_status_ =
           Write6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0], nsid,
-                       kPageSize, kLbaSize, buffer_out);
+                       kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite10:
       pipeline_status_ =
           Write10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
-                        nsid, kPageSize, kLbaSize, buffer_out);
+                        nsid, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite12:
       pipeline_status_ =
           Write12ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
-                        nsid, kPageSize, kLbaSize, buffer_out);
+                        nsid, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kWrite16:
       pipeline_status_ =
           Write16ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], allocations_[0],
-                        nsid, kPageSize, kLbaSize, buffer_out);
+                        nsid, kLbaSize, buffer_out);
       nvme_cmd_count_ = 1;
       break;
     default:
