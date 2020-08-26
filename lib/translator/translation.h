@@ -38,10 +38,13 @@ class Translation {
       : pipeline_status_(StatusCode::kUninitialized),
         nvme_cmd_count_(0),
         allocations_() {}
+
   // Translates from SCSI to NVMe. Translated commands available through
-  // GetNvmeCmds()
-  BeginResponse Begin(Span<const uint8_t> scsi_cmd,
-                      Span<const uint8_t> buffer_out, scsi::LunAddress lun);
+  // GetNvmeCmdWrappers()
+  // scsi_cmd is the raw SCSI command in bytes
+  // buffer can be an output buffer or input buffer depending on the command
+  BeginResponse Begin(Span<const uint8_t> scsi_cmd, Span<const uint8_t> buffer,
+                      scsi::LunAddress lun);
 
   // Translates from NVMe to SCSI. Writes SCSI response data to buffer.
   CompleteResponse Complete(Span<const nvme::GenericQueueEntryCpl> cpl_data,

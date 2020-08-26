@@ -24,6 +24,8 @@ namespace translator {
 // casts it to scsi::Read[6,10,12,16]Command,
 // ensures SCSI command is layed out in Big Endian using hton[sl](),
 // and builds an NVMe Read command
+// It also sets the NVMe prp pointer to the SCSI data in buffer so the
+// NVMe driver can write directly to the data in buffer
 
 // Read(6) is obsolete, but may still be implemented on some devices.
 // As such, it will call the LegacyRead() translation function
@@ -34,31 +36,23 @@ namespace translator {
 
 StatusCode Read6ToNvme(Span<const uint8_t> scsi_cmd,
                        NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                       uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                       uint32_t& alloc_len);
+                       uint32_t nsid, uint32_t lba_size,
+                       Span<const uint8_t> buffer_in, uint32_t& alloc_len);
 
 StatusCode Read10ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
+                        uint32_t nsid, uint32_t lba_size,
+                        Span<const uint8_t> buffer_in, uint32_t& alloc_len);
 
 StatusCode Read12ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
+                        uint32_t nsid, uint32_t lba_size,
+                        Span<const uint8_t> buffer_in, uint32_t& alloc_len);
 
 StatusCode Read16ToNvme(Span<const uint8_t> scsi_cmd,
                         NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                        uint32_t nsid, uint32_t page_size, uint32_t lba_size,
-                        uint32_t& alloc_len);
-
-// Common to Read(6), Read(10), Read(12), and Read(16)
-// Takes in the SCSI data-in buffer and an NVMe read command
-// and writes the data pointed to by the NVMe data pointer
-// to the SCSI data-in buffer
-StatusCode ReadToScsi(Span<uint8_t> buffer,
-                      const nvme::GenericQueueEntryCmd& nvme_cmd,
-                      uint32_t lba_size);
+                        uint32_t nsid, uint32_t lba_size,
+                        Span<const uint8_t> buffer_in, uint32_t& alloc_len);
 
 }  // namespace translator
 
