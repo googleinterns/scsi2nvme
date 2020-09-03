@@ -39,7 +39,7 @@ class ReadTest : public ::testing::Test {
   // Called before the first test in this test suite.
   static void SetUpTestSuite() {
     // Mocks AllocPages to not return a null (0) value
-    auto alloc_callback = [](uint16_t count) -> uint64_t {
+    auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
       if (count != 0) {
         return 1337;
       } else {
@@ -94,6 +94,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(cdw12, nvme_wrapper.cmd.cdw[2]);
   EXPECT_EQ(false, nvme_wrapper.is_admin);
   EXPECT_EQ(kHostTransferLen * kLbaSize, alloc_len);
+  EXPECT_EQ(alloc_len, nvme_wrapper.buffer_len);
 }
 
 TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
@@ -127,6 +128,7 @@ TEST_F(ReadTest, Read6ToNvmeShouldRead256BlocksForZeroTransferLen) {
   EXPECT_EQ(cdw12, nvme_wrapper.cmd.cdw[2]);
   EXPECT_EQ(false, nvme_wrapper.is_admin);
   EXPECT_EQ(256 * kLbaSize, alloc_len);
+  EXPECT_EQ(alloc_len, nvme_wrapper.buffer_len);
 }
 
 TEST_F(ReadTest, Read10ToNvmeShouldReturnInvalidInputStatus) {
@@ -173,6 +175,7 @@ TEST_F(ReadTest, Read10ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(cdw12, nvme_wrapper.cmd.cdw[2]);
   EXPECT_EQ(false, nvme_wrapper.is_admin);
   EXPECT_EQ(kHostTransferLen * kLbaSize, alloc_len);
+  EXPECT_EQ(alloc_len, nvme_wrapper.buffer_len);
 }
 
 TEST_F(ReadTest, Read12ToNvmeShouldReturnInvalidInputStatus) {
@@ -219,6 +222,7 @@ TEST_F(ReadTest, Read12ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(cdw12, nvme_wrapper.cmd.cdw[2]);
   EXPECT_EQ(false, nvme_wrapper.is_admin);
   EXPECT_EQ(kHostTransferLen * kLbaSize, alloc_len);
+  EXPECT_EQ(alloc_len, nvme_wrapper.buffer_len);
 }
 
 TEST_F(ReadTest, Read16ToNvmeShouldReturnInvalidInputStatus) {
@@ -286,6 +290,7 @@ TEST_F(ReadTest, Read16ToNvmeShouldReturnCorrectTranslation) {
   EXPECT_EQ(cdw12, nvme_wrapper.cmd.cdw[2]);
   EXPECT_EQ(false, nvme_wrapper.is_admin);
   EXPECT_EQ(kHostTransferLen * kLbaSize, alloc_len);
+  EXPECT_EQ(alloc_len, nvme_wrapper.buffer_len);
 }
 
 TEST_F(ReadTest, NonRead6ToNvmeShouldReturnNoTranslationForZeroTransferLen) {

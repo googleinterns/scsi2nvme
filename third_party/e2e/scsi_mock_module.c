@@ -11,17 +11,21 @@
 
 #include "scsi_mock_module.h"
 
+#include "engine.h"
+#include "nvme_driver.h"
+
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/scatterlist.h>
 #include <scsi/scsi.h>
+#include <scsi/scsi_cmnd.h>
 #include <scsi/scsi_host.h>
 
 static const char kName[] = "SCSI2NVMe SCSI Mock";
 static const int kQueueCount = 1;
-static const int kCanQueue = 64;
+static const int kCanQueue = 1;
 static const int kCmdPerLun = 1;
 
 static struct bus_type pseudo_bus;
@@ -30,9 +34,44 @@ static struct device pseudo_adapter;
 static struct device_driver scsi_mock_driverfs = {.name = kName,
                                                   .bus = &pseudo_bus};
 
-static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
-  printk("RECIEVED COMMAND");
+static int respond(struct scsi_cmnd* cmd, u32 resp_code) {
+  cmd->result = resp_code;
+  cmd->scsi_done(cmd);
   return 0;
+}
+
+static int scsi_queuecommand(struct Scsi_Host* host, struct scsi_cmnd* cmd) {
+  u64 lun = cmd->device->lun;
+  unsigned char* cmd_buf = cmd->cmnd;
+  u16 cmd_len = cmd->cmd_len;
+  u16 data_len = scsi_bufflen(cmd);
+  unsigned char* sense_buf = cmd->sense_buffer;
+  unsigned short sense_len = SCSI_SENSE_BUFFERSIZE;
+  bool is_data_in = cmd->sc_data_direction == DMA_FROM_DEVICE;
+  unsigned char* data_buf;
+  printk("RECIEVED COMMAND");
+  if (data_len > 0) {
+    data_buf = kzalloc(data_len, GFP_ATOMIC | GFP_KERNEL);
+    if (data_buf == NULL) {
+      printk("OUT OF MEMORY!!");
+      return respond(cmd, 23);
+    }
+    printk("Data Length of SCSI Buffer: %u", data_len);
+    if (!is_data_in) scsi_sg_copy_to_buffer(cmd, data_buf, data_len);
+  }
+  struct ScsiToNvmeResponse resp =
+      ScsiToNvme(cmd_buf, cmd_len, lun, sense_buf, sense_len, data_buf,
+                 data_len, is_data_in);
+  // Copy response to SGL buffer
+  if (is_data_in && data_len > 0) {
+    printk("ALLOC_LEN %u", resp.alloc_len);
+    struct scsi_data_buffer* sdb = &cmd->sdb;
+    int sdb_len = sg_copy_from_buffer(sdb->table.sgl, sdb->table.nents,
+                                      data_buf, resp.alloc_len);
+    scsi_set_resid(cmd, data_len - sdb_len);
+  }
+  if (data_len > 0) kfree(data_buf);
+  return respond(cmd, resp.return_code);
 }
 
 static int scsi_abort(struct scsi_cmnd* cmd) { return SUCCESS; }
@@ -57,15 +96,25 @@ static int bus_match(struct device* dev, struct device_driver* driver) {
   return 1;
 }
 
+int registered = 0;
+
 static int bus_driver_probe(struct device* dev) {
   int err;
   struct Scsi_Host* scsi_host;
+
+  printk("REGISTERING NEW DEVICE!");
+  if (dev != &pseudo_adapter || registered > 0) return -1;
+
+  printk("REGISTER CONTINUE!");
+
   scsi_host = scsi_host_alloc(&scsi_mock_template, 0);
   if (!scsi_host) {
     printk("SCSI Host failed to allocate");
     return -ENODEV;
   }
   scsi_host->nr_hw_queues = kQueueCount;
+  scsi_host->max_id = 1;
+  scsi_host->max_lun = 1;
   err = scsi_add_host(scsi_host, NULL);
   if (err) {
     scsi_host_put(scsi_host);
@@ -73,6 +122,7 @@ static int bus_driver_probe(struct device* dev) {
   }
   dev_set_drvdata(dev, scsi_host);
   scsi_scan_host(scsi_host);
+  registered = 1;
   return 0;
 }
 
@@ -101,6 +151,8 @@ static int scsi_mock_add_device(void) {
 
 static int __init scsi_mock_init(void) {
   int err;
+  SetEngineCallbacks();
+  nvme_driver_init();
   printk("Registering root device\n");
   pseudo_root_dev = root_device_register("pseudo_scsi_root");
   if (IS_ERR(pseudo_root_dev)) {

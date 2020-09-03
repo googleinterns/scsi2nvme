@@ -22,6 +22,8 @@
 
 namespace {
 
+constexpr uint32_t kPageSize = 4096;
+
 TEST(TranslateUnmap, ShouldFillBufferCorrectly) {
   // Define basic test variables
   uint32_t descriptor_count = 3;
@@ -59,7 +61,7 @@ TEST(TranslateUnmap, ShouldFillBufferCorrectly) {
   translator::NvmeCmdWrapper nvme_wrapper = {};
   translator::Allocation allocation = {};
 
-  auto alloc_callback = [](uint16_t count) -> uint64_t {
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
     void* ptr = malloc(4096);  // Minimum page size of 4096 bytes
     return reinterpret_cast<uint64_t>(ptr);
   };
@@ -68,7 +70,7 @@ TEST(TranslateUnmap, ShouldFillBufferCorrectly) {
 
   // Run function we're testing
   translator::StatusCode status_code = translator::UnmapToNvme(
-      scsi_cmd, buffer_out, nvme_wrapper, allocation, nsid);
+      scsi_cmd, buffer_out, nvme_wrapper, kPageSize, nsid, allocation);
 
   // Validate outputs
   ASSERT_EQ(status_code, translator::StatusCode::kSuccess);

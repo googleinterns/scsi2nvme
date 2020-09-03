@@ -185,6 +185,8 @@ TEST(WriteTest, Write6ShouldBuildCorrectNvmeCommandStruct) {
   EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
   EXPECT_EQ(nvme_wrapper.cmd.dptr.prp.prp1,
             reinterpret_cast<uint64_t>(buffer_out.data()));
+  EXPECT_EQ(nvme_wrapper.is_admin, false);
+  EXPECT_EQ(nvme_wrapper.buffer_len, buffer_out.size());
 }
 
 TEST(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
@@ -215,6 +217,8 @@ TEST(WriteTest, Write10ShouldBuildCorrectNvmeCommandStruct) {
   EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
   EXPECT_EQ(nvme_wrapper.cmd.dptr.prp.prp1,
             reinterpret_cast<uint64_t>(buffer_out.data()));
+  EXPECT_EQ(nvme_wrapper.is_admin, false);
+  EXPECT_EQ(nvme_wrapper.buffer_len, buffer_out.size());
 }
 
 TEST(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
@@ -245,6 +249,8 @@ TEST(WriteTest, Write12ShouldBuildCorrectNvmeCommandStruct) {
   EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
   EXPECT_EQ(nvme_wrapper.cmd.dptr.prp.prp1,
             reinterpret_cast<uint64_t>(buffer_out.data()));
+  EXPECT_EQ(nvme_wrapper.is_admin, false);
+  EXPECT_EQ(nvme_wrapper.buffer_len, buffer_out.size());
 }
 
 TEST(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
@@ -278,6 +284,8 @@ TEST(WriteTest, Write16ShouldBuildCorrectNvmeCommandStruct) {
   EXPECT_EQ(nvme_wrapper.cmd.cdw[2], expected_cdw12);
   EXPECT_EQ(nvme_wrapper.cmd.dptr.prp.prp1,
             reinterpret_cast<uint64_t>(buffer_out.data()));
+  EXPECT_EQ(nvme_wrapper.is_admin, false);
+  EXPECT_EQ(nvme_wrapper.buffer_len, buffer_out.size());
 }
 
 TEST(WriteTest, Write10ShoudlFailOnWrongProtectBit) {

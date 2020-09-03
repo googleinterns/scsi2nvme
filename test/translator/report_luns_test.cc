@@ -25,6 +25,8 @@
 
 namespace {
 
+constexpr uint32_t kPageSize = 4096;
+
 TEST(reportLunsToNvme, shouldReturnCorrectCommand) {
   translator::NvmeCmdWrapper nvme_wrapper;
   scsi::ReportLunsCommand scsi_cmd = {};
@@ -36,14 +38,16 @@ TEST(reportLunsToNvme, shouldReturnCorrectCommand) {
   translator::Span<uint8_t> scsi_cmd_span(buf_ptr,
                                           sizeof(scsi::ReportLunsCommand));
 
-  auto alloc_callback = [](uint16_t count) -> uint64_t { return 2323; };
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
+    return 2323;
+  };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
   translator::Allocation allocation = {};
   uint32_t actual_alloc_len;
   translator::StatusCode actual_status = translator::ReportLunsToNvme(
-      scsi_cmd_span, nvme_wrapper, allocation, actual_alloc_len);
+      scsi_cmd_span, nvme_wrapper, kPageSize, allocation, actual_alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, actual_status);
 
@@ -56,6 +60,7 @@ TEST(reportLunsToNvme, shouldReturnCorrectCommand) {
   EXPECT_EQ(1, allocation.data_page_count);
   EXPECT_EQ(expected_alloc_len, actual_alloc_len);
   EXPECT_EQ(true, nvme_wrapper.is_admin);
+  EXPECT_EQ(kPageSize, nvme_wrapper.buffer_len);
 }
 
 TEST(reportLunsToScsi, shouldFillBufferCorrectly) {
@@ -86,7 +91,7 @@ TEST(reportLunsToScsi, shouldFillBufferCorrectly) {
   lun_list =
       reinterpret_cast<scsi::LunAddress*>(buffer + sizeof(actual_response));
   for (scsi::LunAddress i = 0; i < ns_list_size; ++i) {
-    EXPECT_EQ(i, translator::ntohll(lun_list[i]));
+    ASSERT_EQ(i, translator::ntohll(lun_list[i]));
   }
 }
 

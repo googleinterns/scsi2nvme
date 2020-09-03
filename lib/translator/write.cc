@@ -66,6 +66,9 @@ StatusCode LegacyWrite(NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
   nvme_wrapper.cmd.dptr.prp.prp1 =
       reinterpret_cast<uint64_t>(buffer_out.data());
 
+  nvme_wrapper.buffer_len = buffer_out.size();
+  nvme_wrapper.is_admin = false;
+
   return StatusCode::kSuccess;
 }
 
@@ -101,7 +104,6 @@ StatusCode Write(bool fua, uint8_t wrprotect, uint32_t transfer_length,
     return status_code;
   }
   nvme_wrapper.cmd.cdw[2] = htoll(BuildCdw12(transfer_length, pr_info, fua));
-  nvme_wrapper.is_admin = false;
 
   return status_code;
 }

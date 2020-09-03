@@ -28,8 +28,8 @@ namespace translator {
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
                        Span<const uint8_t> buffer_out,
-                       NvmeCmdWrapper& nvme_wrapper, Allocation& allocation,
-                       uint32_t nsid) {
+                       NvmeCmdWrapper& nvme_wrapper, uint32_t page_size,
+                       uint32_t nsid, Allocation& allocation) {
   scsi::UnmapCommand unmap_cmd;
   if (!ReadValue(scsi_cmd, unmap_cmd)) {
     DebugLog("Malformed unmap command");
@@ -83,8 +83,9 @@ StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
     buffer_out = buffer_out.subspan(sizeof(block_descriptors[i]));
   }
 
+  uint16_t num_pages = 1;
   // Copy block descriptor data into allocated nvme data buffer
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure)
+  if (allocation.SetPages(page_size, num_pages, 0) == StatusCode::kFailure)
     return StatusCode::kFailure;
   uint8_t* dmr_ptr = reinterpret_cast<uint8_t*>(allocation.data_addr);
   Span<uint8_t> dmr_span(
@@ -110,6 +111,8 @@ StatusCode UnmapToNvme(Span<const uint8_t> scsi_cmd,
       .ad = 1};
   dataset_cmd.dptr.prp.prp1 = allocation.data_addr,
   memcpy(&nvme_wrapper.cmd, &dataset_cmd, sizeof(nvme_wrapper.cmd));
+
+  nvme_wrapper.buffer_len = page_size * num_pages;
   nvme_wrapper.is_admin = true;
   static_assert(sizeof(nvme_wrapper.cmd) == sizeof(dataset_cmd));
 

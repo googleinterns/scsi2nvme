@@ -20,7 +20,7 @@
 namespace translator {
 
 StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
-                            NvmeCmdWrapper& nvme_wrapper,
+                            NvmeCmdWrapper& nvme_wrapper, uint32_t page_size,
                             Allocation& allocation, uint32_t& alloc_len);
 
 StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,

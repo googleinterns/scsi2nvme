@@ -20,6 +20,8 @@
 
 namespace {
 
+constexpr uint32_t kPageSize = 4096;
+
 class ReadCapacity10Test : public ::testing::Test {
  protected:
   scsi::ReadCapacity10Command read_capacity_10_cmd_;
@@ -33,7 +35,7 @@ class ReadCapacity10Test : public ::testing::Test {
   // Per-test-suite set-up.
   // Called before the first test in this test suite.
   static void SetUpTestSuite() {
-    auto alloc_callback = [](uint16_t count) -> uint64_t {
+    auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
       // TODO: fix count == 0
       // EXPECT_EQ(1, count);
       return 1337;
@@ -68,10 +70,11 @@ class ReadCapacity10Test : public ::testing::Test {
 TEST_F(ReadCapacity10Test, ToNvmeSuccess) {
   translator::Allocation allocation{};
   uint32_t alloc_len = 0;
-  EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1,
-                                             allocation, alloc_len),
+  EXPECT_EQ(translator::ReadCapacity10ToNvme(
+                scsi_cmd_, nvme_wrapper_, kPageSize, 1, allocation, alloc_len),
             translator::StatusCode::kSuccess);
   EXPECT_EQ(nvme_wrapper_.is_admin, true);
+  EXPECT_EQ(nvme_wrapper_.buffer_len, kPageSize * 1);
   EXPECT_EQ(alloc_len, 8);
 }
 
@@ -79,8 +82,8 @@ TEST_F(ReadCapacity10Test, ToNvmeBadBuffer) {
   uint8_t bad_buffer[1];
   translator::Allocation allocation{};
   uint32_t alloc_len = 0;
-  EXPECT_EQ(translator::ReadCapacity10ToNvme(bad_buffer, nvme_wrapper_, 1,
-                                             allocation, alloc_len),
+  EXPECT_EQ(translator::ReadCapacity10ToNvme(
+                bad_buffer, nvme_wrapper_, kPageSize, 1, allocation, alloc_len),
             translator::StatusCode::kInvalidInput);
 }
 
@@ -89,7 +92,7 @@ TEST_F(ReadCapacity10Test, ToNvmeBadControlByteNaca) {
   translator::Allocation allocation{};
   uint32_t alloc_len = 0;
   EXPECT_EQ(translator::ReadCapacity10ToNvme(scsi_cmd_, nvme_wrapper_, 1,
-                                             allocation, alloc_len),
+                                             kPageSize, allocation, alloc_len),
             translator::StatusCode::kInvalidInput);
 }
 

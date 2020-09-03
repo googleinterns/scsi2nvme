@@ -80,22 +80,25 @@ struct CommonCmdAttributes {
 // Generates an nvme identify command for fetching block descriptor data
 StatusCode GenerateBlockDescriptorIdentifyCmd(NvmeCmdWrapper& nvme_wrapper,
                                               Allocation& allocation,
+                                              uint32_t page_size,
                                               uint32_t nsid) {
   nvme_wrapper.cmd = {.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify),
                       .nsid = nsid};
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure) {
+  uint16_t num_pages = 1;
+  if (allocation.SetPages(page_size, num_pages, 0) == StatusCode::kFailure) {
     return StatusCode::kFailure;
   }
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
 
+  nvme_wrapper.buffer_len = page_size * num_pages;
   nvme_wrapper.is_admin = true;
 
   return StatusCode::kSuccess;
 }
 
 // Generates an nvme get features command for fetching cache features
-StatusCode GenerateCacheGetFeaturesCmd(scsi::PageControl pc, uint32_t nsid,
-                                       NvmeCmdWrapper& nvme_wrapper) {
+StatusCode GenerateCacheGetFeaturesCmd(NvmeCmdWrapper& nvme_wrapper,
+                                       scsi::PageControl pc, uint32_t nsid) {
   nvme::GetFeaturesCmd tmp_get_features = {};
   tmp_get_features.opc = static_cast<uint8_t>(nvme::AdminOpcode::kGetFeatures);
   tmp_get_features.nsid = nsid;
@@ -159,12 +162,12 @@ uint16_t GetModeDataLength(CommonCmdAttributes cmd_attributes,
 // Handles common logic between mode sense 6 and 10 to nvme
 StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
                            Span<NvmeCmdWrapper> nvme_wrappers,
-                           Allocation& allocation, uint32_t nsid,
-                           uint32_t& cmd_count) {
+                           Allocation& allocation, uint32_t page_size,
+                           uint32_t nsid, uint32_t& cmd_count) {
   // Handle block descriptors
   if (!cmd_attributes.dbd) {
     StatusCode status = GenerateBlockDescriptorIdentifyCmd(
-        nvme_wrappers[cmd_count++], allocation, nsid);
+        nvme_wrappers[cmd_count++], allocation, page_size, nsid);
     if (status != StatusCode::kSuccess) {
       DebugLog("Error generating Block Descriptor Identify Command");
       return status;
@@ -183,8 +186,8 @@ StatusCode ModeSenseToNvme(CommonCmdAttributes cmd_attributes,
   }
 
   // Configure NVMe get features cmd
-  return GenerateCacheGetFeaturesCmd(cmd_attributes.pc, nsid,
-                                     nvme_wrappers[cmd_count++]);
+  return GenerateCacheGetFeaturesCmd(nvme_wrappers[cmd_count++],
+                                     cmd_attributes.pc, nsid);
 }
 
 // Writes a mode parameter 6 header to buffer
@@ -327,8 +330,9 @@ StatusCode ModeSenseToScsi(CommonCmdAttributes cmd_attributes, bool is_mode_10,
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ModeSense6ToNvme(Span<const uint8_t> scsi_cmd,
                             Span<NvmeCmdWrapper> nvme_wrappers,
-                            Allocation& allocation, uint32_t nsid,
-                            uint32_t& cmd_count, uint32_t& alloc_len) {
+                            Allocation& allocation, uint32_t page_size,
+                            uint32_t nsid, uint32_t& cmd_count,
+                            uint32_t& alloc_len) {
   // cast scsi_cmd to Mode Sense 6 command
   scsi::ModeSense6Command ms6_cmd;
   if (!ReadValue(scsi_cmd, ms6_cmd)) {
@@ -341,15 +345,17 @@ StatusCode ModeSense6ToNvme(Span<const uint8_t> scsi_cmd,
                                         .pc = ms6_cmd.pc,
                                         .dbd = ms6_cmd.dbd,
                                         .llbaa = false};
-  return ModeSenseToNvme(cmd_attributes, nvme_wrappers, allocation, nsid,
-                         cmd_count);
+  return ModeSenseToNvme(cmd_attributes, nvme_wrappers, allocation, page_size,
+                         nsid, cmd_count);
 }
 
 // Section 4.4
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ModeSense10ToNvme(Span<const uint8_t> scsi_cmd,
                              Span<NvmeCmdWrapper> nvme_wrappers,
-                             Allocation& allocation, uint32_t nsid,
+                             Allocation& allocation, uint32_t page_size,
+                             uint32_t nsid,
+
                              uint32_t& cmd_count, uint32_t& alloc_len) {
   // cast scsi_cmd to Mode Sense 10 command
   scsi::ModeSense10Command ms10_cmd;
@@ -363,8 +369,8 @@ StatusCode ModeSense10ToNvme(Span<const uint8_t> scsi_cmd,
                                         .pc = ms10_cmd.pc,
                                         .dbd = ms10_cmd.dbd,
                                         .llbaa = ms10_cmd.llbaa};
-  return ModeSenseToNvme(cmd_attributes, nvme_wrappers, allocation, nsid,
-                         cmd_count);
+  return ModeSenseToNvme(cmd_attributes, nvme_wrappers, allocation, page_size,
+                         nsid, cmd_count);
 }
 
 // Section 6.3

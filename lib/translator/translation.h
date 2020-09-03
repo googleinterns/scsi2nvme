@@ -16,6 +16,7 @@
 #define LIB_TRANSLATOR_TRANSLATION_H
 
 #include "common.h"
+#include "third_party/spdk/nvme.h"
 
 namespace translator {
 

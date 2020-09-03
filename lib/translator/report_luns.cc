@@ -41,7 +41,7 @@ uint32_t GetNsListLength(const nvme::IdentifyNamespaceList& ns_list) {
 // Section 4.5
 // https://www.nvmexpress.org/wp-content/uploads/NVM-Express-SCSI-Translation-Reference-1_1-Gold.pdf
 StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
-                            NvmeCmdWrapper& nvme_wrapper,
+                            NvmeCmdWrapper& nvme_wrapper, uint32_t page_size,
                             Allocation& allocation, uint32_t& alloc_len) {
   // Cast scsi_cmd to ReportLunsCommand
   scsi::ReportLunsCommand rl_cmd;
@@ -64,11 +64,13 @@ StatusCode ReportLunsToNvme(Span<const uint8_t> scsi_cmd,
   nvme_wrapper.cmd.opc = static_cast<uint8_t>(nvme::AdminOpcode::kIdentify);
   nvme_wrapper.cmd.cdw[0] = 0x2;  // Set CNS to return namespace ID list
 
+  uint16_t num_pages = 1;
   // Allocate prp & assign to command
-  if (allocation.SetPages(1, 0) == StatusCode::kFailure)
+  if (allocation.SetPages(page_size, num_pages, 0) == StatusCode::kFailure)
     return StatusCode::kFailure;
   nvme_wrapper.cmd.dptr.prp.prp1 = allocation.data_addr;
 
+  nvme_wrapper.buffer_len = page_size * num_pages;
   nvme_wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }
@@ -98,7 +100,7 @@ StatusCode ReportLunsToScsi(const nvme::GenericQueueEntryCmd& identify_cmd,
       buffer.size() - sizeof(scsi::ReportLunsParamData);
   scsi::ReportLunsParamData rlpd = {};
   rlpd.list_byte_length = htonl(lun_count * sizeof(scsi::LunAddress));
-  if (rlpd.list_byte_length > allocated_list_bytes) {
+  if (ntohl(rlpd.list_byte_length) > allocated_list_bytes) {
     uint32_t lbl = allocated_list_bytes -
                    (allocated_list_bytes % sizeof(scsi::LunAddress));
     rlpd.list_byte_length = htonl(lbl);

@@ -22,6 +22,8 @@ namespace {
 
 // Tests mode sense to nvme translation
 
+constexpr uint32_t kPageSize = 4096;
+
 TEST(TranslateModeSenseToNvme, ShouldReturnNoCommands) {
   translator::Span<translator::NvmeCmdWrapper> nvme_wrappers;
   translator::Allocation allocation = {};
@@ -36,8 +38,9 @@ TEST(TranslateModeSenseToNvme, ShouldReturnNoCommands) {
   translator::Span<uint8_t> scsi_cmd(reinterpret_cast<uint8_t*>(&ms6_cmd),
                                      sizeof(ms6_cmd));
 
-  translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
+  translator::StatusCode status_code =
+      translator::ModeSense6ToNvme(scsi_cmd, nvme_wrappers, allocation,
+                                   kPageSize, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 0);
@@ -59,8 +62,9 @@ TEST(TranslateModeSenseToNvme, ShouldReturnGetFeatures) {
   translator::Span<uint8_t> scsi_cmd(reinterpret_cast<uint8_t*>(&ms6_cmd),
                                      sizeof(ms6_cmd));
 
-  translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
+  translator::StatusCode status_code =
+      translator::ModeSense6ToNvme(scsi_cmd, nvme_wrappers, allocation,
+                                   kPageSize, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 1);
@@ -78,7 +82,9 @@ TEST(TranslateModeSenseToNvme, ShouldReturnGetFeatures) {
 }
 
 TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
-  auto alloc_callback = [](uint16_t count) -> uint64_t { return 2323; };
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
+    return 2323;
+  };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
@@ -94,8 +100,9 @@ TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
   translator::Span<uint8_t> scsi_cmd(reinterpret_cast<uint8_t*>(&ms6_cmd),
                                      sizeof(ms6_cmd));
 
-  translator::StatusCode status_code = translator::ModeSense6ToNvme(
-      scsi_cmd, nvme_wrappers, allocation, nsid, cmd_count, alloc_len);
+  translator::StatusCode status_code =
+      translator::ModeSense6ToNvme(scsi_cmd, nvme_wrappers, allocation,
+                                   kPageSize, nsid, cmd_count, alloc_len);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(cmd_count, 2);
@@ -110,6 +117,7 @@ TEST(TranslateModeSenseToNvme, ShouldReturnDbdCommands) {
   EXPECT_EQ(2323, nvme_wrappers[0].cmd.dptr.prp.prp1);
   EXPECT_EQ(0x0, nvme_wrappers[0].cmd.cdw[0]);
   EXPECT_EQ(true, nvme_wrappers[0].is_admin);
+  EXPECT_EQ(nvme_wrappers[0].buffer_len, kPageSize * 1);
 
   EXPECT_EQ(static_cast<uint8_t>(nvme::AdminOpcode::kGetFeatures),
             nvme_wrappers[1].cmd.opc);

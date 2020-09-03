@@ -27,7 +27,7 @@
 namespace translator {
 
 static void (*debug_callback)(const char*);
-static uint64_t (*alloc_pages_callback)(uint16_t);
+static uint64_t (*alloc_pages_callback)(uint32_t, uint16_t);
 static void (*dealloc_pages_callback)(uint64_t, uint16_t);
 
 void DebugLog(const char* format, ...) {
@@ -45,9 +45,9 @@ void SetDebugCallback(void (*callback)(const char*)) {
 }
 
 // A return value of 0 is equivalent to nullptr.
-uint64_t AllocPages(uint16_t count) {
+uint64_t AllocPages(uint32_t page_size, uint16_t count) {
   if (alloc_pages_callback == nullptr) return 0;
-  return alloc_pages_callback(count);
+  return alloc_pages_callback(page_size, count);
 }
 
 void DeallocPages(uint64_t pages_ptr, uint16_t count) {
@@ -55,7 +55,7 @@ void DeallocPages(uint64_t pages_ptr, uint16_t count) {
   dealloc_pages_callback(pages_ptr, count);
 }
 
-void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint32_t, uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t)) {
   alloc_pages_callback = alloc_callback;
   dealloc_pages_callback = dealloc_callback;
@@ -105,7 +105,7 @@ uint64_t htolll(uint64_t value) {
   }
 }
 
-StatusCode Allocation::SetPages(uint16_t data_page_count,
+StatusCode Allocation::SetPages(uint32_t page_size, uint16_t data_page_count,
                                 uint16_t mdata_page_count) {
   if ((data_page_count != 0 && this->data_addr != 0) ||
       (mdata_page_count != 0 && this->mdata_addr != 0)) {
@@ -114,9 +114,9 @@ StatusCode Allocation::SetPages(uint16_t data_page_count,
   }
 
   this->data_page_count = data_page_count;
-  this->data_addr = AllocPages(data_page_count);
+  this->data_addr = AllocPages(page_size, data_page_count);
   this->mdata_page_count = mdata_page_count;
-  this->mdata_addr = AllocPages(mdata_page_count);
+  this->mdata_addr = AllocPages(page_size, mdata_page_count);
 
   if ((data_page_count != 0 && this->data_addr == 0) ||
       (mdata_page_count != 0 && this->mdata_addr == 0)) {

@@ -23,9 +23,9 @@
 namespace translator {
 
 StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
-
-                                NvmeCmdWrapper& wrapper, uint32_t nsid,
-                                Allocation& allocation, uint32_t& alloc_len) {
+                                NvmeCmdWrapper& wrapper, uint32_t page_size,
+                                uint32_t nsid, Allocation& allocation,
+                                uint32_t& alloc_len) {
   scsi::ReadCapacity10Command cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed ReadCapacity10 Command - Error in reading to buffer");
@@ -42,8 +42,9 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
   // and medium format of the direct-access block device to the data-in buffer.
   alloc_len = 8;
 
+  uint16_t num_pages = 1;
   // Allocate prp & assign to command
-  auto read_status = allocation.SetPages(1, 0);
+  auto read_status = allocation.SetPages(page_size, num_pages, 0);
   if (read_status != StatusCode::kSuccess) {
     return read_status;
   }
@@ -55,6 +56,7 @@ StatusCode ReadCapacity10ToNvme(Span<const uint8_t> raw_scsi,
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
 
+  wrapper.buffer_len = page_size * num_pages;
   wrapper.is_admin = true;
   return StatusCode::kSuccess;
 }

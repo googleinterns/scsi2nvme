@@ -27,10 +27,10 @@
 #include "verify.h"
 #include "write.h"
 
-namespace translator {
-
 constexpr uint32_t kPageSize = 4096;
 constexpr uint32_t kLbaSize = 4096;
+
+namespace translator {
 
 BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
                                  Span<const uint8_t> buffer,
@@ -52,7 +52,8 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
 
   pipeline_status_ = StatusCode::kSuccess;
   scsi_cmd_ = scsi_cmd;
-
+  DebugLog("Translating command %s with opcode %#x",
+           ScsiOpcodeToString((scsi::OpCode)(scsi_cmd[0])), scsi_cmd[0]);
   uint32_t nsid = static_cast<uint32_t>(lun) + 1;
   Span<const uint8_t> scsi_cmd_no_op = scsi_cmd.subspan(1);
   scsi::OpCode opc = static_cast<scsi::OpCode>(scsi_cmd[0]);
@@ -60,36 +61,37 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kInquiry:
       pipeline_status_ =
           InquiryToNvme(scsi_cmd_no_op, nvme_wrappers_[0], nvme_wrappers_[1],
-                        response.alloc_len, nsid, allocations_);
+                        kPageSize, nsid, allocations_, response.alloc_len);
       nvme_cmd_count_ = 2;
       break;
     case scsi::OpCode::kUnmap:
       pipeline_status_ = UnmapToNvme(scsi_cmd_no_op, buffer, nvme_wrappers_[0],
-                                     allocations_[0], nsid);
+                                     kPageSize, nsid, allocations_[0]);
       nvme_cmd_count_ = 1;
     case scsi::OpCode::kModeSense6:
-      pipeline_status_ =
-          ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
-                           nsid, nvme_cmd_count_, response.alloc_len);
+      pipeline_status_ = ModeSense6ToNvme(scsi_cmd_no_op, nvme_wrappers_,
+                                          allocations_[0], kPageSize, nsid,
+                                          nvme_cmd_count_, response.alloc_len);
       break;
     case scsi::OpCode::kModeSense10:
-      pipeline_status_ =
-          ModeSense10ToNvme(scsi_cmd_no_op, nvme_wrappers_, allocations_[0],
-                            nsid, nvme_cmd_count_, response.alloc_len);
+      pipeline_status_ = ModeSense10ToNvme(scsi_cmd_no_op, nvme_wrappers_,
+                                           allocations_[0], kPageSize, nsid,
+                                           nvme_cmd_count_, response.alloc_len);
     case scsi::OpCode::kMaintenanceIn:
       // ReportSupportedOpCodes is the only supported MaintenanceIn command
       pipeline_status_ =
           ValidateReportSupportedOpCodes(scsi_cmd_no_op, response.alloc_len);
       nvme_cmd_count_ = 0;
     case scsi::OpCode::kReportLuns:
-      pipeline_status_ = ReportLunsToNvme(scsi_cmd_no_op, nvme_wrappers_[0],
-                                          allocations_[0], response.alloc_len);
+      pipeline_status_ =
+          ReportLunsToNvme(scsi_cmd_no_op, nvme_wrappers_[0], kPageSize,
+                           allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kReadCapacity10:
       pipeline_status_ =
-          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], nsid,
-                               allocations_[0], response.alloc_len);
+          ReadCapacity10ToNvme(scsi_cmd_no_op, nvme_wrappers_[0], kPageSize,
+                               nsid, allocations_[0], response.alloc_len);
       nvme_cmd_count_ = 1;
       break;
     case scsi::OpCode::kRequestSense:
@@ -127,6 +129,12 @@ BeginResponse Translation::Begin(Span<const uint8_t> scsi_cmd,
     case scsi::OpCode::kVerify10:
       pipeline_status_ = VerifyToNvme(scsi_cmd_no_op, nvme_wrappers_[0]);
       nvme_cmd_count_ = 1;
+      break;
+    case scsi::OpCode::kTestUnitReady:
+      // Always return NVMe device is ready
+      // The implementation of actually querying readiness of NVMe device does
+      // not fit with our Library and engine design and is of little use
+      pipeline_status_ = StatusCode::kSuccess;
       break;
     case scsi::OpCode::kWrite6:
       pipeline_status_ = Write6ToNvme(scsi_cmd_no_op, nvme_wrappers_[0],
@@ -176,6 +184,7 @@ CompleteResponse Translation::Complete(
         "Invalid use of API, completion count %u does not equal command count "
         "%u",
         cpl_data.size(), nvme_cmd_count_);
+    AbortPipeline();
     resp.status = ApiStatus::kFailure;
     return resp;
   }
@@ -257,6 +266,7 @@ CompleteResponse Translation::Complete(
       // No command specific response data to translate
       pipeline_status_ = StatusCode::kSuccess;
       break;
+    case scsi::OpCode::kTestUnitReady:
     case scsi::OpCode::kWrite6:
     case scsi::OpCode::kWrite10:
     case scsi::OpCode::kWrite12:

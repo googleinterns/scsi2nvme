@@ -27,8 +27,7 @@ namespace translator {
 
 // Vendor Identification shall be set to "NVMe" followed by 4 spaces: "NVMe    "
 // This value is not null terminated and should be size 8
-constexpr char kNvmeVendorIdentification[] = "NVMe    ";
-static_assert(strlen(kNvmeVendorIdentification) == 8);
+static const char* kNvmeVendorIdentification = "NVMe    ";
 
 // The maximum amplification ratio of any supported SCSI:NVMe translation
 constexpr int kMaxCommandRatio = 3;
@@ -50,24 +49,26 @@ struct Allocation {
 
   // Sets [m]data_page_count, calls AllocPages([m]data_page_count),
   // and returns StatusCode based on whether AllocPages was successful
-  StatusCode SetPages(uint16_t data_page_count, uint16_t mdata_page_count);
+  StatusCode SetPages(uint32_t page_size, uint16_t data_page_count,
+                      uint16_t mdata_page_count);
 };
 
 struct NvmeCmdWrapper {
   nvme::GenericQueueEntryCmd cmd;
+  uint32_t buffer_len;
   bool is_admin;
 };
 
 void DebugLog(const char* format, ...);
 
 // Max consecutive pages required by NVMe PRP list is 512
-uint64_t AllocPages(uint16_t count);
+uint64_t AllocPages(uint32_t page_size, uint16_t count);
 
 void DeallocPages(uint64_t pages_ptr, uint16_t count);
 
 void SetDebugCallback(void (*callback)(const char*));
 
-void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint16_t),
+void SetAllocPageCallbacks(uint64_t (*alloc_callback)(uint32_t, uint16_t),
                            void (*dealloc_callback)(uint64_t, uint16_t));
 
 // Returns true if system is little endian.

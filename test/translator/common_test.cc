@@ -99,7 +99,7 @@ TEST(Common, ShouldCorrectlyWriteValueToSpan) {
 
 TEST(Common, ShouldBuildAllocationWithSuccessStatus) {
   translator::Allocation allocation = {};
-  auto alloc_callback = [](uint16_t count) -> uint64_t {
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
     if (count == 1) {
       return 1337;
     }
@@ -111,7 +111,7 @@ TEST(Common, ShouldBuildAllocationWithSuccessStatus) {
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
-  translator::StatusCode status_code = allocation.SetPages(1, 3);
+  translator::StatusCode status_code = allocation.SetPages(4096, 1, 3);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(1, allocation.data_page_count);
@@ -122,7 +122,7 @@ TEST(Common, ShouldBuildAllocationWithSuccessStatus) {
 
 TEST(Common, ShouldBuildAllocationZeroPageCountaWithSuccessStatus) {
   translator::Allocation allocation = {};
-  auto alloc_callback = [](uint16_t count) -> uint64_t {
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
     if (count == 2) {
       return 1337;
     }
@@ -131,7 +131,7 @@ TEST(Common, ShouldBuildAllocationZeroPageCountaWithSuccessStatus) {
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
-  translator::StatusCode status_code = allocation.SetPages(2, 0);
+  translator::StatusCode status_code = allocation.SetPages(4096, 2, 0);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(2, allocation.data_page_count);
@@ -139,7 +139,7 @@ TEST(Common, ShouldBuildAllocationZeroPageCountaWithSuccessStatus) {
   EXPECT_EQ(0, allocation.mdata_page_count);
   EXPECT_EQ(0, allocation.mdata_addr);
 
-  status_code = allocation.SetPages(0, 2);
+  status_code = allocation.SetPages(4096, 0, 2);
 
   EXPECT_EQ(translator::StatusCode::kSuccess, status_code);
   EXPECT_EQ(0, allocation.data_page_count);
@@ -151,20 +151,20 @@ TEST(Common, ShouldBuildAllocationZeroPageCountaWithSuccessStatus) {
 TEST(Common, ShouldFailBuildAllocationWhenOverrdingMemory) {
   translator::Allocation allocation = {.data_addr = 1337, .mdata_addr = 0};
 
-  translator::StatusCode status_code = allocation.SetPages(1, 1);
+  translator::StatusCode status_code = allocation.SetPages(4096, 1, 1);
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 
 TEST(Common, ShouldFailBuildAllocationWhenAllocPageFails) {
   translator::Allocation allocation = {};
-  auto alloc_callback = [](uint16_t count) -> uint64_t {
+  auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
     EXPECT_EQ(1, count);
     return 0;
   };
   void (*dealloc_callback)(uint64_t, uint16_t) = nullptr;
   translator::SetAllocPageCallbacks(alloc_callback, dealloc_callback);
 
-  translator::StatusCode status_code = allocation.SetPages(1, 1);
+  translator::StatusCode status_code = allocation.SetPages(4096, 1, 1);
   EXPECT_EQ(translator::StatusCode::kFailure, status_code);
 }
 

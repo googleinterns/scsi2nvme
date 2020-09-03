@@ -32,8 +32,8 @@ namespace translator {
 StatusCode InquiryToNvme(Span<const uint8_t> scsi_cmd,
                          NvmeCmdWrapper& identify_ns_wrapper,
                          NvmeCmdWrapper& identify_ctrl_wrapper,
-                         uint32_t& alloc_len, uint32_t nsid,
-                         Span<Allocation> allocations);
+                         uint32_t page_size, uint32_t nsid,
+                         Span<Allocation> allocations, uint32_t& alloc_len);
 
 // Preconditions:
 // scsi_cmd is a pointer to a Inquiry Command without the OpCode

@@ -157,8 +157,6 @@ StatusCode TranslateStandardInquiry(
 
   // Shall be set to “NVMe" followed by 4 spaces: “NVMe    “
   // Vendor Identification is not null terminated.
-  static_assert(sizeof(result.vendor_identification) ==
-                strlen(kNvmeVendorIdentification));
 
   memcpy(result.vendor_identification, kNvmeVendorIdentification,
          strlen(kNvmeVendorIdentification));
@@ -569,8 +567,8 @@ StatusCode TranslateLogicalBlockProvisioningVpd(
 StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
                          NvmeCmdWrapper& identify_ns_wrapper,
                          NvmeCmdWrapper& identify_ctrl_wrapper,
-                         uint32_t& alloc_len, uint32_t nsid,
-                         Span<Allocation> allocations) {
+                         uint32_t page_size, uint32_t nsid,
+                         Span<Allocation> allocations, uint32_t& alloc_len) {
   scsi::InquiryCommand cmd = {};
   if (!ReadValue(raw_scsi, cmd)) {
     DebugLog("Malformed Inquiry Command");
@@ -579,7 +577,8 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
 
   alloc_len = static_cast<uint32_t>(ntohs(cmd.allocation_length));
 
-  StatusCode status_alloc1 = allocations[0].SetPages(1, 0);
+  uint16_t num_pages = 1;
+  StatusCode status_alloc1 = allocations[0].SetPages(page_size, num_pages, 0);
   if (status_alloc1 != StatusCode::kSuccess) {
     return status_alloc1;
   }
@@ -590,8 +589,9 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
   identify_ns_wrapper.cmd.cdw[0] =
       0x0;  // Controller or Namespace Structure (CNS): This field specifies the
             // information to be returned to the host.
+  identify_ns_wrapper.buffer_len = page_size * num_pages;
 
-  StatusCode status_alloc2 = allocations[1].SetPages(1, 0);
+  StatusCode status_alloc2 = allocations[1].SetPages(page_size, num_pages, 0);
   if (status_alloc2 != StatusCode::kSuccess) {
     return status_alloc2;
   }
@@ -603,6 +603,7 @@ StatusCode InquiryToNvme(Span<const uint8_t> raw_scsi,
   identify_ctrl_wrapper.cmd.cdw[0] =
       htoll(0x1);  // Controller or Namespace Structure (CNS): This field
                    // specifies the information to be returned to the host.
+  identify_ctrl_wrapper.buffer_len = page_size * num_pages;
 
   identify_ns_wrapper.is_admin = true;
   identify_ctrl_wrapper.is_admin = true;

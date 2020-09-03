@@ -21,6 +21,7 @@ namespace {
 /*
    Tests translation class
 */
+const uint32_t kPageSize = 4096;
 
 TEST(Translation, ShouldHandleUnknownOpcode) {
   translator::Translation translation = {};

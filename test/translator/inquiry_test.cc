@@ -24,6 +24,7 @@ namespace {
 constexpr uint64_t kSampleIdentifierData = 0x12345678;
 constexpr uint8_t kIdentifierLengthNGUID = 0x10;
 constexpr uint8_t kIdentifierLengthEUI64 = 0x8;
+constexpr uint8_t kPageSize = 4096;
 
 class InquiryTest : public ::testing::Test {
  protected:
@@ -38,7 +39,7 @@ class InquiryTest : public ::testing::Test {
   // Per-test-suite set-up.
   // Called before the first test in this test suite.
   static void SetUpTestSuite() {
-    auto alloc_callback = [](uint16_t count) -> uint64_t {
+    auto alloc_callback = [](uint32_t page_size, uint16_t count) -> uint64_t {
       // EXPECT_EQ(1, count);
       return 1337;
     };
@@ -82,7 +83,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
 
   translator::StatusCode status =
       translator::InquiryToNvme(scsi_cmd_, nvme_wrappers_[0], nvme_wrappers_[1],
-                                alloc_len, nsid, allocations);
+                                kPageSize, nsid, allocations, alloc_len);
 
   EXPECT_EQ(status, translator::StatusCode::kSuccess);
 
@@ -95,6 +96,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
   EXPECT_NE(nvme_wrappers_[0].cmd.dptr.prp.prp1, 0);
   EXPECT_EQ(nvme_wrappers_[0].cmd.cdw[0], 0);
   EXPECT_EQ(nvme_wrappers_[0].is_admin, true);
+  EXPECT_EQ(nvme_wrappers_[0].buffer_len, kPageSize * 1);
 
   // identify controller
   EXPECT_EQ(nvme_wrappers_[1].cmd.opc,
@@ -103,6 +105,7 @@ TEST_F(InquiryTest, InquiryToNvme) {
   EXPECT_NE(nvme_wrappers_[1].cmd.dptr.prp.prp1, 0);
   EXPECT_EQ(nvme_wrappers_[1].cmd.cdw[0], 1);
   EXPECT_EQ(nvme_wrappers_[1].is_admin, true);
+  EXPECT_EQ(nvme_wrappers_[1].buffer_len, kPageSize * 1);
 }
 
 TEST_F(InquiryTest, InquiryToNvmeFailRead) {
@@ -113,8 +116,8 @@ TEST_F(InquiryTest, InquiryToNvmeFailRead) {
 
   uint8_t bad_buffer[1] = {};
   translator::StatusCode status = translator::InquiryToNvme(
-      bad_buffer, nvme_wrappers_[0], nvme_wrappers_[1], alloc_len, nsid,
-      allocations);
+      bad_buffer, nvme_wrappers_[0], nvme_wrappers_[1], kPageSize, nsid,
+      allocations, alloc_len);
 
   EXPECT_EQ(status, translator::StatusCode::kInvalidInput);
 }
